@@ -21,7 +21,7 @@ class Login extends BaseController
     {
         $username = $this->request->getPost('username');
         $pass = $this->request->getPost('password');
-        $str = "SELECT *,PASSWORD(:pass:) AS cek_pass FROM tb_user LEFT JOIN role_user USING(level_id) left join toko using (toko_id) WHERE username=:username:;";
+        $str = "SELECT *,PASSWORD(:pass:) AS cek_pass FROM tb_user LEFT JOIN role_user USING(level_id) left join toko using (toko_id) WHERE username=:username: and active='Y';";
         $query = $this->db->query($str, ['username' => $username, 'pass' => $pass]);
 
         $row = $query->getRow();
