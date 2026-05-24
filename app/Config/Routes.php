@@ -32,3 +32,11 @@ $routes->group('user', ['filter' => 'sudahlogin'], static function ($routes) {
     $routes->patch('/', 'User::Update');
     $routes->delete('/', 'User::Delete');
 });
+
+$routes->group('menu', static function ($route) {
+    $route->get('', 'Menu::index');
+    $route->post('ajax', 'Menu::ajax');
+    $route->put('', 'Menu::store');
+    $route->patch('', 'Menu::update');
+    $route->delete('', 'Menu::delete');
+});

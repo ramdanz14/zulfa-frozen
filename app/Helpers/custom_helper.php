@@ -24,6 +24,14 @@ function GetToko(string $col)
     $const = $db->query("SELECT * FROM toko WHERE toko_id='$toko_id'")->getRowArray();
     return $const[$col];
 }
+
+function GetAkseMenu(string $level_id, string $menu_id)
+{
+    $db = \Config\Database::connect();
+    $akses_menu =  $db->query("SELECT * FROM akses_menu WHERE level_id= :level_id: and menu_id= :menu_id:", ['level_id' => $level_id, 'menu_id' => $menu_id])->getRow();
+
+    return $akses_menu;
+}
 function GetMenu()
 {
     $db = \Config\Database::connect();
