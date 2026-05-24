@@ -130,7 +130,7 @@
 <?= $this->section('javascript') ?>
 
 <script>
-    const akses_menu = <?= json_encode($akses_menu) ?>;
+    const akses_menu = <?= $akses_menu ?>;
     DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
     let currentAction = "tambah";
     const userModal = new bootstrap.Modal(document.getElementById("user-modal"));
@@ -144,10 +144,7 @@
                         if (akses_menu.akses_create == "Y") {
                             showModal('tambah');
                         } else {
-                            Toast({
-                                text: 'Anda tidak memiliki akses untuk ini!',
-                                type: 'error'
-                            });
+                            toastr.error('Anda tidak memiliki akses untuk ini!');
                         }
                     }
                 }, {

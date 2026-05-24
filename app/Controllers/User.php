@@ -8,30 +8,19 @@ use App\Models\UserModel;
 class User extends BaseController
 {
     public $userModel;
+    private $db;
     public function __construct()
     {
+        $this->db = \Config\Database::connect();
         $this->userModel = new UserModel();
     }
     public function index()
     {
-        $menu_id =  $this->request->getUri()->getSegment(1);
-        $level_id = session()->level_id;
-        $akses_menu =  GetAkseMenu($level_id, $menu_id);
-
-        $menu = GetMenu();
-        $data['menu'] = $menu;
-        $data['menuJson'] = json_encode($menu, JSON_UNESCAPED_SLASHES);
-
-        $data['akses_menu'] = $akses_menu;
         $list_role =  $this->db->query("SELECT * FROM role_user ;")->getResult();
         $data['list_role'] = $list_role;
         $list_toko =  $this->db->query("SELECT * FROM toko ;")->getResult();
         $data['list_toko'] = $list_toko;
-        if ($akses_menu->akses_read == 'Y') {
-            return view('user/index_user', $data);
-        } else {
-            return view('errors/html/error_401');
-        }
+        cek_akses_menu('user/index_user', $data);
     }
 
     public function lastid()

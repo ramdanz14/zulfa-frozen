@@ -15,20 +15,7 @@ class Menu extends BaseController
 
     public function index()
     {
-        $menu_id =  $this->request->getUri()->getSegment(1);
-        $level_id = session()->level_id;
-        $akses_menu =  GetAkseMenu($level_id, $menu_id);
-
-        $menu = GetMenu();
-        $data['menu'] = $menu;
-        $data['menuJson'] = json_encode($menu, JSON_UNESCAPED_SLASHES);
-
-        $data['akses_menu'] = $akses_menu;
-        if ($akses_menu->akses_read == 'Y') {
-            return view('menu', $data);
-        } else {
-            return view('errors/html/error_401');
-        }
+        cek_akses_menu('menu');
     }
 
     public function ajax()
