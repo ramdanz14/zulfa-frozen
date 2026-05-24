@@ -40,3 +40,14 @@ $routes->group('menu', static function ($route) {
     $route->patch('', 'Menu::update');
     $route->delete('', 'Menu::delete');
 });
+
+
+$routes->group('jabatan', static function ($route) {
+    $route->get('', 'Role::index');
+    $route->post('ajax', 'Role::ajax');
+    $route->put('', 'Role::store');
+    $route->patch('', 'Role::update');
+    $route->delete('', 'Role::delete');
+    $route->get('akses/(:segment)', 'Role::indexAkses/$1');
+    $route->post('akses', 'Role::updateAkses');
+});
