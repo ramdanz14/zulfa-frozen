@@ -38,6 +38,47 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="<?= base_url(); ?>/assets/js/plugins/toastr-init.js"></script>
+    <script>
+        function showToastr(type, message) {
+            const msg = message || '';
+            const toastType = (type || 'info').toLowerCase();
+
+            if (typeof toastr !== 'undefined' && typeof toastr[toastType] === 'function') {
+                toastr[toastType](msg);
+                return;
+            }
+            if (typeof Toast === 'function') {
+                Toast({
+                    type: toastType,
+                    text: msg
+                });
+                return;
+            }
+            alert(msg);
+        }
+
+
+
+        function extractErrorMessage(xhr, fallback) {
+            if (!xhr) {
+                return fallback;
+            }
+            if (xhr.responseJSON && xhr.responseJSON.data) {
+                return xhr.responseJSON.data;
+            }
+            if (xhr.responseText) {
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    if (parsed && parsed.data) {
+                        return parsed.data;
+                    }
+                } catch (err) {
+                    return xhr.responseText;
+                }
+            }
+            return fallback;
+        }
+    </script>
     <?= $this->renderSection('javascript'); ?>
 
 </body>
