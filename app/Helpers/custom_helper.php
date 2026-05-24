@@ -222,25 +222,7 @@ function terbilang($angka)
     return strtoupper($terbilang);
 }
 
-function cek_akses_menu($viewtpl)
-{
-    $db = \Config\Database::connect();
-    $request = \Config\Services::request();
-    $menu_id =  $request->getUri()->getSegment(1);
-    $level_id = session()->level_id;
-    $akses_menu =  $db->query("SELECT * FROM akses_menu WHERE level_id='$level_id' and menu_id='$menu_id';")->getRow();
-    $data['akses_menu'] =  json_encode($akses_menu);
-    if ($akses_menu) {
-        if ($akses_menu->akses_read == 'Y') {
 
-            echo view($viewtpl, $data);
-        } else {
-            echo view('errors/html/error_401');
-        }
-    } else {
-        echo view('errors/html/error_401');
-    }
-}
 
 function cekClosing()
 {
@@ -259,5 +241,30 @@ function cekClosing()
         } else {
             return true;
         }
+    }
+}
+
+function cek_akses_menu(string $viewtpl, $data = null)
+{
+    $db = \Config\Database::connect();
+    $request = \Config\Services::request();
+    $menu_id =  $request->getUri()->getSegment(1) == '' ? 'main' : $request->getUri()->getSegment(1);
+    $level_id = session()->level_id;
+    $akses_menu =  $db->query("SELECT * FROM akses_menu WHERE level_id= :level_id: and menu_id= :menu_id:", ['level_id' => $level_id, 'menu_id' => $menu_id])->getRow();
+
+    $data['akses_menu'] =  json_encode($akses_menu);
+    $data['isMobile'] = cekMobile();
+    $menu = GetMenu();
+    $data['menu'] = $menu;
+    $data['menuJson'] = json_encode($menu, JSON_UNESCAPED_SLASHES);
+    if ($akses_menu) {
+        if ($akses_menu->akses_read == 'Y') {
+
+            echo view($viewtpl, $data);
+        } else {
+            echo view('errors/html/error_401');
+        }
+    } else {
+        echo view('errors/html/error_401');
     }
 }
