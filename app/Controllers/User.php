@@ -7,21 +7,16 @@ use App\Models\UserModel;
 
 class User extends BaseController
 {
-    protected $db;
     public $userModel;
     public function __construct()
     {
-        $this->db = \Config\Database::connect();
         $this->userModel = new UserModel();
     }
     public function index()
     {
         $menu_id =  $this->request->getUri()->getSegment(1);
         $level_id = session()->level_id;
-        $akses_menu =  $this->db->query("SELECT * FROM akses_menu WHERE level_id='$level_id' and menu_id='$menu_id';")->getRow();
-        if (!$akses_menu) {
-            return view('errors/html/error_401');
-        }
+        $akses_menu =  GetAkseMenu($level_id, $menu_id);
 
         $menu = GetMenu();
         $data['menu'] = $menu;
