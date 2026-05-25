@@ -14,23 +14,22 @@ $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(false);
 $routes->set404Override();
 
-$routes->get('/', 'Main::index', ['filter' => 'sudahlogin']);
-$routes->get('/main', 'Main::index', ['filter' => 'sudahlogin']);
-$routes->get('/login', 'Login::index', ['filter' => 'belumlogin']);
+$routes->get('/', 'Main::index');
+$routes->get('/main', 'Main::index');
+$routes->get('/login', 'Login::index');
 $routes->get('/logout', 'Login::out');
 $routes->match(['post'], '/login', 'Login::check');
 
 
-$routes->group('user', ['filter' => 'sudahlogin'], static function ($routes) {
-    $routes->get('', 'User::index');
-    $routes->post('ajax', 'User::ajax');
-    $routes->get('lastid', 'User::lastid');
-    $routes->get('getid', 'User::GetId');
-    $routes->get('(:segment)', 'User::Read/$1');
-    $routes->post('reset', 'User::ResetPassword');
-    $routes->put('/', 'User::Create');
-    $routes->patch('/', 'User::Update');
-    $routes->delete('/', 'User::Delete');
+$routes->group('user', static function ($route) {
+    $route->get('', 'User::index');
+    $route->post('ajax', 'User::ajax');
+    $route->get('lastid', 'User::lastid');
+    $route->get('(:segment)', 'User::Read/$1');
+    $route->post('reset', 'User::ResetPassword');
+    $route->put('/', 'User::Create');
+    $route->patch('/', 'User::Update');
+    $route->delete('/', 'User::Delete');
 });
 
 $routes->group('menu', static function ($route) {
@@ -50,4 +49,14 @@ $routes->group('jabatan', static function ($route) {
     $route->delete('', 'Role::delete');
     $route->get('akses/(:segment)', 'Role::indexAkses/$1');
     $route->post('akses', 'Role::updateAkses');
+});
+
+$routes->group('listoko', static function ($route) {
+    $route->get('', 'Toko::index');
+    $route->post('ajax', 'Toko::ajax');
+    $route->get('lastid', 'Toko::lastid');
+    $route->put('', 'Toko::store');
+    $route->patch('', 'Toko::update');
+    $route->delete('', 'Toko::delete');
+    $route->get('getid', 'User::GetId');
 });
