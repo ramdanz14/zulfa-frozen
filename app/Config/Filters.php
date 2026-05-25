@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Filters\AuthFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -34,8 +35,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        'sudahlogin'    => \App\Filters\SudahLogin::class,
-        'belumlogin'    => \App\Filters\BelumLogin::class,
+        'auth'          => AuthFilter::class
 
     ];
 
@@ -56,6 +56,7 @@ class Filters extends BaseFilters
         'before' => [
             'forcehttps', // Force Global Secure Requests
             'pagecache',  // Web Page Caching
+            'auth'
         ],
         'after' => [
             'pagecache',   // Web Page Caching
