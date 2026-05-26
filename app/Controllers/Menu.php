@@ -15,7 +15,8 @@ class Menu extends BaseController
 
     public function index()
     {
-        cek_akses_menu('menu');
+        $data["title"] = "Menu";
+        cek_akses_menu('menu', $data);
     }
 
     public function ajax()

@@ -15,7 +15,8 @@ class Toko extends BaseController
 
     public function index()
     {
-        cek_akses_menu('toko');
+        $data["title"] = "Toko";
+        cek_akses_menu('toko', $data);
     }
 
     public function ajax()

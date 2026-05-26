@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.css">
     <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.8/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/r-3.0.8/sp-2.3.5/datatables.min.css" rel="stylesheet" integrity="sha384-Ardp6FCkpCmEUMnE5/KjGBWG2nRUVIRu9FC/rX34QDRbJ+ebmGFWYRrv2DGEtRtc" crossorigin="anonymous">
 
-    <title>Zulfaa Frozen |<?= esc($title ?? 'Dashboard'); ?></title>
+    <title>Zulfaa Frozen | <?= esc($title ?? 'Dashboard'); ?></title>
 </head>
 
 <body class="link-sidebar">

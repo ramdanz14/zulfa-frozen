@@ -20,6 +20,7 @@ class User extends BaseController
         $data['list_role'] = $list_role;
         $list_toko =  $this->db->query("SELECT * FROM toko ;")->getResult();
         $data['list_toko'] = $list_toko;
+        $data['title'] = "User";
         cek_akses_menu('user/index_user', $data);
     }
 

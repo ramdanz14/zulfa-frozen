@@ -254,6 +254,8 @@
                     success: function(res) {
                         if (res?.tipe === 'success') {
                             $('#toko_id').val(res.data || '');
+                            $('#toko_id').prop('readonly', true);
+
                         }
                     }
                 });

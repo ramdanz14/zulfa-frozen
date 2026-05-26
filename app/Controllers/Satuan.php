@@ -14,7 +14,8 @@ class Satuan extends BaseController
     }
     public function index()
     {
-        cek_akses_menu('satuan');
+        $data["title"] = "Satuan";
+        cek_akses_menu('satuan', $data);
     }
     public function ajax()
     {

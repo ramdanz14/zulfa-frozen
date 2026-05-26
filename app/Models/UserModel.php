@@ -70,6 +70,7 @@ class UserModel extends Model
         $output = "KY" . sprintf("%03s", $nourut);
         return $output;
     }
+
     public function GetDetail(string $karyawan_id)
     {
         return $this->db->query("SELECT * FROM tb_user LEFT JOIN role_user USING(level_id)  WHERE karyawan_id= ? ", [$karyawan_id])

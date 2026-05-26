@@ -13,7 +13,7 @@ class Kategori extends BaseController
     }
     public function index()
     {
-        $data['total'] = $this->kategoriModel->countAll();
+        $data["title"] = "Kategori";
         cek_akses_menu("kategori", $data);
     }
 

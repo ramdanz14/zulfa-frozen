@@ -16,13 +16,15 @@ class Role extends BaseController
     }
     public function index()
     {
-        cek_akses_menu('role/index_role');
+        $data["title"] = "Jabatan";
+        cek_akses_menu('role/index_role', $data);
     }
     public function indexAkses($level_id)
     {
 
         $data['akses'] = $this->roleModel->getListAkses($level_id);
         $data['level_id'] = $level_id;
+        $data['title'] = "Akses Menu";
         cek_akses_menu('role/akses_menu', $data);
     }
 
