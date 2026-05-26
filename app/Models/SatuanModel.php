@@ -26,9 +26,9 @@ class SatuanModel extends Model
 
             $total_filter = $this->db->query("SELECT count(*) total FROM satuan  WHERE sat_id like ? ", array('%' . $this->db->escapeLikeString($search_value) . '%'))->getRow();
 
-            $data = $this->db->query("SELECT sat_id,COUNT(kode_item) jml_item FROM satuan LEFT JOIN konversi USING(sat_id)   WHERE sat_id like ? GROUP BY sat_id $queryLimit", array('%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
+            $data = $this->db->query("SELECT sat_id,COUNT(kode_item) jml_item FROM satuan LEFT JOIN prodmast_satuan USING(sat_id)   WHERE sat_id like ? GROUP BY sat_id $queryLimit", array('%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
         } else {
-            $data = $this->db->query("SELECT sat_id,COUNT(kode_item) jml_item FROM satuan LEFT JOIN konversi USING(sat_id) GROUP BY sat_id $queryLimit  ")->getResult();
+            $data = $this->db->query("SELECT sat_id,COUNT(kode_item) jml_item FROM satuan LEFT JOIN prodmast_satuan USING(sat_id) GROUP BY sat_id $queryLimit  ")->getResult();
         }
 
         return array('data' => $data, 'total_count' => $total_count ?? 0, 'total_filtered' => $total_filter->total ?? $total_count);
