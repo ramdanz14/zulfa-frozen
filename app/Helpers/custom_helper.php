@@ -244,13 +244,13 @@ function cekClosing()
     }
 }
 
-function cek_akses_menu(string $viewtpl, $data = null)
+function cek_akses_menu(string $viewtpl, $data = null, string $akses = "akses_read")
 {
     $db = \Config\Database::connect();
     $request = \Config\Services::request();
     $menu_id =  $request->getUri()->getSegment(1) == '' ? 'main' : $request->getUri()->getSegment(1);
     $level_id = session()->level_id;
-    $akses_menu =  $db->query("SELECT * FROM akses_menu WHERE level_id= :level_id: and menu_id= :menu_id:", ['level_id' => $level_id, 'menu_id' => $menu_id])->getRow();
+    $akses_menu =  $db->query("SELECT * FROM akses_menu WHERE level_id= :level_id: and menu_id= :menu_id:", ['level_id' => $level_id, 'menu_id' => $menu_id])->getRowArray();
 
     $data['akses_menu'] =  json_encode($akses_menu);
     $data['isMobile'] = cekMobile();
@@ -258,7 +258,7 @@ function cek_akses_menu(string $viewtpl, $data = null)
     $data['menu'] = $menu;
     $data['menuJson'] = json_encode($menu, JSON_UNESCAPED_SLASHES);
     if ($akses_menu) {
-        if ($akses_menu->akses_read == 'Y') {
+        if ($akses_menu[$akses] == 'Y') {
 
             echo view($viewtpl, $data);
         } else {
