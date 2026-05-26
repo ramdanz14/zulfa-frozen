@@ -58,7 +58,7 @@ $routes->group('listoko', static function ($route) {
     $route->put('', 'Toko::store');
     $route->patch('', 'Toko::update');
     $route->delete('', 'Toko::delete');
-    $route->get('getid', 'User::GetId');
+    $route->get('getid', 'Toko::GetId');
 });
 
 
@@ -72,7 +72,6 @@ $routes->group('satuan',  static function ($route) {
 });
 
 
-
 $routes->group('kategori', static function ($route) {
     $route->get('', 'Kategori::index');
     $route->post('ajax', 'Kategori::ajax');
@@ -80,4 +79,15 @@ $routes->group('kategori', static function ($route) {
     $route->put('', 'Kategori::store');
     $route->patch('', 'Kategori::update');
     $route->delete('', 'Kategori::delete');
+});
+
+
+$routes->group('supplier', static function ($route) {
+    $route->get('', 'Supplier::index');
+    $route->post('ajax', 'Supplier::ajax');
+    $route->get('lastid', 'Supplier::lastid');
+    $route->put('', 'Supplier::store');
+    $route->patch('', 'Supplier::update');
+    $route->delete('', 'Supplier::delete');
+    $route->get('getid', 'Supplier::GetId');
 });
