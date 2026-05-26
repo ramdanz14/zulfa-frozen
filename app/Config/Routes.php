@@ -91,3 +91,14 @@ $routes->group('supplier', static function ($route) {
     $route->delete('', 'Supplier::delete');
     $route->get('getid', 'Supplier::GetId');
 });
+
+$routes->group('item', static function ($route) {
+    $route->get('', 'Item::index');
+    $route->post('ajax', 'Item::ajax');
+    $route->get('create', 'Item::create');
+    $route->get('edit/(:segment)', 'Item::edit/$1');
+    $route->get('view/(:segment)', 'Item::view/$1');
+    $route->get('lastid', 'Item::lastid');
+    $route->put('', 'Item::store');
+    $route->patch('', 'Item::update');
+});
