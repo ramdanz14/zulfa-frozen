@@ -39,6 +39,48 @@
     <script src="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="<?= base_url(); ?>/assets/js/plugins/toastr-init.js"></script>
     <script>
+        function normalizeMoneyValue(value) {
+            const raw = String(value ?? '').replace(/[^\d-]/g, '');
+            if (raw === '' || raw === '-') return '0';
+            return raw;
+        }
+
+        function formatMoneyValue(value) {
+            const normalized = normalizeMoneyValue(value);
+            const number = parseInt(normalized, 10) || 0;
+            return number.toLocaleString('en-US');
+        }
+
+        function normalizeMoneyInputs(scope) {
+            const $scope = scope ? $(scope) : $(document);
+            $scope.find('input.money').each(function() {
+                $(this).val(normalizeMoneyValue($(this).val()));
+            });
+        }
+
+        function applyMoneyMask(scope) {
+            const $scope = scope ? $(scope) : $(document);
+            $scope.find('input.money').each(function() {
+                const $input = $(this);
+                if ($input.data('money-init') === true) return;
+                $input.data('money-init', true);
+                $input.val(formatMoneyValue($input.val()));
+                $input.on('input', function() {
+                    const caret = this.selectionStart;
+                    const beforeLen = this.value.length;
+                    this.value = formatMoneyValue(this.value);
+                    const afterLen = this.value.length;
+                    const delta = afterLen - beforeLen;
+                    const nextPos = Math.max(0, (caret || 0) + delta);
+                    this.setSelectionRange(nextPos, nextPos);
+                });
+            });
+        }
+
+        $(function() {
+            applyMoneyMask();
+        });
+
         function showToastr(type, message) {
             const msg = message || '';
             const toastType = (type || 'info').toLowerCase();
@@ -77,6 +119,57 @@
                 }
             }
             return fallback;
+        }
+
+        function humanizeDate(targetDateString) {
+            const targetDate = new Date(targetDateString);
+            const currentDate = new Date();
+
+            // Hitung selisih waktu dalam milidetik
+            const diffTime = targetDate - currentDate;
+
+            // Definisikan ukuran waktu dalam milidetik
+            const msPerSecond = 1000;
+            const msPerMinute = msPerSecond * 60;
+            const msPerHour = msPerMinute * 60;
+            const msPerDay = msPerHour * 24;
+            const msPerWeek = msPerDay * 7;
+            const msPerMonth = msPerDay * 30.4375; // Rata-rata hari dalam sebulan (365/12)
+            const msPerYear = msPerDay * 365;
+
+            const absDiffTime = Math.abs(diffTime);
+            let value, unit;
+
+            // Tentukan satuan berdasarkan besaran selisih waktu
+            if (absDiffTime >= msPerYear) {
+                value = Math.round(diffTime / msPerYear);
+                unit = 'year';
+            } else if (absDiffTime >= msPerMonth) {
+                value = Math.round(diffTime / msPerMonth);
+                unit = 'month';
+            } else if (absDiffTime >= msPerWeek) {
+                value = Math.round(diffTime / msPerWeek);
+                unit = 'week';
+            } else if (absDiffTime >= msPerDay) {
+                value = Math.round(diffTime / msPerDay);
+                unit = 'day';
+            } else if (absDiffTime >= msPerHour) {
+                value = Math.round(diffTime / msPerHour);
+                unit = 'hour';
+            } else if (absDiffTime >= msPerMinute) {
+                value = Math.round(diffTime / msPerMinute);
+                unit = 'minute';
+            } else {
+                value = Math.round(diffTime / msPerSecond);
+                unit = 'second';
+            }
+
+            // Gunakan Intl bawaan browser dengan lokal Indonesia
+            const rtf = new Intl.RelativeTimeFormat('id', {
+                numeric: 'auto'
+            });
+
+            return rtf.format(value, unit);
         }
     </script>
     <?= $this->renderSection('javascript'); ?>
