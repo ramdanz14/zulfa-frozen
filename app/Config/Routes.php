@@ -60,3 +60,24 @@ $routes->group('listoko', static function ($route) {
     $route->delete('', 'Toko::delete');
     $route->get('getid', 'User::GetId');
 });
+
+
+$routes->group('satuan',  static function ($route) {
+    $route->get('', 'Satuan::index');
+    $route->post('ajax', 'Satuan::ajax');
+    $route->post('', 'Satuan::show');
+    $route->put('', 'Satuan::store');
+    $route->patch('', 'Satuan::update');
+    $route->delete('', 'Satuan::delete');
+});
+
+
+
+$routes->group('kategori', static function ($route) {
+    $route->get('', 'Kategori::index');
+    $route->post('ajax', 'Kategori::ajax');
+    $route->post('', 'Kategori::show');
+    $route->put('', 'Kategori::store');
+    $route->patch('', 'Kategori::update');
+    $route->delete('', 'Kategori::delete');
+});
