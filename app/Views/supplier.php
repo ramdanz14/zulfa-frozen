@@ -116,12 +116,6 @@
 
             },
             {
-                data: "jml_item",
-                title: "Jml item",
-                class: "dt-center",
-
-            },
-            {
                 data: "email",
                 title: "Email",
                 className: "not-mobile",
