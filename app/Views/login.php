@@ -47,7 +47,9 @@
                                     <p class="mb-0 fs-4 px-3 d-inline-block bg-body text-dark z-index-5 position-relative">Silahkan Login</p>
                                     <span class="border-top w-100 position-absolute top-50 start-50 translate-middle"></span>
                                 </div>
-                                <form class="needs-validation" novalidate method="post" action="<?= base_url("/login"); ?>">
+                                <form class="needs-validation" novalidate method="post" action="<?php $currentURL = current_url(true);
+                                                                                                $fullURL = (string)$currentURL;
+                                                                                                echo $fullURL; ?> ">
                                     <div class="mb-3">
                                         <label for="username" class="form-label">Username</label>
                                         <input type="text" class="form-control" id="username" name="username" required autocomplete="username">

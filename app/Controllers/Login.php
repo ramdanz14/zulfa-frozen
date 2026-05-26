@@ -37,7 +37,13 @@ class Login extends BaseController
                 session()->set('toko_theme', $row->toko_theme);
                 session()->set('avatar', $row->avatar);
                 tracelog('LOGIN', 'Login dengan user : ' . $row->fullname);
-                return redirect()->to('/main');
+                $redirect = $this->request->getGet('redirect') ?? "";
+                if ($redirect != "") {
+                    return redirect()->to($redirect);
+                } else {
+
+                    return redirect()->to('/main');
+                }
             } else {
                 session()->setFlashdata('warning', '<div class="alert alert-danger" role="alert">
                 ALERT!! Password salah
