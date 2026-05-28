@@ -122,3 +122,11 @@ $routes->group('hutang', static function ($route) {
     $route->get('', 'Hutang::index');
     $route->post('ajax', 'Hutang::ajax');
 });
+
+$routes->group('historybayar', static function ($route) {
+    $route->get('', 'HistoryBayar::index');
+    $route->post('ajax', 'HistoryBayar::ajax');
+    $route->get('show/(:num)', 'HistoryBayar::show/$1');
+    $route->patch('', 'HistoryBayar::update');
+    $route->delete('', 'HistoryBayar::delete');
+});
