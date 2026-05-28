@@ -1,6 +1,11 @@
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('content') ?>
+<?php
+/**
+ * @var string $akses_menu
+ */
+?>
 <div class="body-wrapper">
   <div class="page-header d-print-none" aria-label="Page header">
     <div class="container-xl">
