@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/css/styles.css" />
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.css">
     <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.8/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/r-3.0.8/sp-2.3.5/datatables.min.css" rel="stylesheet" integrity="sha384-Ardp6FCkpCmEUMnE5/KjGBWG2nRUVIRu9FC/rX34QDRbJ+ebmGFWYRrv2DGEtRtc" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/select2/dist/css/select2.min.css" />
     <title>Zulfaa Frozen | <?= esc($title ?? 'Dashboard'); ?></title>
 </head>
 
@@ -38,6 +38,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="<?= base_url(); ?>/assets/js/plugins/toastr-init.js"></script>
+    <script src="<?= base_url(); ?>/assets/libs/select2/dist/js/select2.min.js"></script>
     <script>
         function normalizeMoneyValue(value) {
             const raw = String(value ?? '').replace(/[^\d-]/g, '');
@@ -46,7 +47,12 @@
         }
 
         function formatMoneyValue(value) {
-            const normalized = normalizeMoneyValue(value);
+            const raw = String(value ?? '').trim();
+            const numeric = Number(raw.replace(/,/g, ''));
+            if (raw !== '' && Number.isFinite(numeric)) {
+                return Math.round(numeric).toLocaleString('en-US');
+            }
+            const normalized = normalizeMoneyValue(raw);
             const number = parseInt(normalized, 10) || 0;
             return number.toLocaleString('en-US');
         }
@@ -60,6 +66,7 @@
 
         function applyMoneyMask(scope) {
             const $scope = scope ? $(scope) : $(document);
+
             $scope.find('input.money').each(function() {
                 const $input = $(this);
                 if ($input.data('money-init') === true) return;
