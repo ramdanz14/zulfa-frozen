@@ -173,12 +173,15 @@
                 data: 'supplier_nama',
                 title: 'Supplier',
                 render: function(data, type, row) {
-                    return `<div class="fw-semibold">${data || row.supco}</div><small class="text-muted">${row.invoice || '-'}</small>`;
+                    return `<div class="fw-semibold">${data || row.supco}</div><small class="text-muted">inv : ${row.invoice || '-'}</small>`;
                 }
             },
             {
                 data: 'beli_id',
-                title: 'ID Beli'
+                title: 'ID Beli/TGL Faktur',
+                render: function(data, type, row) {
+                    return `<div class="fw-semibold">${data || row.beli_id}</div><small class="text-muted">${row.tanggal || '-'}</small>`;
+                }
             },
             {
                 data: 'cara_bayar',
@@ -200,10 +203,10 @@
             },
             {
                 data: 'status_bayar',
-                title: 'Status Nota',
+                title: 'Status Bayar',
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return `<span class="badge ${row.status_nota === 'TERIMA' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}">${row.status_nota}</span>`;
+                    return `<span class="badge ${row.status_bayar === 'LUNAS' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}">${row.status_bayar}</span>`;
                 }
             },
             {
