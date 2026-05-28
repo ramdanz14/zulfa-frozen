@@ -81,7 +81,7 @@ class Supplier extends BaseController
         $primarykey = $this->request->getVar('supco');
 
 
-        $sisa_hutang =  $this->db->query("SELECT IFNULL(SUM(sisa_hutang),0)  AS total FROM hutang WHERE supco='$primarykey';")->getRow();
+        $sisa_hutang =  $this->db->query("SELECT IFNULL(SUM(sisa_bayar),0) AS total FROM pembelian WHERE supco='$primarykey' AND is_kredit=1 AND status_bayar IN('BELUM','CICIL');")->getRow();
         if ($sisa_hutang->total == '0') {
             $cek =  $this->db->query("DELETE FROM  supmast WHERE supco='$primarykey' ;");
             if ($cek) {
