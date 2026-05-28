@@ -102,3 +102,23 @@ $routes->group('item', static function ($route) {
     $route->put('', 'Item::store');
     $route->patch('', 'Item::update');
 });
+
+$routes->group('pembelian', static function ($route) {
+    $route->get('', 'Pembelian::index');
+    $route->post('ajax', 'Pembelian::ajax');
+    $route->get('add', 'Pembelian::add');
+    $route->get('edit/(:segment)', 'Pembelian::edit/$1');
+    $route->get('show/(:segment)', 'Pembelian::show/$1');
+    $route->get('history/(:segment)', 'Pembelian::history/$1');
+    $route->get('search-item', 'Pembelian::searchItem');
+    $route->get('item-detail/(:segment)', 'Pembelian::itemDetail/$1');
+    $route->post('pay/(:segment)', 'Pembelian::pay/$1');
+    $route->put('', 'Pembelian::store');
+    $route->patch('', 'Pembelian::update');
+    $route->delete('', 'Pembelian::delete');
+});
+
+$routes->group('hutang', static function ($route) {
+    $route->get('', 'Hutang::index');
+    $route->post('ajax', 'Hutang::ajax');
+});
