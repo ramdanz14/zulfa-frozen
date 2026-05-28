@@ -1,6 +1,11 @@
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('content') ?>
+<?php
+/**
+ * @var string $akses_menu
+ */
+?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
         <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
@@ -53,7 +58,7 @@
                     text: '<i class="ti ti-plus"></i> Tambah',
                     action: function() {
                         if (akses_menu?.akses_create === "Y") {
-                            window.location.href = '<?= base_url('/item/create') ?>';
+                            window.open('<?= base_url('/item/create') ?>', '_blank');
                         } else {
                             toastr.error('Anda tidak memiliki akses untuk ini!');
                         }

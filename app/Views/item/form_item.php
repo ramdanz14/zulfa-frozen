@@ -1,6 +1,14 @@
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('content') ?>
+<?php
+/**
+ * @var string $mode
+ * @var array  $kategoriOptions
+ * @var array  $supplierOptions
+ * @var array  $satuanOptions
+ */
+?>
 <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/select2/dist/css/select2.min.css" />
 <div class="body-wrapper">
     <div class="container-fluid p-0">

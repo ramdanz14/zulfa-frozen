@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @var string $menu
+ */
+
+
 $menuData = is_array($menu ?? null) ? $menu : [];
 
 $resolveHref = static function (?string $link): string {

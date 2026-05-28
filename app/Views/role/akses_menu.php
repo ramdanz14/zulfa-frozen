@@ -1,6 +1,12 @@
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('content') ?>
+<?php
+/**
+ * @var string $level_id
+ * @var array  $akses
+ */
+?>
 <div class="body-wrapper">
   <div class="page-header d-print-none" aria-label="Page header">
     <div class="container-xl">
@@ -19,7 +25,7 @@
     <div class="container-xl">
       <div class="card">
         <div class="card-header">
-          <div class="row g-2 align-items-center flex-grow-1">
+          <div class="row g-2 align-items-center grow">
             <div class="col">
               <h3 class="card-title mb-0">Daftar Menu</h3>
             </div>
