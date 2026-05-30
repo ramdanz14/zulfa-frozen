@@ -105,3 +105,9 @@ Menu Operasional dan Kas
 - Saldo & Neraca : sebagai saldo usaha perhitungan summary untuk melihat apakah saldo usaha aman atau tidak , SALDO_KAS + TOTAL STOK RUPIAH + TOTAL PIUTANG - TOTAL HUTANG = SALDO
 
 Menu Pengaturan Sistem
+
+- Hak Ases/Jabatan : untuk pengaturan jabatan yang ada dan pemberian akses menu apa saja yang boleh setiap halaman di berikan akses_create, akses_read, akses_update dan akses_delete
+- Manajemen Karyawan : Untuk menambah, edit hapus data karyawan, di dalamnya ada pengaturna lokasi toko dan jabatan dari masing-masing karyawan juga ada opsi untuk reset password
+- Pindah Toko : khusus untuk akses pemilik bisa pindah2 data toko aktif ,, dari toko A ke toko B
+- Setting Data : untuk setting data di data const misalkan untuk setting target margin penjualan ke toko
+- Menu Web : menu CRUD untuk menu yang tersedia pengelompokan icon dan link url nya
