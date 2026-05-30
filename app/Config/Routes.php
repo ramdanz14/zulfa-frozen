@@ -130,3 +130,15 @@ $routes->group('historybayar', static function ($route) {
     $route->patch('', 'HistoryBayar::update');
     $route->delete('', 'HistoryBayar::delete');
 });
+
+$routes->group('returbeli', static function ($route) {
+    $route->get('', 'ReturBeli::index');
+    $route->post('ajax', 'ReturBeli::ajax');
+    $route->get('add', 'ReturBeli::add');
+    $route->get('edit/(:segment)', 'ReturBeli::edit/$1');
+    $route->get('source/(:segment)', 'ReturBeli::source/$1');
+    $route->get('show/(:segment)', 'ReturBeli::show/$1');
+    $route->put('', 'ReturBeli::store');
+    $route->patch('', 'ReturBeli::update');
+    $route->delete('', 'ReturBeli::delete');
+});
