@@ -218,12 +218,12 @@
                     const isLocked = data.can_modify === false;
                     const editBtn = akses_menu?.akses_update === 'Y' ?
                         (isLocked ?
-                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockMessage('${data.closing_date}')"><i class="ti ti-lock text-danger"></i> Edit Terkunci</a>` :
+                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockMessage('${data.closing_date}','${data.cara_bayar}')"><i class="ti ti-lock text-danger"></i> ${data.cara_bayar === 'POTONGAN RETUR' ? 'Kelola dari Retur' : 'Edit Terkunci'}</a>` :
                             `<a class="dropdown-item" href="javascript:void(0)" onclick="showModal('edit', ${data.bayar_id})"><i class="ti ti-pencil text-warning"></i> Edit</a>`) :
                         '';
                     const deleteBtn = akses_menu?.akses_delete === 'Y' ?
                         (isLocked ?
-                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockMessage('${data.closing_date}')"><i class="ti ti-lock text-danger"></i> Hapus Terkunci</a>` :
+                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockMessage('${data.closing_date}','${data.cara_bayar}')"><i class="ti ti-lock text-danger"></i> ${data.cara_bayar === 'POTONGAN RETUR' ? 'Hapus via Retur' : 'Hapus Terkunci'}</a>` :
                             `<a class="dropdown-item" href="javascript:void(0)" onclick="showModal('delete', ${data.bayar_id})"><i class="ti ti-trash text-danger"></i> Hapus</a>`) :
                         '';
                     return `<span class="dropdown">
@@ -380,7 +380,11 @@
         });
     }
 
-    function showLockMessage(closingDate) {
+    function showLockMessage(closingDate, caraBayar = '') {
+        if (caraBayar === 'POTONGAN RETUR') {
+            toastr.error('Pembayaran POTONGAN RETUR hanya bisa dikelola dari menu retur pembelian.');
+            return;
+        }
         toastr.error(`Pembayaran sebelum ${new Date(closingDate).toLocaleDateString('id-ID')} sudah melewati closing dan dikunci.`);
     }
 

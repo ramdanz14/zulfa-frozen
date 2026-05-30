@@ -82,7 +82,7 @@ class HistoryBayarModel extends Model
         )->getResultArray();
 
         foreach ($data as &$row) {
-            $row['can_modify'] = substr((string) $row['tanggal_bayar'], 0, 10) >= $closingDate;
+            $row['can_modify'] = substr((string) $row['tanggal_bayar'], 0, 10) >= $closingDate && ($row['cara_bayar'] ?? '') !== 'POTONGAN RETUR';
             $row['closing_date'] = $closingDate;
         }
 
@@ -108,6 +108,10 @@ class HistoryBayarModel extends Model
         $jumlahBayar = (float) ($input['jumlah_bayar'] ?? 0);
         $bankNama = trim((string) ($input['bank_nama'] ?? ''));
         $rekeningNo = trim((string) ($input['rekening_no'] ?? ''));
+
+        if (($payment['cara_bayar'] ?? '') === 'POTONGAN RETUR') {
+            return ['tipe' => 'error', 'data' => 'Pembayaran POTONGAN RETUR hanya boleh diubah dari menu retur pembelian'];
+        }
 
         if (!in_array($caraBayar, ['TUNAI', 'TRANSFER'], true) || $tanggalBayar === '' || $jumlahBayar <= 0) {
             return ['tipe' => 'error', 'data' => 'Data pembayaran tidak valid'];
@@ -161,6 +165,9 @@ class HistoryBayarModel extends Model
         $payment = $this->getPayment($toko_id, $bayar_id);
         if (!$payment) {
             return ['tipe' => 'error', 'data' => 'Data pembayaran tidak ditemukan'];
+        }
+        if (($payment['cara_bayar'] ?? '') === 'POTONGAN RETUR') {
+            return ['tipe' => 'error', 'data' => 'Pembayaran POTONGAN RETUR hanya boleh dihapus dari menu retur pembelian'];
         }
         if (!$this->canModifyByClosing($toko_id, (string) $payment['tanggal_bayar'])) {
             return ['tipe' => 'error', 'data' => 'Pembayaran yang sudah melewati periode closing tidak boleh dihapus'];
