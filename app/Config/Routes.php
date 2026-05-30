@@ -61,6 +61,11 @@ $routes->group('listoko', static function ($route) {
     $route->get('getid', 'Toko::GetId');
 });
 
+$routes->group('tokoaktif', static function ($route) {
+    $route->get('', 'Tokoaktif::index');
+    $route->post('switch', 'Tokoaktif::switch');
+});
+
 
 $routes->group('satuan',  static function ($route) {
     $route->get('', 'Satuan::index');

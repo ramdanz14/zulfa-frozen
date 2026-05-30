@@ -63,4 +63,15 @@ class TokoModel extends Model
         }
         return ['data' => $data, 'total_count' => $total_count ?? 0, 'total_filtered' => $total_filter->total ?? $total_count];
     }
+
+    public function getSwitcherList(): array
+    {
+        return $this->orderBy('toko_id', 'ASC')->findAll();
+    }
+
+    public function getById(string $tokoId): ?array
+    {
+        $row = $this->where('toko_id', $tokoId)->first();
+        return is_array($row) ? $row : null;
+    }
 }
