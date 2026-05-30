@@ -97,6 +97,15 @@ $routes->group('supplier', static function ($route) {
     $route->get('getid', 'Supplier::GetId');
 });
 
+$routes->group('customer', static function ($route) {
+    $route->get('', 'Customer::index');
+    $route->post('ajax', 'Customer::ajax');
+    $route->get('lastid', 'Customer::lastid');
+    $route->put('', 'Customer::store');
+    $route->patch('', 'Customer::update');
+    $route->delete('', 'Customer::delete');
+});
+
 $routes->group('item', static function ($route) {
     $route->get('', 'Item::index');
     $route->post('ajax', 'Item::ajax');
