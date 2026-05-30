@@ -22,6 +22,18 @@ class PembelianModel extends Model
         $next = (int) ($row['nomor'] ?? 0) + 1;
         return 'PB' . $toko_id . sprintf("%09s", $next);;
     }
+    public function getSHNextId(string $toko_id): string
+    {
+        $row = $this->db->query(
+            "SELECT MAX(CAST(RIGHT(beli_id,9) AS UNSIGNED)) AS nomor
+             FROM pembelian
+             WHERE toko_id = :toko_id: AND beli_id like 'SH%'",
+            ['toko_id' => $toko_id]
+        )->getRowArray();
+
+        $next = (int) ($row['nomor'] ?? 0) + 1;
+        return 'SH' . $toko_id . sprintf("%09s", $next);;
+    }
 
     public function getSupplierOptions(): array
     {
