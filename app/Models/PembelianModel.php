@@ -175,7 +175,7 @@ class PembelianModel extends Model
                 ON store.kode_item=p.kode_item
                 AND store.toko_id=:toko_id:
                 AND store.sat_id=base.sat_id
-             WHERE (
+             WHERE store.status_item='Y' AND (
                     p.kode_item LIKE :search:
                     OR p.barcode LIKE :search:
                     OR p.nama_item LIKE :search:
