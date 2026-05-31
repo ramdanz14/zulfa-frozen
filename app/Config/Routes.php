@@ -135,6 +135,11 @@ $routes->group('pembelian', static function ($route) {
 $routes->group('hutang', static function ($route) {
     $route->get('', 'Hutang::index');
     $route->post('ajax', 'Hutang::ajax');
+    $route->get('saldo-form', 'Hutang::saldoForm');
+    $route->get('saldo-form/(:segment)', 'Hutang::saldoForm/$1');
+    $route->put('saldo', 'Hutang::storeSaldo');
+    $route->patch('saldo', 'Hutang::updateSaldo');
+    $route->delete('saldo', 'Hutang::deleteSaldo');
 });
 
 $routes->group('historybayar', static function ($route) {

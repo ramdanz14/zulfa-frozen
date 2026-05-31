@@ -40,6 +40,36 @@ class PembelianModel extends Model
         return $this->db->query("SELECT supco,nama FROM supmast ORDER BY nama")->getResultArray();
     }
 
+    public function getSaldoHutangFormData(string $toko_id, ?string $beli_id = null): array
+    {
+        $data = [
+            'header' => [
+                'beli_id' => $beli_id ? '' : $this->getSHNextId($toko_id),
+                'tanggal' => date('Y-m-d'),
+                'supco' => '',
+                'invoice' => '',
+                'keterangan' => '',
+                'jatuh_tempo' => date('Y-m-d', strtotime('+1 month')),
+                'total_gross' => 0,
+            ],
+        ];
+
+        if (!$beli_id) {
+            return $data;
+        }
+
+        $header = $this->db->query(
+            "SELECT * FROM pembelian WHERE toko_id=:toko_id: AND beli_id=:beli_id:",
+            ['toko_id' => $toko_id, 'beli_id' => $beli_id]
+        )->getRowArray();
+
+        if (!$header || !$this->isSaldoHutangId($header['beli_id'] ?? null)) {
+            return $data;
+        }
+
+        return ['header' => $header];
+    }
+
     public function ajaxList(array $params, string $toko_id): array
     {
         $start = (int) ($params['start'] ?? 0);
@@ -323,6 +353,92 @@ class PembelianModel extends Model
         return $header;
     }
 
+    public function saveSaldoHutangAwal(string $toko_id, string $username, array $input, string $mode = 'create'): array
+    {
+        $headerId = trim((string) ($input['beli_id'] ?? ''));
+        $tanggal = trim((string) ($input['tanggal'] ?? ''));
+        $supco = trim((string) ($input['supco'] ?? ''));
+        $invoice = trim((string) ($input['invoice'] ?? ''));
+        $keterangan = trim((string) ($input['keterangan'] ?? ''));
+        $jatuhTempo = trim((string) ($input['jatuh_tempo'] ?? ''));
+        $totalGross = (float) ($input['total_gross'] ?? 0);
+
+        if ($tanggal === '' || $supco === '' || $invoice === '') {
+            return ['tipe' => 'error', 'data' => 'Tanggal, supplier, dan invoice wajib diisi'];
+        }
+        if ($totalGross <= 0) {
+            return ['tipe' => 'error', 'data' => 'Nominal saldo hutang harus lebih besar dari nol'];
+        }
+        if ($jatuhTempo === '') {
+            return ['tipe' => 'error', 'data' => 'Tanggal jatuh tempo wajib diisi'];
+        }
+        if ($jatuhTempo < $tanggal) {
+            return ['tipe' => 'error', 'data' => 'Tanggal jatuh tempo tidak boleh lebih kecil dari tanggal transaksi'];
+        }
+
+        if ($mode === 'create') {
+            $headerId = $this->getSHNextId($toko_id);
+        } elseif ($headerId === '' || !$this->isSaldoHutangId($headerId)) {
+            return ['tipe' => 'error', 'data' => 'ID saldo hutang tidak valid'];
+        }
+
+        if ($mode !== 'create') {
+            $existing = $this->db->query(
+                "SELECT * FROM pembelian WHERE toko_id=:toko_id: AND beli_id=:beli_id:",
+                ['toko_id' => $toko_id, 'beli_id' => $headerId]
+            )->getRowArray();
+
+            if (!$existing || !$this->isSaldoHutangId($existing['beli_id'] ?? null)) {
+                return ['tipe' => 'error', 'data' => 'Data saldo hutang awal tidak ditemukan'];
+            }
+
+            if ((float) ($existing['total_bayar'] ?? 0) - $totalGross > 0.0001) {
+                return ['tipe' => 'error', 'data' => 'Nominal saldo hutang tidak boleh lebih kecil dari total pembayaran yang sudah tercatat'];
+            }
+        }
+
+        $this->db->transStart();
+
+        $headerData = [
+            'toko_id' => $toko_id,
+            'beli_id' => $headerId,
+            'tanggal' => $tanggal,
+            'supco' => $supco,
+            'invoice' => $invoice,
+            'total_gross' => round($totalGross, 2),
+            'total_bayar' => 0,
+            'sisa_bayar' => round($totalGross, 2),
+            'is_kredit' => 1,
+            'status_nota' => 'TERIMA',
+            'status_bayar' => 'BELUM',
+            'jatuh_tempo' => $jatuhTempo,
+            'username' => $username,
+            'keterangan' => $keterangan !== '' ? $keterangan : null,
+        ];
+
+        if ($mode === 'create') {
+            $this->db->table('pembelian')->insert($headerData);
+        } else {
+            $this->db->table('pembelian')
+                ->where('toko_id', $toko_id)
+                ->where('beli_id', $headerId)
+                ->update($headerData);
+        }
+
+        $this->syncPaymentSummary($toko_id, $headerId);
+        $this->db->transComplete();
+
+        if (!$this->db->transStatus()) {
+            return ['tipe' => 'error', 'data' => 'Gagal menyimpan saldo hutang awal'];
+        }
+
+        return [
+            'tipe' => 'success',
+            'data' => 'Saldo hutang awal berhasil disimpan',
+            'beli_id' => $headerId,
+        ];
+    }
+
     public function getPaymentHistory(string $toko_id, string $beli_id): array
     {
         return $this->db->query(
@@ -596,6 +712,31 @@ class PembelianModel extends Model
         return ['tipe' => 'success', 'data' => 'Transaksi pembelian berhasil dihapus'];
     }
 
+    public function deleteSaldoHutangAwal(string $toko_id, string $beli_id): array
+    {
+        $header = $this->db->query(
+            "SELECT * FROM pembelian WHERE toko_id=:toko_id: AND beli_id=:beli_id:",
+            ['toko_id' => $toko_id, 'beli_id' => $beli_id]
+        )->getRowArray();
+
+        if (!$header || !$this->isSaldoHutangId($header['beli_id'] ?? null)) {
+            return ['tipe' => 'error', 'data' => 'Data saldo hutang awal tidak ditemukan'];
+        }
+
+        $this->db->transStart();
+        $this->db->table('pembelian')
+            ->where('toko_id', $toko_id)
+            ->where('beli_id', $beli_id)
+            ->delete();
+        $this->db->transComplete();
+
+        if (!$this->db->transStatus()) {
+            return ['tipe' => 'error', 'data' => 'Gagal menghapus saldo hutang awal'];
+        }
+
+        return ['tipe' => 'success', 'data' => 'Saldo hutang awal berhasil dihapus'];
+    }
+
     public function addPayment(string $toko_id, string $beli_id, string $username, array $payments): array
     {
         $header = $this->db->query(
@@ -809,5 +950,10 @@ class PembelianModel extends Model
         }
 
         return ($row['status_nota'] ?? '') === 'TERIMA' && ($row['tanggal'] ?? '') < $this->getClosingDate($toko_id);
+    }
+
+    public function isSaldoHutangId(?string $beli_id): bool
+    {
+        return is_string($beli_id) && str_starts_with($beli_id, 'SH');
     }
 }

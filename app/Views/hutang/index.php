@@ -111,6 +111,60 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modal-saldo-hutang" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saldo-modal-title">Tambah Saldo Hutang Awal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-saldo-hutang">
+                <div class="modal-body">
+                    <input type="hidden" id="saldo-mode" value="create">
+                    <input type="hidden" id="saldo-beli-id" name="beli_id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="saldo-supplier" class="form-label">Supplier</label>
+                            <select class="form-select" id="saldo-supplier" name="supco" required>
+                                <option value="">Pilih supplier</option>
+                                <?php foreach (($supplierOptions ?? []) as $supplier): ?>
+                                    <option value="<?= esc($supplier['supco']) ?>"><?= esc($supplier['nama']) ?> (<?= esc($supplier['supco']) ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="saldo-invoice" class="form-label">Invoice</label>
+                            <input type="text" class="form-control" id="saldo-invoice" name="invoice" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="saldo-tanggal" class="form-label">Tanggal</label>
+                            <input type="date" class="form-control" id="saldo-tanggal" name="tanggal" required>
+                            <small class="text-muted">Tanggal boleh mundur untuk pencatatan hutang lama.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="saldo-jatuh-tempo" class="form-label">Jatuh Tempo</label>
+                            <input type="date" class="form-control" id="saldo-jatuh-tempo" name="jatuh_tempo" required>
+                            <small class="text-muted">Default otomatis 1 bulan dari tanggal transaksi.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="saldo-total" class="form-label">Nominal Hutang</label>
+                            <input type="text" class="form-control money" id="saldo-total" name="total_gross" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="saldo-keterangan" class="form-label">Keterangan</label>
+                            <input type="text" class="form-control" id="saldo-keterangan" name="keterangan" placeholder="Opsional">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Simpan Saldo Hutang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <?= $this->endSection('content') ?>
 
 <?= $this->section('javascript') ?>
@@ -118,12 +172,29 @@
     let currentDebt = null;
     let modalPayments = [];
     const hutangModal = new bootstrap.Modal(document.getElementById('modal-hutang'));
+    const saldoHutangModal = new bootstrap.Modal(document.getElementById('modal-saldo-hutang'));
     DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
 
     const table = $('#table-data').DataTable({
         layout: {
             topStart: {
-                buttons: ['pageLength']
+                buttons: [{
+                    text: 'Tambah Saldo Hutang',
+                    className: 'btn btn-danger',
+                    action: function() {
+                        openSaldoModal();
+                    }
+                }, {
+                    text: '<i class="ti ti-file-type-xls"></i> Excel',
+                    extend: 'excelHtml5',
+                    title: 'Laporan-Hutang',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4, 5, 6],
+                        orthogonal: 'export'
+                    },
+                }, {
+                    extend: 'pageLength'
+                }]
             }
         },
         lengthMenu: [
@@ -202,11 +273,16 @@
                 className: 'text-center',
                 responsivePriority: 1,
                 render: function(data) {
+                    const saldoActions = String(data.beli_id || '').startsWith('SH') ? `
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="openSaldoModal('${data.beli_id}')"><i class="ti ti-pencil text-warning"></i> Edit Saldo Hutang</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="deleteSaldoHutang('${data.beli_id}')"><i class="ti ti-trash text-danger"></i> Hapus Saldo Hutang</a>` : '';
                     return `<span class="dropdown">
                         <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-toggle="dropdown">Actions</button>
                         <div class="dropdown-menu dropdown-menu-end">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="openDebtModal('${data.beli_id}')"><i class="ti ti-cash text-success"></i> Bayar Hutang</a>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="openDebtModal('${data.beli_id}')"><i class="ti ti-history text-info"></i> Lihat History</a>
+                            ${saldoActions}
                         </div>
                     </span>`;
                 }
@@ -236,6 +312,19 @@
     $('#form-pay-hutang').on('submit', function(e) {
         e.preventDefault();
         submitDebtPayment();
+    });
+
+    $('#form-saldo-hutang').on('submit', function(e) {
+        e.preventDefault();
+        submitSaldoHutang();
+    });
+
+    $('#saldo-tanggal').on('change', function() {
+        const tanggal = $(this).val();
+        if (!tanggal) {
+            return;
+        }
+        $('#saldo-jatuh-tempo').val(addMonthToDate(tanggal));
     });
 
     function openDebtModal(beliId) {
@@ -273,6 +362,9 @@
         const itemDetail = (currentDebt.details || []).map((row) => `
             <li>${row.kode_item} - ${row.nama_item || '-'} | ${Number(row.qty_beli || 0).toLocaleString('id-ID')} ${row.sat_id} | Rp ${formatMoneyValue(row.gross)}</li>
         `).join('');
+        const detailHtml = itemDetail || (String(currentDebt.beli_id || '').startsWith('SH') ?
+            '<li>Saldo hutang awal tanpa detail barang dan tanpa pengaruh stok.</li>' :
+            '<li>-</li>');
 
         $('#hutang-detail').html(`
             <div class="row g-3">
@@ -281,9 +373,117 @@
                 <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Total Hutang</small><div class="fw-semibold">Rp ${formatMoneyValue(currentDebt.total_gross)}</div></div></div>
                 <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Sisa</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(currentDebt.sisa_bayar)}</div></div></div>
                 <div class="col-md-6"><div class="border rounded p-3 h-100"><small class="text-muted">Jatuh Tempo</small><div class="fw-semibold ${overdue ? 'text-danger' : ''}">${currentDebt.jatuh_tempo ? new Date(currentDebt.jatuh_tempo).toLocaleDateString('id-ID') : '-'}</div></div></div>
-                <div class="col-md-6"><div class="border rounded p-3 h-100"><small class="text-muted">Detail Invoice Pembelian</small><ul class="mb-0 ps-3">${itemDetail || '<li>-</li>'}</ul></div></div>
+                <div class="col-md-6"><div class="border rounded p-3 h-100"><small class="text-muted">Detail Invoice Pembelian</small><ul class="mb-0 ps-3">${detailHtml}</ul></div></div>
             </div>
         `);
+    }
+
+    function openSaldoModal(beliId = '') {
+        const isEdit = !!beliId;
+        $('#saldo-modal-title').text(isEdit ? 'Edit Saldo Hutang Awal' : 'Tambah Saldo Hutang Awal');
+        $('#saldo-mode').val(isEdit ? 'edit' : 'create');
+        $('#form-saldo-hutang')[0].reset();
+        $('#saldo-beli-id').val('');
+        $('#saldo-total').val('0');
+        applyMoneyMask('#form-saldo-hutang');
+        normalizeMoneyInputs('#form-saldo-hutang');
+
+        $.getJSON(isEdit ? `<?= base_url('/hutang/saldo-form') ?>/${beliId}` : `<?= base_url('/hutang/saldo-form') ?>`, function(res) {
+            if (res.tipe !== 'success') {
+                toastr.error(res.data || 'Gagal memuat form saldo hutang');
+                return;
+            }
+
+            const header = res.data?.header || {};
+            $('#saldo-beli-id').val(header.beli_id || '');
+            $('#saldo-supplier').val(header.supco || '');
+            $('#saldo-invoice').val(header.invoice || '');
+            $('#saldo-tanggal').val(header.tanggal || '');
+            $('#saldo-jatuh-tempo').val(header.jatuh_tempo || '');
+            $('#saldo-total').val(Number(header.total_gross || 0));
+            $('#saldo-keterangan').val(header.keterangan || '');
+            applyMoneyMask('#form-saldo-hutang');
+            saldoHutangModal.show();
+        }).fail(function(xhr) {
+            toastr.error(extractErrorMessage(xhr, 'Gagal memuat form saldo hutang'));
+        });
+    }
+
+    function submitSaldoHutang() {
+        normalizeMoneyInputs('#form-saldo-hutang');
+        const mode = $('#saldo-mode').val();
+        const payload = {
+            beli_id: $('#saldo-beli-id').val(),
+            supco: $('#saldo-supplier').val(),
+            invoice: $('#saldo-invoice').val().trim(),
+            tanggal: $('#saldo-tanggal').val(),
+            jatuh_tempo: $('#saldo-jatuh-tempo').val(),
+            total_gross: Number(normalizeMoneyValue($('#saldo-total').val() || 0)),
+            keterangan: $('#saldo-keterangan').val().trim()
+        };
+
+        if (!payload.supco || !payload.invoice || !payload.tanggal || !payload.jatuh_tempo) {
+            toastr.error('Supplier, tanggal, invoice, dan jatuh tempo wajib diisi');
+            return;
+        }
+        if (payload.total_gross <= 0) {
+            toastr.error('Nominal hutang harus lebih besar dari nol');
+            return;
+        }
+
+        $.ajax({
+            type: mode === 'edit' ? 'PATCH' : 'PUT',
+            url: '<?= base_url('/hutang/saldo') ?>',
+            dataType: 'json',
+            data: payload,
+            success: function(res) {
+                if (res.tipe === 'success') {
+                    toastr.success(res.data || 'Saldo hutang awal tersimpan');
+                    saldoHutangModal.hide();
+                    table.ajax.reload(null, false);
+                    return;
+                }
+                toastr.error(res.data || 'Gagal menyimpan saldo hutang awal');
+            },
+            error: function(xhr) {
+                toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan saldo hutang awal'));
+            }
+        });
+    }
+
+    function deleteSaldoHutang(beliId) {
+        Swal.fire({
+            title: 'Hapus saldo hutang awal?',
+            text: `Data ${beliId} akan dihapus dari monitoring hutang.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, hapus',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            $.ajax({
+                type: 'DELETE',
+                url: '<?= base_url('/hutang/saldo') ?>',
+                dataType: 'json',
+                data: {
+                    beli_id: beliId
+                },
+                success: function(res) {
+                    if (res.tipe === 'success') {
+                        toastr.success(res.data || 'Saldo hutang awal dihapus');
+                        table.ajax.reload(null, false);
+                        return;
+                    }
+                    toastr.error(res.data || 'Gagal menghapus saldo hutang awal');
+                },
+                error: function(xhr) {
+                    toastr.error(extractErrorMessage(xhr, 'Gagal menghapus saldo hutang awal'));
+                }
+            });
+        });
     }
 
     function renderHistory(rows) {
@@ -461,6 +661,25 @@
 
     function normalizeDateTime(value) {
         return value ? value.replace('T', ' ') + ':00' : '';
+    }
+
+    function addMonthToDate(value) {
+        const base = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(base.getTime())) {
+            return value;
+        }
+
+        const day = base.getDate();
+        const next = new Date(base);
+        next.setMonth(next.getMonth() + 1);
+        if (next.getDate() !== day) {
+            next.setDate(0);
+        }
+
+        const year = next.getFullYear();
+        const month = String(next.getMonth() + 1).padStart(2, '0');
+        const date = String(next.getDate()).padStart(2, '0');
+        return `${year}-${month}-${date}`;
     }
 </script>
 <?= $this->endSection('javascript') ?>
