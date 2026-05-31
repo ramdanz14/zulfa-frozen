@@ -861,6 +861,9 @@ class PembelianModel extends Model
 
     private function applyStoreCostUpdates(string $toko_id, string $beli_id, string $tanggal, array $details): void
     {
+        $cekgram = $this->db->query("SELECT * FROM CONST WHERE rkey='satuan_gramasi'")->getRow();
+        $satGramasiRaw = $cekgram->nilai ?? "GR;GRAM;ML";
+        $satuanGramasi = explode(';', $satGramasiRaw);
         foreach ($details as $detail) {
             $qtyKonversiBeli = (float) ($detail['qty_konversi'] ?? 0);
             $hargaPokokBeli = (float) ($detail['price'] ?? 0);
@@ -888,6 +891,8 @@ class PembelianModel extends Model
                 continue;
             }
 
+
+
             foreach ($stores as $store) {
                 $hargaPokokOld = (float) ($store['harga_pokok'] ?? 0);
                 $hargaJualOld = (float) ($store['harga_jual'] ?? 0);
@@ -897,7 +902,12 @@ class PembelianModel extends Model
                 $hargaJualNew = $hargaJualOld;
 
                 if ($hargaPokokNew > $hargaPokokOld) {
-                    $hargaJualNew = round($hargaPokokNew + ($hargaPokokNew * $targetMargin / 100));
+                    $hargaJualbase = round($hargaPokokNew + ($hargaPokokNew * $targetMargin / 100));
+                    if (!in_array(strtoupper($store['sat_id']), $satuanGramasi)) {
+                        $hargaJualNew = ceil($hargaJualbase / 50) * 50;
+                    } else {
+                        $hargaJualNew = $hargaJualbase;
+                    }
                 }
 
                 $this->db->table('prodmast_store')

@@ -117,6 +117,12 @@ $routes->group('item', static function ($route) {
     $route->patch('', 'Item::update');
 });
 
+$routes->group('settingharga', static function ($route) {
+    $route->get('', 'Settingharga::index');
+    $route->post('ajax', 'Settingharga::ajax');
+    $route->patch('', 'Settingharga::save');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
