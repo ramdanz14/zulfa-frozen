@@ -109,6 +109,7 @@
     const akses_menu = <?= $akses_menu ?>;
     const pendingChanges = {};
     const purchaseHistoryModal = new bootstrap.Modal(document.getElementById('purchase-history-modal'));
+    const initialSearchText = new URLSearchParams(window.location.search).get('search_text') || '';
     DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
 
     const table = $('#table-data').DataTable({
@@ -228,6 +229,10 @@
     table.on('xhr.dt', function(e, settings, json) {
         $('.page-pretitle').text(`Total Data : ${json?.recordsFiltered || 0}`);
     });
+
+    if (initialSearchText) {
+        table.search(initialSearchText).draw();
+    }
 
     $('#invoice_filter').on('change', function() {
         table.ajax.reload();
