@@ -129,6 +129,14 @@ $routes->group('historybeli', static function ($route) {
     $route->post('ajax', 'Historybeli::ajax');
 });
 
+$routes->group('poinmember', static function ($route) {
+    $route->get('', 'Poinmember::index');
+    $route->post('ajax', 'Poinmember::ajax');
+    $route->post('setting', 'Poinmember::setting');
+    $route->delete('hard-reset', 'Poinmember::hardReset');
+    $route->post('hard-reset', 'Poinmember::hardReset');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
