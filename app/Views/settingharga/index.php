@@ -30,13 +30,15 @@
                         <label for="invoice_filter" class="form-label">Filter Faktur Pembelian</label>
                         <select class="form-select" id="invoice_filter">
                             <option value="">Semua item aktif</option>
+                            <option value="salah-harga">Salah Setting Harga</option>
                             <?php foreach (($recentInvoices ?? []) as $row): ?>
                                 <option value="<?= esc($row['beli_id']) ?>">
                                     <?= esc($row['beli_id']) ?> | <?= esc($row['invoice']) ?> | <?= esc($row['supplier_nama'] ?? '-') ?> | <?= esc($row['tanggal']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <small class="text-muted">Hanya 10 faktur `TERIMA` terbaru. Jika dipilih, tabel menampilkan item yang ada di faktur itu saja.</small>
+                        <small class="text-muted">Hanya 10 faktur `TERIMA` terbaru. Jika dipilih, tabel menampilkan item yang ada di faktur itu saja.</small></br>
+                        <small class="text-muted">Klik Kode item untuk menampilkan history harga pembelian dari supplier.</small>
                     </div>
                     <div class="col-lg-6">
                         <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
@@ -61,12 +63,52 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="purchase-history-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-1">History Pembelian Supplier</h5>
+                    <div class="small text-muted" id="purchase-history-item-label">-</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="purchase-history-loading" class="text-center py-4 d-none">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    <span>Memuat history pembelian...</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Supplier</th>
+                                <th>Faktur</th>
+                                <th>Sat</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Price Dasar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchase-history-body">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Klik kode item untuk melihat history.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection('content') ?>
 
 <?= $this->section('javascript') ?>
 <script>
     const akses_menu = <?= $akses_menu ?>;
     const pendingChanges = {};
+    const purchaseHistoryModal = new bootstrap.Modal(document.getElementById('purchase-history-modal'));
     DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
 
     const table = $('#table-data').DataTable({
@@ -104,6 +146,14 @@
                 data: 'kode_item',
                 title: 'Kode Item',
                 className: "not-mobile",
+                render: function(data, type, row) {
+                    if (type !== 'display') {
+                        return data;
+                    }
+                    return `<button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-item-history" data-kode-item="${escapeHtml(data)}" data-nama-item="${escapeHtml(row.nama_item || '')}">
+                        ${escapeHtml(data)}
+                    </button>`;
+                }
             },
             {
                 data: 'nama_item',
@@ -207,6 +257,12 @@
     $('#table-data tbody').on('click', '.btn-save-row', function() {
         const rowData = table.row($(this).closest('tr')).data();
         submitRowCorrection(rowData);
+    });
+
+    $('#table-data tbody').on('click', '.btn-item-history', function() {
+        const kodeItem = $(this).data('kode-item');
+        const namaItem = $(this).data('nama-item') || '';
+        openPurchaseHistory(kodeItem, namaItem);
     });
 
     function getRowKey(row) {
@@ -321,6 +377,71 @@
                 toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan koreksi harga'));
             }
         });
+    }
+
+    function openPurchaseHistory(kodeItem, namaItem) {
+        $('#purchase-history-item-label').text(`${kodeItem}${namaItem ? ' | ' + namaItem : ''}`);
+        $('#purchase-history-body').html('');
+        $('#purchase-history-loading').removeClass('d-none');
+        purchaseHistoryModal.show();
+
+        $.ajax({
+            url: `<?= base_url('/settingharga/history') ?>/${encodeURIComponent(kodeItem)}`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                const rows = Array.isArray(res?.data) ? res.data : [];
+                renderPurchaseHistory(rows);
+            },
+            error: function(xhr) {
+                $('#purchase-history-body').html(`
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">${escapeHtml(extractErrorMessage(xhr, 'Gagal memuat history pembelian'))}</td>
+                    </tr>
+                `);
+            },
+            complete: function() {
+                $('#purchase-history-loading').addClass('d-none');
+            }
+        });
+    }
+
+    function renderPurchaseHistory(rows) {
+        if (!rows.length) {
+            $('#purchase-history-body').html(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted">Belum ada history pembelian untuk item ini.</td>
+                </tr>
+            `);
+            return;
+        }
+
+        const html = rows.map(function(row) {
+            const supplier = [row.supplier_nama || '-', row.supco || ''].filter(Boolean).join(' / ');
+            const faktur = [row.beli_id || '-', row.invoice || ''].filter(Boolean).join(' | ');
+
+            return `
+                <tr>
+                    <td>${escapeHtml(row.tanggal || '-')}</td>
+                    <td>${escapeHtml(supplier || '-')}</td>
+                    <td>${escapeHtml(faktur || '-')}</td>
+                    <td>${escapeHtml(row.sat_id || '-')}</td>
+                    <td class="text-end">${formatMoneyValue(row.price || 0)}</td>
+                    <td class="text-end">${formatMoneyValue(row.price_dasar || 0)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        $('#purchase-history-body').html(html);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     function roundUpTo50(value) {

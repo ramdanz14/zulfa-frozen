@@ -40,6 +40,22 @@ class Settingharga extends BaseController
         ]);
     }
 
+    public function history(string $kodeItem)
+    {
+        $kodeItem = trim($kodeItem);
+        if ($kodeItem === '') {
+            return $this->response->setJSON([
+                'tipe' => 'error',
+                'data' => 'Kode item tidak valid',
+            ])->setStatusCode(400);
+        }
+
+        return $this->response->setJSON([
+            'tipe' => 'success',
+            'data' => $this->settingHargaModel->getPurchaseHistory((string) session('toko_id'), $kodeItem),
+        ]);
+    }
+
     public function save()
     {
         $payload = $this->request->getRawInput();

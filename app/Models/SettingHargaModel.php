@@ -35,7 +35,7 @@ class SettingHargaModel extends Model
         $binds = ['toko_id' => $toko_id];
         $where = " WHERE ps.toko_id=:toko_id: AND ps.status_item='Y' ";
 
-        if ($beli_id !== '') {
+        if ($beli_id !== '' && $beli_id != 'salah-harga') {
             $where .= " AND ps.kode_item IN (
                 SELECT pd.kode_item
                 FROM pembelian_detail pd
@@ -43,6 +43,12 @@ class SettingHargaModel extends Model
             )";
             $binds['beli_id'] = $beli_id;
         }
+        if ($beli_id == 'salah-harga') {
+            $where .= " AND ps.kode_item IN (
+                SELECT kode_item FROM prodmast_store WHERE harga_pokok=0 OR harga_jual=0 OR harga_jual<harga_pokok
+            )";
+        }
+
 
         $baseSql = "
             FROM prodmast_store ps
@@ -95,6 +101,25 @@ class SettingHargaModel extends Model
             'total_count' => (int) ($totalRow['total'] ?? 0),
             'total_filtered' => (int) $filtered,
         ];
+    }
+
+    public function getPurchaseHistory(string $toko_id, string $kode_item): array
+    {
+        return $this->db->query(
+            "SELECT p.tanggal, pd.sat_id, pd.price, 
+                    CASE WHEN COALESCE(pd.qty_stock, 0) = 0 THEN 0 ELSE pd.gross / pd.qty_stock END AS price_dasar,
+                    p.beli_id, p.invoice, p.supco, COALESCE(s.nama, '') AS supplier_nama
+             FROM pembelian_detail pd
+             LEFT JOIN pembelian p ON p.toko_id=pd.toko_id AND p.beli_id=pd.beli_id
+             LEFT JOIN supmast s ON s.supco=p.supco
+             WHERE pd.toko_id=:toko_id: AND pd.kode_item=:kode_item:
+             ORDER BY p.tanggal DESC, p.updtime DESC, p.beli_id DESC
+             LIMIT 10",
+            [
+                'toko_id' => $toko_id,
+                'kode_item' => $kode_item,
+            ]
+        )->getResultArray();
     }
 
     public function saveCorrections(string $toko_id, string $username, array $rows, string $source_beli_id = 'KOREKSI'): array

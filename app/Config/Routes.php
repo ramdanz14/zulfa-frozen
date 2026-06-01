@@ -120,6 +120,7 @@ $routes->group('item', static function ($route) {
 $routes->group('settingharga', static function ($route) {
     $route->get('', 'Settingharga::index');
     $route->post('ajax', 'Settingharga::ajax');
+    $route->get('history/(:segment)', 'Settingharga::history/$1');
     $route->patch('', 'Settingharga::save');
 });
 
