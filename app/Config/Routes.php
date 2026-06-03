@@ -137,6 +137,17 @@ $routes->group('poinmember', static function ($route) {
     $route->post('hard-reset', 'Poinmember::hardReset');
 });
 
+$routes->group('jual', static function ($route) {
+    $route->get('', 'Jual::index');
+    $route->get('search-item', 'Jual::searchItem');
+    $route->get('item-detail/(:segment)', 'Jual::itemDetail/$1');
+    $route->get('search-customer', 'Jual::searchCustomer');
+    $route->post('register-member', 'Jual::registerMember');
+    $route->post('void-cart', 'Jual::voidCart');
+    $route->get('struk/(:segment)', 'Jual::struk/$1');
+    $route->post('', 'Jual::save');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
