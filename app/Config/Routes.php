@@ -183,6 +183,13 @@ $routes->group('hutang', static function ($route) {
     $route->delete('saldo', 'Hutang::deleteSaldo');
 });
 
+$routes->group('piutang', static function ($route) {
+    $route->get('', 'Piutang::index');
+    $route->post('ajax', 'Piutang::ajax');
+    $route->get('show/(:segment)', 'Piutang::show/$1');
+    $route->post('pay/(:segment)', 'Piutang::pay/$1');
+});
+
 $routes->group('historybayar', static function ($route) {
     $route->get('', 'HistoryBayar::index');
     $route->post('ajax', 'HistoryBayar::ajax');

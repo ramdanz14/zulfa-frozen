@@ -1155,6 +1155,194 @@ class JualModel extends Model
         return $header;
     }
 
+    public function ajaxPiutang(array $params, string $toko_id, string $filter): array
+    {
+        $start = (int) ($params['start'] ?? 0);
+        $length = $params['length'] ?? 25;
+        $search = trim((string) ($params['search_value'] ?? ''));
+        $queryLimit = $length !== '-1' ? " LIMIT $start, " . (int) $length : '';
+
+        $binds = ['toko_id' => $toko_id];
+        $where = " WHERE j.toko_id = :toko_id: AND j.is_kredit = '1' ";
+
+        if ($filter === 'LUNAS') {
+            $where .= " AND j.status_bayar = 'LUNAS' ";
+        } elseif ($filter === 'BELUM') {
+            $where .= " AND j.status_bayar IN ('BELUM','CICIL') ";
+        }
+
+        if ($search !== '') {
+            $where .= " AND (j.jual_id LIKE :search: OR j.cust_id LIKE :search: OR c.nama LIKE :search: OR c.kontak LIKE :search:)";
+            $binds['search'] = '%' . $this->db->escapeLikeString($search) . '%';
+        }
+
+        $totalRow = $this->db->query(
+            "SELECT COUNT(*) total FROM penjualan j WHERE j.toko_id=:toko_id: AND j.is_kredit='1'",
+            ['toko_id' => $toko_id]
+        )->getRowArray();
+        $filtered = $totalRow['total'] ?? 0;
+        if ($search !== '' || $filter !== 'BELUM') {
+            $filteredRow = $this->db->query(
+                "SELECT COUNT(*) total
+                 FROM penjualan j
+                 LEFT JOIN customer c ON c.cust_id=j.cust_id
+                 $where",
+                $binds
+            )->getRowArray();
+            $filtered = $filteredRow['total'] ?? 0;
+        }
+
+        $data = $this->db->query(
+            "SELECT j.*, c.nama AS customer_nama, c.kontak AS customer_kontak,
+                    (j.netto - j.sisa_piutang) AS total_bayar,
+                    DATEDIFF(CURDATE(), j.jatuh_tempo) AS hari_lewat
+             FROM penjualan j
+             LEFT JOIN customer c ON c.cust_id=j.cust_id
+             $where
+             ORDER BY
+                CASE
+                    WHEN j.status_bayar <> 'LUNAS' AND j.jatuh_tempo IS NOT NULL AND j.jatuh_tempo < CURDATE() THEN 0
+                    ELSE 1
+                END ASC,
+                j.jatuh_tempo ASC,
+                j.updtime DESC,
+                j.tgl DESC
+             $queryLimit",
+            $binds
+        )->getResultArray();
+
+        return [
+            'data' => $data,
+            'total_count' => (int) ($totalRow['total'] ?? 0),
+            'total_filtered' => (int) $filtered,
+        ];
+    }
+
+    public function getPiutangSummary(string $toko_id, string $jual_id): ?array
+    {
+        return $this->getReceiptData($toko_id, $jual_id);
+    }
+
+    public function addPiutangPayment(string $toko_id, string $jual_id, string $username, array $payments): array
+    {
+        $header = $this->db->query(
+            "SELECT * FROM penjualan WHERE toko_id=:toko_id: AND jual_id=:jual_id:",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getRowArray();
+
+        if (!$header) {
+            return ['tipe' => 'error', 'data' => 'Data penjualan tidak ditemukan'];
+        }
+        if (($header['is_kredit'] ?? '0') !== '1') {
+            return ['tipe' => 'error', 'data' => 'Pembayaran hanya bisa ditambahkan pada transaksi piutang'];
+        }
+
+        $sanitized = [];
+        $incoming = 0;
+        foreach ($payments as $row) {
+            $caraBayar = strtoupper(trim((string) ($row['cara_bayar'] ?? '')));
+            $nominalBayar = (float) ($row['nominal_bayar'] ?? 0);
+            $bankNama = trim((string) ($row['bank_nama'] ?? ''));
+            $rekeningNo = trim((string) ($row['rekening_no'] ?? ''));
+            $tglBayar = trim((string) ($row['tgl_bayar'] ?? ''));
+
+            if (!in_array($caraBayar, ['TUNAI', 'TRANSFER', 'QRIS'], true) || $nominalBayar <= 0) {
+                return ['tipe' => 'error', 'data' => 'Data cicilan tidak valid'];
+            }
+            if (in_array($caraBayar, ['TRANSFER', 'QRIS'], true) && $bankNama === '') {
+                return ['tipe' => 'error', 'data' => 'Pembayaran non tunai wajib mengisi bank atau e-wallet'];
+            }
+            if ($caraBayar === 'TRANSFER' && $rekeningNo === '') {
+                return ['tipe' => 'error', 'data' => 'Pembayaran transfer wajib mengisi nomor rekening'];
+            }
+
+            $incoming += $nominalBayar;
+            $sanitized[] = [
+                'tgl_bayar' => $tglBayar !== '' ? $tglBayar : date('Y-m-d H:i:s'),
+                'cara_bayar' => $caraBayar,
+                'nominal_bayar' => round($nominalBayar, 2),
+                'bank_nama' => in_array($caraBayar, ['TRANSFER', 'QRIS'], true) ? $bankNama : null,
+                'rekening_no' => $caraBayar === 'TRANSFER' ? $rekeningNo : null,
+            ];
+        }
+
+        if (empty($sanitized)) {
+            return ['tipe' => 'error', 'data' => 'Minimal satu cicilan harus diisi'];
+        }
+
+        $remaining = (float) ($header['sisa_piutang'] ?? 0);
+        if ($incoming - $remaining > 0.0001) {
+            return ['tipe' => 'error', 'data' => 'Total cicilan melebihi sisa piutang'];
+        }
+
+        $this->db->transStart();
+        foreach ($sanitized as $payment) {
+            $this->db->table('penjualan_pembayaran')->insert([
+                'jual_id' => $jual_id,
+                'toko_id' => $toko_id,
+                'tgl_bayar' => $payment['tgl_bayar'],
+                'cara_bayar' => $payment['cara_bayar'],
+                'nominal_bayar' => $payment['nominal_bayar'],
+                'bank_nama' => $payment['bank_nama'],
+                'rekening_no' => $payment['rekening_no'],
+                'updid' => $username,
+            ]);
+        }
+        $this->syncSalePaymentSummary($toko_id, $jual_id);
+        $this->db->transComplete();
+
+        if (!$this->db->transStatus()) {
+            return ['tipe' => 'error', 'data' => 'Gagal menyimpan cicilan'];
+        }
+
+        return ['tipe' => 'success', 'data' => 'Pembayaran piutang berhasil disimpan'];
+    }
+
+    private function syncSalePaymentSummary(string $toko_id, string $jual_id): void
+    {
+        $header = $this->db->query(
+            "SELECT netto
+             FROM penjualan
+             WHERE toko_id=:toko_id: AND jual_id=:jual_id:",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getRowArray();
+
+        if (!$header) {
+            return;
+        }
+
+        $payRow = $this->db->query(
+            "SELECT COALESCE(SUM(nominal_bayar),0) AS total_bayar
+             FROM penjualan_pembayaran
+             WHERE toko_id=:toko_id: AND jual_id=:jual_id:",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getRowArray();
+
+        $netto = (float) ($header['netto'] ?? 0);
+        $totalBayar = (float) ($payRow['total_bayar'] ?? 0);
+        $sisaPiutang = max($netto - $totalBayar, 0);
+
+        if ($sisaPiutang <= 0.0001) {
+            $statusBayar = 'LUNAS';
+            $isKredit = '1';
+        } elseif ($totalBayar > 0) {
+            $statusBayar = 'CICIL';
+            $isKredit = '1';
+        } else {
+            $statusBayar = 'BELUM';
+            $isKredit = '1';
+        }
+
+        $this->db->table('penjualan')
+            ->where('toko_id', $toko_id)
+            ->where('jual_id', $jual_id)
+            ->update([
+                'status_bayar' => $statusBayar,
+                'is_kredit' => $isKredit,
+                'sisa_piutang' => round($sisaPiutang, 2),
+            ]);
+    }
+
     private function getPriceValidationMessage(float $hargaPokok, float $hargaJual): string
     {
         if ($hargaPokok <= 0) {

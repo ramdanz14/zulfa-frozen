@@ -9,7 +9,7 @@ $runningText = array_map(
     static fn(array $row): string => trim((string) ($row['isi_pengumuman'] ?? '')),
     $initialData['running_text'] ?? []
 );
-$marqueeText = implode('  |  ', array_values(array_filter($runningText)));
+$marqueeText = implode('   ::::    ', array_values(array_filter($runningText)));
 if ($marqueeText === '') {
     $marqueeText = 'POS aktif. Scan barcode, cari item, pilih member, lalu lanjutkan ke pembayaran dan cetak struk.';
 }
@@ -724,19 +724,61 @@ if ($marqueeText === '') {
             }
 
             .cart-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+                align-items: start;
+                gap: 8px;
+                padding: 8px 10px;
             }
 
             .cart-row-controls {
-                grid-template-columns: 1fr 1fr;
+                display: contents;
             }
 
             .cart-row-summary {
-                grid-template-columns: 1fr 1fr 40px;
+                grid-column: 2;
+                grid-row: 3;
+                text-align: right;
             }
 
             .qty-control {
                 grid-template-columns: 44px minmax(0, 1fr) 44px;
+            }
+
+            .cart-row-main {
+                grid-column: 1 / 4;
+                grid-row: 1;
+            }
+
+            .cart-row-main .d-flex {
+                flex-wrap: wrap;
+            }
+
+            .cart-item-name {
+                white-space: normal;
+                overflow: visible;
+                text-overflow: unset;
+            }
+
+            .cart-row-controls .cart-control-block:nth-child(1) {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .cart-row-controls .cart-control-block:nth-child(2) {
+                grid-column: 2 / 4;
+                grid-row: 2;
+            }
+
+            .cart-row-controls .cart-control-block:nth-child(3) {
+                grid-column: 1;
+                grid-row: 3;
+            }
+
+            .btn-remove-row {
+                grid-column: 3;
+                grid-row: 3;
+                justify-self: end;
+                align-self: end;
             }
 
             .shortcut-note {
@@ -781,7 +823,7 @@ if ($marqueeText === '') {
                     </div>
                     <div>
                         <div class="member-actions">
-                            <button type="button" class="btn btn-outline-primary" id="btn-register-member"><i class="ti ti-user-plus d-none d-xl-block"></i> Member Baru</button>
+                            <button type="button" class="btn btn-outline-primary w-100" id="btn-register-member"><i class="ti ti-user-plus d-none d-xl-block"></i> Member Baru</button>
                             <button type="button" class="btn btn-outline-secondary w-100" id="btn-hold-cart"><i class="ti ti-bookmark d-none d-xl-block"></i> Pending </button>
                             <button type="button" class="btn btn-outline-secondary w-100" id="btn-recall-cart"><i class="ti ti-history d-none d-xl-block"></i> Recall </button>
                         </div>
@@ -815,7 +857,7 @@ if ($marqueeText === '') {
                 <span class="badge bg-light text-dark" id="current-customer-badge">CUST-GENERAL</span>
             </div>
             <div class="footer-right">
-                <button type="button" class="btn btn-danger" id="btn-reset-cart"><i class="ti ti-trash"></i> Reset Keranjang <span class="shortcut-text">F5</span></button>
+                <button type="button" class="btn btn-danger" id="btn-reset-cart"><i class="ti ti-trash"></i> Reset Keranjang </button>
                 <button type="button" class="btn btn-outline-dark" id="btn-exit-pos"><i class="ti ti-door-exit"></i> Keluar POS</button>
                 <button type="button" class="btn btn-success" id="btn-pay"><i class="ti ti-cash"></i> Bayar <span class="shortcut-text">F12</span></button>
             </div>
