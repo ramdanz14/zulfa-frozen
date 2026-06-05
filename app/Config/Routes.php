@@ -158,6 +158,12 @@ $routes->group('listjual', static function ($route) {
     $route->delete('', 'Listjual::delete');
 });
 
+$routes->group('lapjual', static function ($route) {
+    $route->get('', 'Lapjual::index');
+    $route->post('ajax', 'Lapjual::ajax');
+    $route->post('summary', 'Lapjual::summary');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');

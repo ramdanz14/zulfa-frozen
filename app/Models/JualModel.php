@@ -1218,6 +1218,218 @@ class JualModel extends Model
         ];
     }
 
+    public function ajaxLaporanPenjualan(array $params, string $sessionTokoId, bool $allowMultiStore = false): array
+    {
+        $start = (int) ($params['start'] ?? 0);
+        $length = $params['length'] ?? 25;
+        $search = trim((string) ($params['search_value'] ?? ''));
+        $startDate = $this->normalizeDateFilter($params['date_start'] ?? '') ?: date('Y-m-01');
+        $endDate = $this->normalizeDateFilter($params['date_end'] ?? '') ?: date('Y-m-d');
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $storeIds = $this->resolveStoreIds($params['toko_ids'] ?? [], $sessionTokoId, $allowMultiStore);
+        $queryLimit = $length !== '-1' ? " LIMIT $start, " . (int) $length : '';
+
+        $binds = [
+            'start_date' => $startDate . ' 00:00:00',
+            'end_date' => $endDate . ' 23:59:59',
+        ];
+        $storePlaceholders = [];
+        foreach ($storeIds as $idx => $storeId) {
+            $key = 'toko_id_' . $idx;
+            $storePlaceholders[] = ':' . $key . ':';
+            $binds[$key] = $storeId;
+        }
+
+        $where = " WHERE j.tgl BETWEEN :start_date: AND :end_date: AND j.toko_id IN (" . implode(',', $storePlaceholders) . ")";
+        if ($search !== '') {
+            $where .= " AND (
+                DATE(j.tgl) LIKE :search:
+                OR j.toko_id LIKE :search:
+                OR COALESCE(c.nama, '') LIKE :search:
+                OR j.cust_id LIKE :search:
+            )";
+            $binds['search'] = '%' . $this->db->escapeLikeString($search) . '%';
+        }
+
+        $headerSql = "
+            SELECT
+                DATE(j.tgl) AS tanggal,
+                GROUP_CONCAT(DISTINCT j.toko_id ORDER BY j.toko_id SEPARATOR ', ') AS daftar_toko,
+                COUNT(DISTINCT CASE
+                    WHEN j.cust_id = 'CUST-GENERAL' THEN CONCAT('G-', j.jual_id)
+                    ELSE CONCAT('C-', j.cust_id)
+                END) AS jumlah_customer,
+                COUNT(DISTINCT j.jual_id) AS jumlah_transaksi,
+                COALESCE(SUM(j.netto), 0) AS omset
+            FROM penjualan j
+            LEFT JOIN customer c ON c.cust_id=j.cust_id
+            $where
+            GROUP BY DATE(j.tgl)
+        ";
+        $detailSql = "
+            SELECT
+                DATE(j.tgl) AS tanggal,
+                COALESCE(SUM(d.qty_jual), 0) AS total_qty,
+                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
+            FROM penjualan j
+            INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
+            $where
+            GROUP BY DATE(j.tgl)
+        ";
+        $baseSql = "
+            SELECT
+                h.tanggal,
+                h.daftar_toko,
+                h.jumlah_customer,
+                h.jumlah_transaksi,
+                COALESCE(d.total_qty, 0) AS total_qty,
+                h.omset,
+                COALESCE(d.margin_bruto, 0) AS margin_bruto
+            FROM ($headerSql) h
+            LEFT JOIN ($detailSql) d ON d.tanggal = h.tanggal
+        ";
+
+        $countRow = $this->db->query(
+            "SELECT COUNT(*) AS total FROM ($baseSql) x",
+            $binds
+        )->getRowArray();
+
+        $data = $this->db->query(
+            "SELECT tanggal, daftar_toko, jumlah_customer, jumlah_transaksi, total_qty, omset, margin_bruto
+             FROM ($baseSql) x
+             ORDER BY tanggal DESC
+             $queryLimit",
+            $binds
+        )->getResultArray();
+
+        return [
+            'data' => $data,
+            'total_count' => (int) ($countRow['total'] ?? 0),
+            'total_filtered' => (int) ($countRow['total'] ?? 0),
+        ];
+    }
+
+    public function getLaporanPenjualanSummary(array $params, string $sessionTokoId, bool $allowMultiStore = false): array
+    {
+        $startDate = $this->normalizeDateFilter($params['date_start'] ?? '') ?: date('Y-m-01');
+        $endDate = $this->normalizeDateFilter($params['date_end'] ?? '') ?: date('Y-m-d');
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $storeIds = $this->resolveStoreIds($params['toko_ids'] ?? [], $sessionTokoId, $allowMultiStore);
+        $binds = [
+            'start_date' => $startDate . ' 00:00:00',
+            'end_date' => $endDate . ' 23:59:59',
+        ];
+        $storePlaceholders = [];
+        foreach ($storeIds as $idx => $storeId) {
+            $key = 'toko_id_' . $idx;
+            $storePlaceholders[] = ':' . $key . ':';
+            $binds[$key] = $storeId;
+        }
+
+        $where = " WHERE j.tgl BETWEEN :start_date: AND :end_date: AND j.toko_id IN (" . implode(',', $storePlaceholders) . ")";
+
+        $summary = $this->db->query(
+            "SELECT
+                COUNT(DISTINCT CASE
+                    WHEN j.cust_id = 'CUST-GENERAL' THEN CONCAT('G-', j.jual_id)
+                    ELSE CONCAT('C-', j.cust_id)
+                END) AS total_customer,
+                COUNT(DISTINCT j.jual_id) AS total_transaksi,
+                COALESCE(SUM(j.netto), 0) AS total_omset_raw
+             FROM penjualan j
+             $where",
+            $binds
+        )->getRowArray() ?: [];
+
+        $marginRow = $this->db->query(
+            "SELECT COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS total_margin
+             FROM penjualan j
+             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
+             $where",
+            $binds
+        )->getRowArray() ?: [];
+
+        $dailyRows = $this->db->query(
+            "SELECT
+                DATE(j.tgl) AS tanggal,
+                COALESCE(SUM(j.netto), 0) AS omset_raw
+             FROM penjualan j
+             $where
+             GROUP BY DATE(j.tgl)
+             ORDER BY DATE(j.tgl) ASC",
+            $binds
+        )->getResultArray();
+
+        $marginDailyRows = $this->db->query(
+            "SELECT
+                DATE(j.tgl) AS tanggal,
+                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
+             FROM penjualan j
+             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
+             $where
+             GROUP BY DATE(j.tgl)
+             ORDER BY DATE(j.tgl) ASC",
+            $binds
+        )->getResultArray();
+
+        $marginDailyMap = [];
+        foreach ($marginDailyRows as $row) {
+            $marginDailyMap[(string) ($row['tanggal'] ?? '')] = (float) ($row['margin_bruto'] ?? 0);
+        }
+
+        $daily = [];
+        foreach ($dailyRows as $row) {
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            $daily[] = [
+                'tanggal' => $tanggal,
+                'label_tanggal' => date('d/m', strtotime($tanggal)),
+                'omset' => (float) ($row['omset_raw'] ?? 0),
+                'margin_bruto' => (float) ($marginDailyMap[$tanggal] ?? 0),
+            ];
+        }
+
+        $omsetByStoreRows = $this->db->query(
+            "SELECT
+                DATE(j.tgl) AS tanggal,
+                j.toko_id,
+                COALESCE(SUM(j.netto), 0) AS omset
+             FROM penjualan j
+             $where
+             GROUP BY DATE(j.tgl), j.toko_id
+             ORDER BY DATE(j.tgl) ASC, j.toko_id ASC",
+            $binds
+        )->getResultArray();
+
+        $marginByStoreRows = $this->db->query(
+            "SELECT
+                DATE(j.tgl) AS tanggal,
+                j.toko_id,
+                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
+             FROM penjualan j
+             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
+             $where
+             GROUP BY DATE(j.tgl), j.toko_id
+             ORDER BY DATE(j.tgl) ASC, j.toko_id ASC",
+            $binds
+        )->getResultArray();
+
+        return [
+            'total_customer' => (int) ($summary['total_customer'] ?? 0),
+            'total_transaksi' => (int) ($summary['total_transaksi'] ?? 0),
+            'total_omset' => (float) ($summary['total_omset_raw'] ?? 0),
+            'total_margin' => (float) ($marginRow['total_margin'] ?? 0),
+            'daily' => $daily,
+            'daily_omset_by_store' => $omsetByStoreRows,
+            'daily_margin_by_store' => $marginByStoreRows,
+        ];
+    }
+
     public function getPiutangSummary(string $toko_id, string $jual_id): ?array
     {
         return $this->getReceiptData($toko_id, $jual_id);
@@ -1341,6 +1553,32 @@ class JualModel extends Model
                 'is_kredit' => $isKredit,
                 'sisa_piutang' => round($sisaPiutang, 2),
             ]);
+    }
+
+    private function resolveStoreIds($rawStoreIds, string $sessionTokoId, bool $allowMultiStore): array
+    {
+        if (!$allowMultiStore) {
+            return [$sessionTokoId];
+        }
+
+        $storeIds = is_array($rawStoreIds) ? $rawStoreIds : [$rawStoreIds];
+        $filtered = array_values(array_unique(array_filter(array_map(
+            static fn($value): string => trim((string) $value),
+            $storeIds
+        ))));
+
+        return !empty($filtered) ? $filtered : $this->getAllStoreIds();
+    }
+
+    private function getAllStoreIds(): array
+    {
+        $rows = $this->db->query("SELECT toko_id FROM toko ORDER BY toko_id ASC")->getResultArray();
+        $storeIds = array_values(array_filter(array_map(
+            static fn(array $row): string => trim((string) ($row['toko_id'] ?? '')),
+            $rows
+        )));
+
+        return !empty($storeIds) ? $storeIds : [(string) session('toko_id')];
     }
 
     private function getPriceValidationMessage(float $hargaPokok, float $hargaJual): string
