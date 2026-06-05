@@ -63,8 +63,8 @@ if ($marqueeText === '') {
             height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            padding: 14px;
+            gap: 6px;
+            padding: 6px;
             width: 100%;
             overflow-x: hidden;
         }
@@ -81,8 +81,8 @@ if ($marqueeText === '') {
             grid-template-columns: 280px 1fr;
             gap: 12px;
             align-items: center;
-            padding: 14px 18px;
-            background: linear-gradient(135deg, var(--pos-warm) 0%, #fffdf7 100%);
+            padding: 6px 18px;
+            /* background: linear-gradient(135deg, var(--pos-warm) 0%, #fffdf7 100%); */
         }
 
         .pos-header-brand {
@@ -117,13 +117,13 @@ if ($marqueeText === '') {
             flex: 1;
             min-height: 0;
             display: grid;
-            grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.8fr);
+            grid-template-columns: minmax(320px, 1.5fr) minmax(0, 1.5fr);
             grid-template-areas:
                 "summary customer"
                 "search search"
                 "cart cart";
             grid-template-rows: auto auto minmax(0, 1fr);
-            gap: 14px;
+            gap: 6px;
         }
 
         .layout-summary {
@@ -144,12 +144,12 @@ if ($marqueeText === '') {
         }
 
         .pos-customer-panel {
-            padding: 16px;
+            padding: 12px;
         }
 
         .pos-customer-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+            grid-template-columns: minmax(0, 1.8fr) minmax(100px, 0.5fr);
             gap: 14px;
             align-items: start;
         }
@@ -162,6 +162,8 @@ if ($marqueeText === '') {
         }
 
         .member-summary {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr);
             margin-top: 10px;
             border-radius: 16px;
             background: linear-gradient(145deg, #f8fbff 0%, #f7faf8 100%);
@@ -171,7 +173,7 @@ if ($marqueeText === '') {
         }
 
         .pos-search-panel {
-            padding: 14px;
+            padding: 12px;
             position: relative;
         }
 
@@ -229,7 +231,7 @@ if ($marqueeText === '') {
         .cart-panel {
             flex: 1;
             min-height: 0;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
         }
@@ -243,232 +245,217 @@ if ($marqueeText === '') {
         .cart-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
         }
 
+        /* ROW UTAMA */
         .cart-row {
-            border: 1px solid rgba(15, 23, 42, 0.08);
-            border-radius: 18px;
-            background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
-            padding: 14px;
             display: grid;
-            grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr) auto;
-            gap: 14px;
+            grid-template-columns:
+                minmax(260px, 1.2fr) minmax(520px, 2fr) minmax(120px, 0.5fr) 42px;
             align-items: center;
+            gap: 10px;
+
+            padding: 0px 10px;
+            min-height: 64px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 14px;
+            background: #fff;
         }
 
+        /* KOLOM NAMA ITEM */
         .cart-row-main {
             min-width: 0;
         }
 
-        .cart-item-name {
-            font-size: 1rem;
-            font-weight: 800;
-            color: #15212f;
-            line-height: 1.3;
+        .cart-row-main .d-flex {
+            align-items: center !important;
+            gap: 8px;
         }
 
-        .cart-item-meta {
-            margin-top: 4px;
-            color: var(--pos-text-soft);
-            font-size: 12px;
-            line-height: 1.5;
+        .cart-item-name {
+            min-width: 0;
+            font-size: 13px;
+            font-weight: 800;
+            color: #15212f;
+            line-height: 1.2;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cart-item-name small {
+            font-size: 11px;
+            font-weight: 600;
         }
 
         .cart-item-price {
-            margin-top: 10px;
-            font-size: 1.05rem;
-            font-weight: 900;
-            color: #16212f;
-        }
-
-        .cart-item-price small {
-            display: block;
-            margin-top: 4px;
+            margin-top: 3px;
             font-size: 12px;
-            font-weight: 500;
-            color: var(--pos-text-soft);
+            font-weight: 800;
+            color: #173f35;
         }
 
+        /* TOMBOL HAPUS */
+        .btn-remove-row {
+            grid-column: 4;
+            grid-row: 1;
+
+            justify-self: center;
+            align-self: center;
+
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            min-height: 34px;
+            padding: 0;
+            border-radius: 10px;
+        }
+
+        .btn-remove-row .fs-5 {
+            font-size: 16px !important;
+        }
+
+        /* KOLOM CONTROL */
         .cart-row-controls {
             min-width: 0;
             display: grid;
-            grid-template-columns: minmax(0, 168px) minmax(0, 160px) minmax(0, 150px);
-            gap: 12px;
+            grid-template-columns: 130px minmax(120px, 1fr) 120px;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .cart-control-block {
+            min-width: 0;
         }
 
         .cart-control-block label {
             display: block;
-            font-size: 11px;
+            font-size: 10px;
+            line-height: 1;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.05em;
             color: var(--pos-text-soft);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 700;
         }
 
+        /* QTY */
         .qty-control {
             display: grid;
-            grid-template-columns: 40px minmax(52px, 1fr) 40px;
-            gap: 6px;
+            grid-template-columns: 34px minmax(44px, 1fr) 34px;
+            gap: 4px;
             align-items: center;
         }
 
         .qty-control .btn {
+            height: 34px;
             padding: 0;
-            height: 40px;
-            font-size: 1.1rem;
+            font-size: 16px;
             font-weight: 800;
+            border-radius: 9px;
         }
 
         .qty-control .cart-qty {
+            height: 34px;
             text-align: center;
+            font-size: 13px;
             font-weight: 700;
-            height: 40px;
+            padding: 4px 6px;
         }
 
+        /* SATUAN */
         .unit-static {
-            display: inline-flex;
-            flex-direction: column;
-            gap: 2px;
-            font-weight: 700;
-            min-height: 40px;
-            justify-content: center;
-            border: 1px solid rgba(15, 23, 42, 0.08);
-            border-radius: 12px;
-            padding: 8px 10px;
+            min-height: 34px;
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-radius: 9px;
+            padding: 4px 8px;
             background: #fff;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0;
+
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .unit-static small {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        .cart-control-block .form-select,
+        .cart-control-block .form-control {
+            height: 34px;
+            min-height: 34px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 9px;
+        }
+
+        /* KOLOM NETTO */
+        .cart-row-summary {
+            min-width: 0;
+            text-align: right;
         }
 
         .cart-netto {
-            font-size: 1rem;
-            font-weight: 900;
-            color: #173f35;
-            min-height: 40px;
+            min-height: 34px;
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+
+            font-size: 13px;
+            font-weight: 900;
+            color: #173f35;
+            white-space: nowrap;
         }
 
-        .cart-netto small {
-            display: block;
-            margin-top: 4px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--pos-text-soft);
-        }
-
-        .btn-remove-row {
-            min-width: 48px;
-            min-height: 48px;
-            padding: 0;
-            border-radius: 14px;
-        }
-
-        @media (min-width: 992px) {
-            .cart-list {
-                gap: 10px;
+        /* DESKTOP KECIL / TABLET LANDSCAPE */
+        @media (min-width: 992px) and (max-width: 1280px) {
+            .cart-row {
+                grid-template-columns: minmax(220px, 1.4fr) minmax(370px, 1.3fr) minmax(90px, 0.4fr);
+                gap: 8px;
+                padding: 7px 8px;
             }
 
-            .cart-row {
-                grid-template-columns: minmax(0, 1.8fr) minmax(470px, 1fr) 140px;
-                gap: 12px;
-                padding: 10px 12px;
-                border-radius: 16px;
+            .cart-row-controls {
+                grid-template-columns: 118px minmax(105px, 1fr) 110px;
+                gap: 6px;
             }
 
             .cart-item-name {
-                font-size: 0.95rem;
+                font-size: 12.5px;
             }
 
-            .cart-item-meta {
-                margin-top: 2px;
-                font-size: 11px;
-                line-height: 1.35;
-            }
-
-            .cart-item-price {
-                margin-top: 8px;
-                font-size: 0.95rem;
-                line-height: 1.2;
-            }
-
-            .cart-item-price small {
-                margin-top: 2px;
-                font-size: 11px;
-            }
-
-            .cart-row-controls {
-                grid-template-columns: 138px 132px 138px;
-                gap: 10px;
-                align-items: end;
-            }
-
-            .cart-control-block label {
-                margin-bottom: 4px;
-                font-size: 10px;
+            .cart-item-price,
+            .cart-netto {
+                font-size: 12.5px;
             }
 
             .qty-control {
-                grid-template-columns: 34px minmax(44px, 1fr) 34px;
-                gap: 4px;
+                grid-template-columns: 32px minmax(40px, 1fr) 32px;
             }
 
             .qty-control .btn,
-            .qty-control .cart-qty {
-                height: 34px;
-            }
-
-            .qty-control .btn {
-                font-size: 1rem;
-            }
-
-            .unit-static,
+            .qty-control .cart-qty,
             .cart-control-block .form-select,
-            .cart-control-block .form-control {
-                min-height: 34px;
-                font-size: 0.92rem;
-            }
-
+            .cart-control-block .form-control,
             .unit-static {
-                padding: 6px 8px;
-                gap: 0;
-            }
-
-            .unit-static small {
-                font-size: 10px;
-                line-height: 1.2;
-            }
-
-            .cart-netto {
-                min-height: 34px;
-                font-size: 0.95rem;
-                line-height: 1.2;
-            }
-
-            .cart-netto small {
-                margin-top: 2px;
-                font-size: 10px;
+                height: 32px;
+                min-height: 32px;
             }
 
             .btn-remove-row {
-                min-width: 40px;
-                min-height: 40px;
-                border-radius: 12px;
-            }
-
-            .btn-remove-row .fs-5 {
-                font-size: 1rem !important;
-            }
-        }
-
-        @media (min-width: 992px) and (max-width: 1280px) {
-            .cart-row {
-                grid-template-columns: minmax(0, 1.55fr) minmax(400px, 1fr) 124px;
-            }
-
-            .cart-row-controls {
-                grid-template-columns: 122px 118px 124px;
-                gap: 8px;
+                width: 32px;
+                height: 32px;
+                min-width: 32px;
+                min-height: 32px;
             }
         }
 
@@ -481,7 +468,8 @@ if ($marqueeText === '') {
         }
 
         .summary-card {
-            padding: 20px;
+
+            padding: 16px;
             color: #fff;
             background: linear-gradient(160deg, #183d34 0%, #246655 55%, #2e806a 100%);
         }
@@ -502,7 +490,7 @@ if ($marqueeText === '') {
 
         .summary-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 0.5fr 0.5fr 1fr 1fr;
             gap: 10px;
             margin-top: 16px;
         }
@@ -736,13 +724,15 @@ if ($marqueeText === '') {
             }
 
             .cart-row {
-                padding: 12px;
-                gap: 12px;
+                grid-template-columns: 1fr;
             }
 
             .cart-row-controls {
-                grid-template-columns: 1fr;
-                gap: 10px;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .cart-row-summary {
+                grid-template-columns: 1fr 1fr 40px;
             }
 
             .qty-control {
@@ -758,16 +748,15 @@ if ($marqueeText === '') {
 
 <body>
     <div class="pos-app">
-        <header class="pos-panel pos-header">
+        <header class="pos-panel pos-header bg-primary">
             <div class="pos-header-brand">
                 <span class="store-badge"><?= esc($toko['toko_id'] ?? session('toko_id')) ?></span>
                 <div>
-                    <h1><?= esc($toko['toko_nama'] ?? 'POS Kasir') ?></h1>
-                    <div class="small text-muted">Mode kasir full screen</div>
+                    <h1 class="text-light"><?= esc($toko['toko_nama'] ?? 'POS Kasir') ?></h1>
                 </div>
             </div>
             <div class="pos-marquee">
-                <marquee behavior="scroll" direction="left"><?= esc($marqueeText) ?></marquee>
+                <marquee behavior="scroll" direction="left" class="text-light"><?= esc($marqueeText) ?></marquee>
             </div>
         </header>
 
@@ -792,9 +781,9 @@ if ($marqueeText === '') {
                     </div>
                     <div>
                         <div class="member-actions">
-                            <button type="button" class="btn btn-outline-primary" id="btn-register-member"><i class="ti ti-user-plus"></i> Member Baru</button>
-                            <button type="button" class="btn btn-outline-secondary" id="btn-hold-cart"><i class="ti ti-bookmark"></i> Hold Cart <span class="shortcut-text">F2</span></button>
-                            <button type="button" class="btn btn-outline-secondary" id="btn-recall-cart"><i class="ti ti-history"></i> Recall Cart</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-register-member"><i class="ti ti-user-plus d-none d-xl-block"></i> Member Baru</button>
+                            <button type="button" class="btn btn-outline-secondary w-100" id="btn-hold-cart"><i class="ti ti-bookmark d-none d-xl-block"></i> Pending </button>
+                            <button type="button" class="btn btn-outline-secondary w-100" id="btn-recall-cart"><i class="ti ti-history d-none d-xl-block"></i> Recall </button>
                         </div>
                     </div>
                 </div>
@@ -804,7 +793,7 @@ if ($marqueeText === '') {
                 <div class="pos-search-row">
                     <input type="text" class="form-control form-control-lg" id="item-search" placeholder="Scan barcode / kode item / nama produk lalu tekan Enter">
                     <button type="button" class="btn btn-dark" id="btn-item-search"><i class="ti ti-search"></i></button>
-                    <button type="button" class="btn btn-outline-secondary" id="btn-focus-search"><i class="ti ti-focus-2"></i></button>
+                    <button type="button" class="btn btn-outline-secondary d-none d-lg-block" id="btn-focus-search"><i class="ti ti-focus-2"></i></button>
                 </div>
                 <div class="shortcut-note mt-2">Shortcut: <strong>F2</strong> hold cart, <strong>F5</strong> reset, <strong>F12</strong> bayar, <strong>Esc</strong> tutup modal/reset hasil cari.</div>
                 <div id="item-search-result" class="search-result-list d-none"></div>
@@ -1022,6 +1011,10 @@ if ($marqueeText === '') {
         const holdStorageKey = `pos_hold_cart_${initialData?.toko?.toko_id || 'default'}`;
         const defaultJatuhTempo = '<?= esc(date('Y-m-d', strtotime('+30 days'))) ?>';
         const quickCashHotkeys = ['1', '2', '3', '4', '5'];
+        const isEditMode = initialData?.mode === 'edit';
+        const editSale = initialData?.edit_sale || null;
+        const saleSaveUrl = initialData?.save_url || '<?= base_url('/jual') ?>';
+        const exitUrl = initialData?.exit_url || '<?= base_url('/main') ?>';
 
         let cartRows = [];
         let paymentRows = [];
@@ -1059,6 +1052,11 @@ if ($marqueeText === '') {
                 refreshMemberSummary();
                 recalcSummary();
             });
+
+            if (isEditMode) {
+                $('#btn-save-sale').text('Update & Cetak Struk');
+                $('#btn-hold-cart, #btn-recall-cart').addClass('d-none');
+            }
 
             $('#btn-item-search').on('click', searchItem);
             $('#btn-focus-search').on('click', function() {
@@ -1226,7 +1224,8 @@ if ($marqueeText === '') {
             refreshMemberSummary();
             renderCart();
             applyMoneyMask();
-            $('#item-search').trigger('focus');
+            hydrateEditSale();
+            focusSearch();
         });
 
         function searchItem() {
@@ -1408,12 +1407,12 @@ if ($marqueeText === '') {
                 $body.append(`
                     <div class="cart-row">
                         <div class="cart-row-main">
-                            <div class="d-flex align-items-start justify-content-between gap-2">
-                                <div class="cart-item-name">${idx + 1}. ${escapeHtml(row.nama_item || '-')} <small class="text-muted" >${escapeHtml(row.kode_item)}</small> </div>
-                                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row" data-idx="${idx}"><i class="ti ti-trash fs-5"></i></button>
+                            <div class="cart-item-name">
+                                ${idx + 1}. ${escapeHtml(row.nama_item || '-')} <small class="text-muted" >${escapeHtml(row.kode_item)}</small>
                             </div>
-                            <div class="cart-item-price">Rp ${formatMoneyValue(row.price || 0)}</div>
+                             <div class="cart-item-price">@ Rp ${formatMoneyValue(row.price || 0)}</div>
                         </div>
+                           
                         <div class="cart-row-controls">
                             <div class="cart-control-block">
                                 <label>Qty</label>
@@ -1423,21 +1422,24 @@ if ($marqueeText === '') {
                                     <button type="button" class="btn btn-outline-secondary btn-qty-plus" data-idx="${idx}">+</button>
                                 </div>
                             </div>
+
                             <div class="cart-control-block">
                                 <label>Satuan</label>
                                 ${unitCell}
                             </div>
+
                             <div class="cart-control-block">
                                 <label>Diskon</label>
                                 <input type="text" class="form-control form-control-sm money cart-diskon" data-idx="${idx}" value="${formatMoneyValue(row.diskon_item || 0)}">
                             </div>
                         </div>
-                        <div class="cart-row-summary text-end">
+                        <div class="cart-row-summary">
                             <div class="cart-control-block">
-                                <label>Netto</label>
+                                 <label>Netto</label>
                                 <div class="cart-netto d-block">Rp ${formatMoneyValue(row.netto || 0)}</div>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row" data-idx="${idx}"><i class="ti ti-trash fs-5"></i></button>
                     </div>
                 `);
             });
@@ -1489,8 +1491,8 @@ if ($marqueeText === '') {
             const html = `
                 <div class="fw-semibold">${escapeHtml(selectedCustomer.nama || 'Pelanggan Umum')}</div>
                 <div class="small text-muted">${escapeHtml(selectedCustomer.cust_id || 'CUST-GENERAL')}${selectedCustomer.kontak ? ' | ' + escapeHtml(selectedCustomer.kontak) : ''}</div>
-                <div class="small mt-2">Saldo Poin: <strong>${Number(poin).toLocaleString('id-ID')}</strong></div>
-                <div class="small">Piutang Belum Lunas: <strong>Rp ${formatMoneyValue(piutang)}</strong></div>
+                <div class="small mt">Saldo Poin: <strong>${Number(poin).toLocaleString('id-ID')}</strong></div>
+                <div class="small">Piutang : <strong>Rp ${formatMoneyValue(piutang)}</strong></div>
             `;
             $('#member-summary').html(html);
         }
@@ -1519,14 +1521,18 @@ if ($marqueeText === '') {
                 return;
             }
 
-            paymentRows = [{
-                cara_bayar: 'TUNAI',
-                nominal_bayar: summary.netto,
-                bank_nama: '',
-                rekening_no: ''
-            }];
+            if (!paymentRows.length) {
+                paymentRows = [{
+                    cara_bayar: 'TUNAI',
+                    nominal_bayar: summary.netto,
+                    bank_nama: '',
+                    rekening_no: ''
+                }];
+            }
 
-            $('#payment-cash-received').val(summary.netto);
+            if (!Number(normalizeMoneyValue($('#payment-cash-received').val() || 0))) {
+                $('#payment-cash-received').val(summary.netto);
+            }
             $('#payment-total-netto').text(`Rp ${formatMoneyValue(summary.netto)}`);
             $('#payment-member-name').text(selectedCustomer.nama || 'Pelanggan Umum');
             $('#payment-member-extra').text(`${selectedCustomer.cust_id || 'CUST-GENERAL'}${selectedCustomer.kontak ? ' | ' + selectedCustomer.kontak : ''}`);
@@ -1535,7 +1541,9 @@ if ($marqueeText === '') {
                 'Pelanggan umum wajib lunas. Pembayaran kurang akan diblokir.' :
                 `Member aktif. Saldo poin: ${Number(selectedCustomer.poin || 0).toLocaleString('id-ID')} | Piutang lama: Rp ${formatMoneyValue(selectedCustomer.outstanding_piutang || 0)}`
             );
-            $('#payment-jatuh-tempo').val(defaultJatuhTempo);
+            if (!$('#payment-jatuh-tempo').val()) {
+                $('#payment-jatuh-tempo').val(defaultJatuhTempo);
+            }
             renderQuickCashButtons(summary.netto);
             renderPaymentRows();
             renderPaymentStatus();
@@ -1681,27 +1689,36 @@ if ($marqueeText === '') {
                 payment_json: JSON.stringify(paymentRows)
             };
 
+            if (isEditMode && editSale?.jual_id) {
+                payload._method = 'PATCH';
+                payload.jual_id = editSale.jual_id;
+            }
+
             $.ajax({
                 type: 'POST',
-                url: '<?= base_url('/jual') ?>',
+                url: saleSaveUrl,
                 dataType: 'json',
                 data: payload,
                 success: function(res) {
                     if (res.tipe !== 'success') {
-                        toastr.error(res.data || 'Gagal menyimpan transaksi penjualan');
+                        toastr.error(res.data || (isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
                         return;
                     }
 
-                    toastr.success(res.data || 'Transaksi penjualan berhasil disimpan');
+                    toastr.success(res.data || (isEditMode ? 'Transaksi penjualan berhasil diupdate' : 'Transaksi penjualan berhasil disimpan'));
                     paymentModal.hide();
-                    resetCartState(true);
-                    localStorage.removeItem(holdStorageKey);
                     if (res.receipt_url) {
                         window.open(res.receipt_url, '_blank', 'noopener');
                     }
+                    if (isEditMode && res.redirect_url) {
+                        window.location.href = res.redirect_url;
+                        return;
+                    }
+                    resetCartState(true);
+                    localStorage.removeItem(holdStorageKey);
                 },
                 error: function(xhr) {
-                    toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan transaksi penjualan'));
+                    toastr.error(extractErrorMessage(xhr, isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
                 }
             });
         }
@@ -1738,6 +1755,10 @@ if ($marqueeText === '') {
         }
 
         function holdCart(exitAfter = false) {
+            if (isEditMode) {
+                toastr.error('Hold cart tidak tersedia saat edit transaksi');
+                return;
+            }
             if (!cartRows.length) {
                 toastr.error('Tidak ada transaksi untuk di-hold');
                 return;
@@ -1748,11 +1769,15 @@ if ($marqueeText === '') {
             toastr.success('Keranjang disimpan sementara');
 
             if (exitAfter) {
-                window.location.href = '<?= base_url('/main') ?>';
+                window.location.href = exitUrl;
             }
         }
 
         function recallCart() {
+            if (isEditMode) {
+                toastr.error('Recall cart tidak tersedia saat edit transaksi');
+                return;
+            }
             const raw = localStorage.getItem(holdStorageKey);
             if (!raw) {
                 toastr.error('Belum ada hold cart yang tersimpan');
@@ -1773,21 +1798,43 @@ if ($marqueeText === '') {
             }
         }
 
+        function hydrateEditSale() {
+            if (!isEditMode || !editSale) {
+                return;
+            }
+
+            cartRows = Array.isArray(editSale.cart_rows) ? editSale.cart_rows : [];
+            paymentRows = Array.isArray(editSale.payment_rows) && editSale.payment_rows.length ? editSale.payment_rows : [buildPaymentRow()];
+            selectedCustomer = editSale.customer || initialData.customer_general;
+
+            $('#diskon-nota').val(editSale.diskon_nota || 0);
+            $('#redeem-points').val(editSale.redeem_points || 0);
+            $('#payment-cash-received').val(editSale.cash_received || 0);
+            $('#payment-jatuh-tempo').val(editSale.jatuh_tempo || defaultJatuhTempo);
+            setCustomerSelection(selectedCustomer);
+            renderCart();
+            applyMoneyMask();
+        }
+
         function tryExitPos() {
             if (!hasPendingTransaction()) {
-                window.location.href = '<?= base_url('/main') ?>';
+                window.location.href = exitUrl;
                 return;
             }
 
             Swal.fire({
                 title: 'Transaksi belum selesai',
-                text: 'POS tidak bisa ditinggalkan selama keranjang masih berisi. Simpan dulu ke HOLD CART jika ingin keluar.',
+                text: isEditMode ? 'Perubahan edit transaksi belum disimpan. Keluar sekarang akan membuang perubahan pada layar ini.' : 'POS tidak bisa ditinggalkan selama keranjang masih berisi. Simpan dulu ke HOLD CART jika ingin keluar.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Hold Cart & Keluar',
+                confirmButtonText: isEditMode ? 'Keluar' : 'Hold Cart & Keluar',
                 cancelButtonText: 'Tetap di POS'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    if (isEditMode) {
+                        window.location.href = exitUrl;
+                        return;
+                    }
                     holdCart(true);
                 }
             });

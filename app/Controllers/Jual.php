@@ -18,6 +18,10 @@ class Jual extends BaseController
     {
         $data['title'] = 'POS Kasir';
         $data['initialData'] = $this->jualModel->getInitialData((string) session('toko_id'));
+        $data['initialData']['mode'] = 'create';
+        $data['initialData']['save_url'] = base_url('/jual');
+        $data['initialData']['exit_url'] = base_url('/main');
+        $data['initialData']['after_save_redirect'] = null;
         cek_akses_menu('jual/index', $data);
     }
 

@@ -148,6 +148,16 @@ $routes->group('jual', static function ($route) {
     $route->post('', 'Jual::save');
 });
 
+$routes->group('listjual', static function ($route) {
+    $route->get('', 'Listjual::index');
+    $route->post('ajax', 'Listjual::ajax');
+    $route->get('show/(:segment)', 'Listjual::show/$1');
+    $route->get('edit/(:segment)', 'Listjual::edit/$1');
+    $route->get('reprint/(:segment)', 'Listjual::reprint/$1');
+    $route->patch('', 'Listjual::update');
+    $route->delete('', 'Listjual::delete');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');

@@ -315,7 +315,244 @@ class JualModel extends Model
         ];
     }
 
+    public function ajaxList(array $params, string $toko_id): array
+    {
+        $start = (int) ($params['start'] ?? 0);
+        $length = $params['length'] ?? 25;
+        $search = trim((string) ($params['search_value'] ?? ''));
+        $startDate = $this->normalizeDateFilter($params['start_date'] ?? '') ?: date('Y-m-d');
+        $endDate = $this->normalizeDateFilter($params['end_date'] ?? '') ?: $startDate;
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $queryLimit = $length !== '-1' ? " LIMIT $start, " . (int) $length : '';
+        $binds = [
+            'toko_id' => $toko_id,
+            'start_date' => $startDate . ' 00:00:00',
+            'end_date' => $endDate . ' 23:59:59',
+        ];
+        $where = " WHERE j.toko_id=:toko_id: AND j.tgl BETWEEN :start_date: AND :end_date: ";
+        if ($search !== '') {
+            $where .= " AND (
+                j.jual_id LIKE :search:
+                OR j.cust_id LIKE :search:
+                OR COALESCE(c.nama, '') LIKE :search:
+                OR COALESCE(j.updid, '') LIKE :search:
+            )";
+            $binds['search'] = '%' . $this->db->escapeLikeString($search) . '%';
+        }
+
+        $countQuery = "
+            SELECT COUNT(*) AS total
+            FROM penjualan j
+            LEFT JOIN customer c ON c.cust_id=j.cust_id
+            $where
+        ";
+        $filteredRow = $this->db->query($countQuery, $binds)->getRowArray();
+        $filtered = (int) ($filteredRow['total'] ?? 0);
+
+        $data = $this->db->query(
+            "SELECT j.*,
+                    COALESCE(c.nama, 'Pelanggan Umum') AS customer_nama,
+                    COUNT(d.seq_no) AS jml_item,
+                    COALESCE(SUM(d.qty_jual), 0) AS total_qty
+             FROM penjualan j
+             LEFT JOIN customer c ON c.cust_id=j.cust_id
+             LEFT JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
+             $where
+             GROUP BY j.toko_id, j.jual_id
+             ORDER BY j.tgl DESC, j.jual_id DESC
+             $queryLimit",
+            $binds
+        )->getResultArray();
+
+        foreach ($data as &$row) {
+            $row['can_edit'] = $this->canModifySaleDate($row['tgl'] ?? null);
+        }
+        unset($row);
+
+        return [
+            'data' => $data,
+            'total_count' => $filtered,
+            'total_filtered' => $filtered,
+        ];
+    }
+
+    public function canModifySaleDate(?string $tgl): bool
+    {
+        return $tgl !== null && substr((string) $tgl, 0, 10) === date('Y-m-d');
+    }
+
+    public function getSaleEditPayload(string $toko_id, string $jual_id): ?array
+    {
+        $sale = $this->getSaleAggregate($toko_id, $jual_id);
+        if (! $sale) {
+            return null;
+        }
+
+        $customer = $this->getCustomerPayload((string) ($sale['cust_id'] ?? 'CUST-GENERAL')) ?? $this->getCustomerPayload('CUST-GENERAL');
+        if (($sale['cust_id'] ?? 'CUST-GENERAL') !== 'CUST-GENERAL') {
+            $customer['poin'] = (int) ($customer['poin'] ?? 0) + (int) ($sale['redeem_points'] ?? 0);
+        }
+        $cartRows = [];
+
+        foreach ($sale['details'] as $detail) {
+            $itemPayload = $this->getItemPayload($toko_id, (string) ($detail['kode_item'] ?? ''));
+            $qtyStockExisting = round((float) ($detail['qty_stock'] ?? 0), 4);
+
+            if ($itemPayload) {
+                foreach ($itemPayload['satuan_options'] as &$option) {
+                    $stokBase = round((float) ($itemPayload['stok_base'] ?? 0) + $qtyStockExisting, 4);
+                    $qtyKonversi = (float) ($option['qty_konversi'] ?? 0);
+                    $option['stok_maksimal'] = $qtyKonversi > 0 ? round($stokBase / $qtyKonversi, 4) : 0;
+                }
+                unset($option);
+            }
+
+            $selectedOption = null;
+            if ($itemPayload) {
+                foreach (($itemPayload['satuan_options'] ?? []) as $option) {
+                    if (($option['sat_id'] ?? '') === ($detail['sat_id'] ?? '')) {
+                        $selectedOption = $option;
+                        break;
+                    }
+                }
+            }
+
+            if (! $itemPayload || ! $selectedOption) {
+                $itemPayload = [
+                    'kode_item' => $detail['kode_item'],
+                    'barcode' => '',
+                    'nama_item' => $detail['nama_item'] ?? $detail['kode_item'],
+                    'satuan_options' => [[
+                        'sat_id' => $detail['sat_id'],
+                        'qty_konversi' => (float) ($detail['qty_konversi'] ?? 1),
+                        'harga_pokok' => (float) ($detail['harga_pokok'] ?? 0),
+                        'harga_jual' => (float) ($detail['price'] ?? 0),
+                        'stok_maksimal' => (float) ($detail['qty_jual'] ?? 0),
+                        'price_error' => $this->getPriceValidationMessage(
+                            (float) ($detail['harga_pokok'] ?? 0),
+                            (float) ($detail['price'] ?? 0)
+                        ),
+                    ]],
+                ];
+                $selectedOption = $itemPayload['satuan_options'][0];
+            }
+
+            $cartRows[] = [
+                'kode_item' => $detail['kode_item'],
+                'barcode' => $itemPayload['barcode'] ?? '',
+                'nama_item' => $detail['nama_item'] ?? $itemPayload['nama_item'] ?? $detail['kode_item'],
+                'sat_id' => $detail['sat_id'],
+                'qty_jual' => (float) ($detail['qty_jual'] ?? 0),
+                'qty_konversi' => (float) ($detail['qty_konversi'] ?? 1),
+                'harga_pokok' => (float) ($detail['harga_pokok'] ?? 0),
+                'price' => (float) ($detail['price'] ?? 0),
+                'gross' => (float) ($detail['gross'] ?? 0),
+                'diskon_item' => (float) ($detail['diskon_item'] ?? 0),
+                'netto' => (float) ($detail['netto'] ?? 0),
+                'qty_stock' => (float) ($detail['qty_stock'] ?? 0),
+                'max_qty' => (float) ($selectedOption['stok_maksimal'] ?? $detail['qty_jual'] ?? 0),
+                'satuan_options' => array_map(static function ($option): array {
+                    return [
+                        'sat_id' => $option['sat_id'],
+                        'qty_konversi' => (float) ($option['qty_konversi'] ?? 1),
+                        'harga_pokok' => (float) ($option['harga_pokok'] ?? 0),
+                        'harga_jual' => (float) ($option['harga_jual'] ?? 0),
+                        'stok_maksimal' => (float) ($option['stok_maksimal'] ?? 0),
+                        'price_error' => $option['price_error'] ?? '',
+                    ];
+                }, $itemPayload['satuan_options'] ?? []),
+            ];
+        }
+
+        return [
+            'jual_id' => $sale['jual_id'],
+            'tgl' => $sale['tgl'],
+            'customer' => $customer,
+            'diskon_nota' => (float) ($sale['diskon_nota'] ?? 0),
+            'redeem_points' => (int) ($sale['redeem_points'] ?? 0),
+            'cash_received' => (float) ($sale['cash_received'] ?? 0),
+            'jatuh_tempo' => ! empty($sale['jatuh_tempo']) ? $sale['jatuh_tempo'] : date('Y-m-d', strtotime('+30 days')),
+            'cart_rows' => $cartRows,
+            'payment_rows' => array_map(static function ($row): array {
+                return [
+                    'cara_bayar' => strtoupper((string) ($row['cara_bayar'] ?? 'TUNAI')),
+                    'nominal_bayar' => (float) ($row['nominal_bayar'] ?? 0),
+                    'bank_nama' => (string) ($row['bank_nama'] ?? ''),
+                    'rekening_no' => (string) ($row['rekening_no'] ?? ''),
+                ];
+            }, $sale['payments']),
+        ];
+    }
+
     public function saveSale(string $toko_id, string $username, array $input): array
+    {
+        return $this->persistSale($toko_id, $username, $input);
+    }
+
+    public function updateSale(string $toko_id, string $username, string $jual_id, array $input): array
+    {
+        $existingSale = $this->getSaleAggregate($toko_id, $jual_id);
+        if (! $existingSale) {
+            return ['tipe' => 'error', 'data' => 'Transaksi penjualan tidak ditemukan'];
+        }
+        if (! $this->canModifySaleDate($existingSale['tgl'] ?? null)) {
+            return ['tipe' => 'error', 'data' => 'Hanya transaksi penjualan tanggal hari ini yang bisa diedit'];
+        }
+
+        return $this->persistSale($toko_id, $username, $input, $existingSale);
+    }
+
+    public function deleteSale(string $toko_id, string $username, string $jual_id): array
+    {
+        $existingSale = $this->getSaleAggregate($toko_id, $jual_id);
+        if (! $existingSale) {
+            return ['tipe' => 'error', 'data' => 'Transaksi penjualan tidak ditemukan'];
+        }
+        if (! $this->canModifySaleDate($existingSale['tgl'] ?? null)) {
+            return ['tipe' => 'error', 'data' => 'Hanya transaksi penjualan tanggal hari ini yang bisa dihapus'];
+        }
+
+        $timestamp = date('Y-m-d H:i:s');
+        $this->db->transBegin();
+
+        $this->reverseSaleEffects($existingSale, $toko_id, $username, $timestamp, 'Hapus transaksi penjualan');
+        $this->db->table('penjualan')
+            ->where('toko_id', $toko_id)
+            ->where('jual_id', $jual_id)
+            ->delete();
+
+        if (! $this->db->transStatus()) {
+            $this->db->transRollback();
+            return ['tipe' => 'error', 'data' => 'Gagal menghapus transaksi penjualan'];
+        }
+
+        $this->db->transCommit();
+        return ['tipe' => 'success', 'data' => 'Transaksi penjualan berhasil dihapus'];
+    }
+
+    public function incrementReprintCount(string $toko_id, string $jual_id): bool
+    {
+        $exists = $this->db->query(
+            "SELECT jual_id FROM penjualan WHERE toko_id=:toko_id: AND jual_id=:jual_id: LIMIT 1",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getRowArray();
+        if (! $exists) {
+            return false;
+        }
+
+        $this->db->table('penjualan')
+            ->where('toko_id', $toko_id)
+            ->where('jual_id', $jual_id)
+            ->set('reprint_count', 'IFNULL(reprint_count,0)+1', false)
+            ->update();
+
+        return true;
+    }
+
+    private function persistSale(string $toko_id, string $username, array $input, ?array $existingSale = null): array
     {
         $custId = trim((string) ($input['cust_id'] ?? 'CUST-GENERAL'));
         $detailRows = json_decode((string) ($input['detail_json'] ?? '[]'), true) ?: [];
@@ -324,21 +561,33 @@ class JualModel extends Model
         $redeemPoints = max(0, (int) ($input['redeem_points'] ?? 0));
         $jatuhTempo = trim((string) ($input['jatuh_tempo'] ?? ''));
         $cashReceived = round((float) ($input['cash_received'] ?? 0), 2);
+        $timestamp = date('Y-m-d H:i:s');
+        $earnedPoints = 0;
+
+        $this->db->transBegin();
+
+        if ($existingSale) {
+            $this->reverseSaleEffects($existingSale, $toko_id, $username, $timestamp, 'Reversal edit transaksi penjualan');
+        }
 
         if (empty($detailRows)) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Keranjang belanja masih kosong'];
         }
 
         $customer = $this->getCustomerPayload($custId);
         if (! $customer) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Customer tidak ditemukan'];
         }
 
         $isGeneral = $custId === 'CUST-GENERAL';
         if ($redeemPoints > 0 && $isGeneral) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Penukaran poin hanya berlaku untuk member terdaftar'];
         }
         if ($redeemPoints > (int) ($customer['poin'] ?? 0)) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Poin customer tidak mencukupi untuk ditukarkan'];
         }
 
@@ -355,6 +604,7 @@ class JualModel extends Model
 
             $payload = $this->getItemPayload($toko_id, $kodeItem);
             if (! $payload) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Item ' . $kodeItem . ' tidak ditemukan atau tidak aktif'];
             }
 
@@ -366,16 +616,19 @@ class JualModel extends Model
                 }
             }
             if (! $selected) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Satuan ' . $satId . ' untuk item ' . $kodeItem . ' tidak valid'];
             }
 
             $qtyJual = round((float) ($row['qty_jual'] ?? 0), 4);
             if ($qtyJual <= 0) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Qty jual item ' . $kodeItem . ' harus lebih besar dari nol'];
             }
 
             $stokMax = (float) ($selected['stok_maksimal'] ?? 0);
             if ($qtyJual - $stokMax > 0.0001) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Stok tidak mencukupi untuk item ' . $kodeItem . ' / ' . $satId];
             }
 
@@ -384,9 +637,11 @@ class JualModel extends Model
             $price = round((float) ($selected['harga_jual'] ?? 0), 2);
             $priceError = $this->getPriceValidationMessage($hargaPokok, $price);
             if ($qtyKonversi <= 0) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Konversi satuan item ' . $kodeItem . ' belum valid'];
             }
             if ($priceError !== '') {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Item ' . $kodeItem . ' tidak bisa dijual: ' . $priceError];
             }
 
@@ -394,6 +649,7 @@ class JualModel extends Model
             $maxDiskon = max($rowGross - ($qtyJual * $hargaPokok), 0);
             $diskonItem = round((float) ($row['diskon_item'] ?? 0), 2);
             if ($diskonItem - $maxDiskon > 0.0001) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Nilai diskon item ' . $kodeItem . ' melebihi margin keuntungan produk'];
             }
 
@@ -419,11 +675,13 @@ class JualModel extends Model
 
         $redeemNominal = round((float) $redeemPoints, 2);
         if ($diskonNota < 0) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Diskon nota tidak boleh negatif'];
         }
 
         $netto = round($detailNetto - $diskonNota - $redeemNominal, 2);
         if ($netto <= 0) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Total pembayaran setelah diskon harus lebih besar dari nol'];
         }
 
@@ -440,12 +698,15 @@ class JualModel extends Model
                 continue;
             }
             if (! in_array($caraBayar, ['TUNAI', 'TRANSFER', 'QRIS'], true)) {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Metode pembayaran tidak valid'];
             }
             if (in_array($caraBayar, ['TRANSFER', 'QRIS'], true) && $bankNama === '') {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Nama bank/e-wallet wajib diisi untuk pembayaran non tunai'];
             }
             if ($caraBayar === 'TRANSFER' && $rekeningNo === '') {
+                $this->db->transRollback();
                 return ['tipe' => 'error', 'data' => 'Nomor rekening wajib diisi untuk transfer'];
             }
 
@@ -471,21 +732,26 @@ class JualModel extends Model
         }
 
         if ($totalPaymentAllocated - $netto > 0.0001) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Total alokasi pembayaran tidak boleh melebihi total tagihan'];
         }
 
         if ($cashReceived > 0 && $tunaiAllocated <= 0) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Uang tunai diterima diisi tetapi alokasi pembayaran tunai belum ada'];
         }
         if ($cashReceived + 0.0001 < $tunaiAllocated) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Uang tunai diterima tidak boleh lebih kecil dari alokasi pembayaran tunai'];
         }
 
         $sisaPiutang = round(max($netto - $totalPaymentAllocated, 0), 2);
         if ($isGeneral && $sisaPiutang > 0.0001) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Pelanggan umum wajib melakukan pembayaran lunas'];
         }
         if ($sisaPiutang > 0.0001 && $jatuhTempo === '') {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Tanggal jatuh tempo wajib diisi untuk transaksi kredit member'];
         }
         if ($sisaPiutang <= 0.0001) {
@@ -495,32 +761,59 @@ class JualModel extends Model
         $cashChange = round(max($cashReceived - $tunaiAllocated, 0), 2);
         $isKredit = $sisaPiutang > 0.0001 ? '1' : '0';
         $statusBayar = $sisaPiutang <= 0.0001 ? 'LUNAS' : ($totalPaymentAllocated > 0 ? 'CICIL' : 'BELUM');
-        $jualId = $this->getNextId($toko_id);
-        $timestamp = date('Y-m-d H:i:s');
-        $earnedPoints = 0;
+        $jualId = $existingSale['jual_id'] ?? $this->getNextId($toko_id);
 
-        $this->db->transStart();
-
-        $this->db->table('penjualan')->insert([
-            'jual_id' => $jualId,
-            'toko_id' => $toko_id,
-            'tgl' => $timestamp,
-            'cust_id' => $custId,
-            'gross' => round($gross, 2),
-            'diskon_nota' => round($diskonNota, 2),
-            'redeem_points' => $redeemPoints,
-            'redeem_nominal' => round($redeemNominal, 2),
-            'netto' => round($netto, 2),
-            'is_kredit' => $isKredit,
-            'status_bayar' => $statusBayar,
-            'sisa_piutang' => $sisaPiutang,
-            'jatuh_tempo' => $jatuhTempo,
-            'cash_received' => round($cashReceived, 2),
-            'cash_change' => round($cashChange, 2),
-            'earned_points' => 0,
-            'updid' => $username,
-            'updtime' => $timestamp,
-        ]);
+        if ($existingSale) {
+            $this->db->table('penjualan_detail')
+                ->where('toko_id', $toko_id)
+                ->where('jual_id', $jualId)
+                ->delete();
+            $this->db->table('penjualan_pembayaran')
+                ->where('toko_id', $toko_id)
+                ->where('jual_id', $jualId)
+                ->delete();
+            $this->db->table('penjualan')
+                ->where('toko_id', $toko_id)
+                ->where('jual_id', $jualId)
+                ->update([
+                    'cust_id' => $custId,
+                    'gross' => round($gross, 2),
+                    'diskon_nota' => round($diskonNota, 2),
+                    'redeem_points' => $redeemPoints,
+                    'redeem_nominal' => round($redeemNominal, 2),
+                    'netto' => round($netto, 2),
+                    'is_kredit' => $isKredit,
+                    'status_bayar' => $statusBayar,
+                    'sisa_piutang' => $sisaPiutang,
+                    'jatuh_tempo' => $jatuhTempo,
+                    'cash_received' => round($cashReceived, 2),
+                    'cash_change' => round($cashChange, 2),
+                    'earned_points' => 0,
+                    'updid' => $username,
+                    'updtime' => $timestamp,
+                ]);
+        } else {
+            $this->db->table('penjualan')->insert([
+                'jual_id' => $jualId,
+                'toko_id' => $toko_id,
+                'tgl' => $timestamp,
+                'cust_id' => $custId,
+                'gross' => round($gross, 2),
+                'diskon_nota' => round($diskonNota, 2),
+                'redeem_points' => $redeemPoints,
+                'redeem_nominal' => round($redeemNominal, 2),
+                'netto' => round($netto, 2),
+                'is_kredit' => $isKredit,
+                'status_bayar' => $statusBayar,
+                'sisa_piutang' => $sisaPiutang,
+                'jatuh_tempo' => $jatuhTempo,
+                'cash_received' => round($cashReceived, 2),
+                'cash_change' => round($cashChange, 2),
+                'earned_points' => 0,
+                'updid' => $username,
+                'updtime' => $timestamp,
+            ]);
+        }
 
         foreach ($sanitizedDetails as $row) {
             $this->db->table('penjualan_detail')->insert([
@@ -573,31 +866,235 @@ class JualModel extends Model
         }
 
         if (! $isGeneral && $redeemPoints > 0) {
-            $poinModel = new PoinMemberModel();
-            $poinModel->deductPointsFromRedeem($toko_id, $custId, $jualId, $redeemPoints, $redeemNominal, $timestamp, $username);
+            $this->mutateCustomerPoints(
+                $toko_id,
+                $custId,
+                $jualId,
+                'kurang',
+                $redeemPoints,
+                $redeemNominal,
+                $this->getNominalPerPoin(),
+                $timestamp,
+                $username,
+                'Penukaran poin menjadi diskon belanja'
+            );
         }
         if (! $isGeneral) {
-            $poinModel = isset($poinModel) ? $poinModel : new PoinMemberModel();
-            $earnedPoints = $poinModel->addPointsFromSale($toko_id, $custId, $jualId, $netto, $timestamp, $username);
+            $earnedPoints = $this->awardPointsFromSale($toko_id, $custId, $jualId, $netto, $timestamp, $username);
             $this->db->table('penjualan')
                 ->where('jual_id', $jualId)
                 ->where('toko_id', $toko_id)
                 ->update(['earned_points' => $earnedPoints]);
         }
 
-        $this->db->transComplete();
-
         if (! $this->db->transStatus()) {
+            $this->db->transRollback();
             return ['tipe' => 'error', 'data' => 'Gagal menyimpan transaksi penjualan'];
         }
 
+        $this->db->transCommit();
+
         return [
             'tipe' => 'success',
-            'data' => 'Transaksi penjualan berhasil disimpan',
+            'data' => $existingSale ? 'Transaksi penjualan berhasil diupdate' : 'Transaksi penjualan berhasil disimpan',
             'jual_id' => $jualId,
             'receipt_url' => base_url('/jual/struk/' . $jualId),
             'earned_points' => $earnedPoints,
+            'redirect_url' => $existingSale ? base_url('/listjual') : null,
         ];
+    }
+
+    private function normalizeDateFilter($value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $date = date_create($value);
+        return $date ? $date->format('Y-m-d') : null;
+    }
+
+    private function getSaleAggregate(string $toko_id, string $jual_id): ?array
+    {
+        $header = $this->db->query(
+            "SELECT *
+             FROM penjualan
+             WHERE toko_id=:toko_id: AND jual_id=:jual_id:
+             LIMIT 1",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getRowArray();
+
+        if (! $header) {
+            return null;
+        }
+
+        $header['details'] = $this->db->query(
+            "SELECT d.*, p.nama_item
+             FROM penjualan_detail d
+             LEFT JOIN prodmast p ON p.kode_item=d.kode_item
+             WHERE d.toko_id=:toko_id: AND d.jual_id=:jual_id:
+             ORDER BY d.seq_no ASC",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getResultArray();
+
+        $header['payments'] = $this->db->query(
+            "SELECT *
+             FROM penjualan_pembayaran
+             WHERE toko_id=:toko_id: AND jual_id=:jual_id:
+             ORDER BY bayar_id ASC",
+            ['toko_id' => $toko_id, 'jual_id' => $jual_id]
+        )->getResultArray();
+
+        return $header;
+    }
+
+    private function reverseSaleEffects(array $sale, string $toko_id, string $username, string $timestamp, string $reason): void
+    {
+        foreach (($sale['details'] ?? []) as $row) {
+            $qtyStock = round((float) ($row['qty_stock'] ?? 0), 4);
+            if ($qtyStock <= 0) {
+                continue;
+            }
+
+            $this->db->query(
+                "INSERT IGNORE INTO stmast(toko_id, kode_item) VALUES(:toko_id:, :kode_item:)",
+                [
+                    'toko_id' => $toko_id,
+                    'kode_item' => $row['kode_item'],
+                ]
+            );
+
+            $this->db->table('stmast')
+                ->where('toko_id', $toko_id)
+                ->where('kode_item', $row['kode_item'])
+                ->set('jual', 'GREATEST(IFNULL(jual,0)-' . $qtyStock . ',0)', false)
+                ->set('qty', 'IFNULL(qty,0)+' . $qtyStock, false)
+                ->set('rp_saldo_akh', '(IFNULL(qty,0)+' . $qtyStock . ')*IFNULL(acost,0)', false)
+                ->update();
+        }
+
+        $custId = (string) ($sale['cust_id'] ?? 'CUST-GENERAL');
+        if ($custId === 'CUST-GENERAL') {
+            return;
+        }
+
+        $nominalPerPoin = $this->getNominalPerPoin();
+        $earnedPoints = (int) ($sale['earned_points'] ?? 0);
+        $redeemPoints = (int) ($sale['redeem_points'] ?? 0);
+
+        if ($earnedPoints > 0) {
+            $this->mutateCustomerPoints(
+                $toko_id,
+                $custId,
+                (string) $sale['jual_id'],
+                'kurang',
+                $earnedPoints,
+                (float) ($sale['netto'] ?? 0),
+                $nominalPerPoin,
+                $timestamp,
+                $username,
+                $reason . ' - rollback poin hasil belanja'
+            );
+        }
+
+        if ($redeemPoints > 0) {
+            $this->mutateCustomerPoints(
+                $toko_id,
+                $custId,
+                (string) $sale['jual_id'],
+                'tambah',
+                $redeemPoints,
+                (float) ($sale['redeem_nominal'] ?? $redeemPoints),
+                $nominalPerPoin,
+                $timestamp,
+                $username,
+                $reason . ' - pengembalian poin redeem'
+            );
+        }
+    }
+
+    private function awardPointsFromSale(string $toko_id, string $custId, string $jualId, float $nominalBelanja, string $timestamp, string $username): int
+    {
+        $nominalPerPoin = $this->getNominalPerPoin();
+        $points = $nominalPerPoin > 0 ? (int) floor($nominalBelanja / $nominalPerPoin) : 0;
+        if ($points <= 0) {
+            return 0;
+        }
+
+        $this->mutateCustomerPoints(
+            $toko_id,
+            $custId,
+            $jualId,
+            'tambah',
+            $points,
+            $nominalBelanja,
+            $nominalPerPoin,
+            $timestamp,
+            $username,
+            'Poin dari transaksi penjualan'
+        );
+
+        return $points;
+    }
+
+    private function mutateCustomerPoints(
+        string $tokoId,
+        string $custId,
+        string $trxId,
+        string $jenis,
+        int $points,
+        float $nominalTransaksi,
+        int $nominalPerPoin,
+        string $tanggal,
+        string $username,
+        string $keterangan
+    ): int {
+        $points = max(0, $points);
+        if ($custId === 'CUST-GENERAL' || $points <= 0) {
+            return 0;
+        }
+
+        $customer = $this->db->query(
+            "SELECT poin FROM customer WHERE cust_id=:cust_id: LIMIT 1",
+            ['cust_id' => $custId]
+        )->getRowArray();
+        if (! $customer) {
+            return 0;
+        }
+
+        $before = (int) ($customer['poin'] ?? 0);
+        $after = $jenis === 'tambah'
+            ? $before + $points
+            : max(0, $before - $points);
+        $effectiveIn = $jenis === 'tambah' ? $after - $before : 0;
+        $effectiveOut = $jenis === 'kurang' ? $before - $after : 0;
+
+        $this->db->table('customer')
+            ->where('cust_id', $custId)
+            ->update([
+                'poin' => $after,
+                'updid' => $username,
+                'updtime' => $tanggal,
+            ]);
+
+        $this->db->table('history_poin_member')->insert([
+            'toko_id' => $tokoId,
+            'cust_id' => $custId,
+            'trx_id' => $trxId,
+            'tanggal' => $tanggal,
+            'jenis' => $jenis,
+            'nominal_transaksi' => $nominalTransaksi,
+            'nominal_per_poin' => $nominalPerPoin,
+            'poin_masuk' => $effectiveIn,
+            'poin_keluar' => $effectiveOut,
+            'poin_before' => $before,
+            'poin_after' => $after,
+            'keterangan' => $keterangan,
+            'updid' => $username,
+        ]);
+
+        return $jenis === 'tambah' ? $effectiveIn : $effectiveOut;
     }
 
     public function getReceiptData(string $toko_id, string $jual_id): ?array
