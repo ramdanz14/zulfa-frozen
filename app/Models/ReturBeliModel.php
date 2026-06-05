@@ -24,12 +24,7 @@ class ReturBeliModel extends Model
 
     public function getClosingDate(string $toko_id): string
     {
-        $row = $this->db->query(
-            "SELECT nilai FROM const WHERE rkey=:rkey:",
-            ['rkey' => 'closing-' . $toko_id]
-        )->getRowArray();
-
-        return $row['nilai'] ?? date('Y-m-01');
+        return GetClosingDateByToko($toko_id);
     }
 
     public function getEligiblePurchaseOptions(string $toko_id, ?string $includeBeliId = null): array
