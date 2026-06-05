@@ -137,6 +137,27 @@ $routes->group('poinmember', static function ($route) {
     $route->post('hard-reset', 'Poinmember::hardReset');
 });
 
+$routes->group('so', static function ($route) {
+    $route->get('', 'So::index');
+    $route->get('input', 'So::input');
+    $route->get('hasil', 'So::hasil');
+    $route->get('satuan', 'So::satuan');
+    $route->get('history', 'So::history');
+    $route->post('create-all', 'So::createAll');
+    $route->post('create-kategori', 'So::createKategori');
+    $route->post('ajax-input', 'So::ajaxInput');
+    $route->patch('input-save', 'So::saveInput');
+    $route->post('history-input', 'So::historyInput');
+    $route->post('ajax-hasil', 'So::ajaxHasil');
+    $route->post('summary', 'So::summary');
+    $route->post('adjust-all', 'So::adjustAll');
+    $route->post('search-item', 'So::searchItem');
+    $route->post('ajax-adjust', 'So::ajaxAdjust');
+    $route->put('adjust', 'So::storeAdjust');
+    $route->delete('adjust', 'So::deleteAdjust');
+    $route->post('history-data', 'So::historyData');
+});
+
 $routes->group('jual', static function ($route) {
     $route->get('', 'Jual::index');
     $route->get('search-item', 'Jual::searchItem');
