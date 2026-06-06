@@ -199,6 +199,24 @@ $routes->group('bap', static function ($route) {
     $route->delete('', 'Bap::delete');
 });
 
+$routes->group('konversi', static function ($route) {
+    $route->get('', 'Konversi::index');
+    $route->get('add', 'Konversi::add');
+    $route->get('show/(:segment)', 'Konversi::show/$1');
+    $route->get('recipe', 'Konversi::recipe');
+    $route->get('search-result', 'Konversi::searchResult');
+    $route->get('result-recipe/(:segment)', 'Konversi::resultRecipe/$1');
+    $route->get('search-item', 'Konversi::searchItem');
+    $route->get('item-detail/(:segment)', 'Konversi::itemDetail/$1');
+    $route->post('ajax', 'Konversi::ajax');
+    $route->post('recipe-ajax', 'Konversi::recipeAjax');
+    $route->put('', 'Konversi::store');
+    $route->delete('', 'Konversi::delete');
+    $route->put('recipe', 'Konversi::recipeStore');
+    $route->patch('recipe', 'Konversi::recipeUpdate');
+    $route->delete('recipe', 'Konversi::recipeDelete');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');

@@ -173,6 +173,7 @@
     let activeStep = 1;
     let satuanRows = <?= json_encode($formData['satuan'] ?? []) ?>;
     let storeRows = <?= json_encode($formData['store'] ?? []) ?>;
+    let previousSatuanRows = JSON.parse(JSON.stringify(satuanRows));
 
     $(function() {
         $('.select2').select2({
@@ -289,16 +290,51 @@
     });
 
     function syncHargaTable() {
+        const oldQtyBySat = {};
+        previousSatuanRows.forEach(row => oldQtyBySat[row.sat_id] = Number(row.qty_konversi || 0));
         const existingMap = {};
         storeRows.forEach(row => existingMap[row.sat_id] = row);
+        const oldBaseRow = storeRows.find(row => (oldQtyBySat[row.sat_id] || 0) === 1) || null;
+        const oldBasePokok = Number(oldBaseRow?.harga_pokok || 0);
+        const oldBaseJual = Number(oldBaseRow?.harga_jual || 0);
+
         storeRows = satuanRows.map(row => {
             const old = existingMap[row.sat_id] || {};
+            const newQty = Number(row.qty_konversi || 0);
+            const oldQty = Number(oldQtyBySat[row.sat_id] || 0);
+            let hargaPokok = Number(old.harga_pokok || 0);
+            let hargaJual = Number(old.harga_jual || 0);
+
+            if (oldQty > 0 && newQty > 0 && oldQty !== newQty) {
+                const unitPokok = hargaPokok > 0 ? (hargaPokok / oldQty) : 0;
+                const unitJual = hargaJual > 0 ? (hargaJual / oldQty) : 0;
+                hargaPokok = unitPokok > 0 ? Math.round(unitPokok * newQty) : 0;
+                hargaJual = unitJual > 0 ? Math.round(unitJual * newQty) : 0;
+            }
+
+            if ((!old || Object.keys(old).length === 0) && newQty > 0) {
+                if (oldBasePokok > 0) {
+                    hargaPokok = Math.round(oldBasePokok * newQty);
+                }
+                if (oldBaseJual > 0) {
+                    hargaJual = Math.round(oldBaseJual * newQty);
+                }
+            }
+
+            if (newQty === 1 && oldBasePokok > 0 && hargaPokok === 0) {
+                hargaPokok = oldBasePokok;
+            }
+            if (newQty === 1 && oldBaseJual > 0 && hargaJual === 0) {
+                hargaJual = oldBaseJual;
+            }
+
             return {
                 sat_id: row.sat_id,
-                harga_pokok: Number(old.harga_pokok || 0),
-                harga_jual: Number(old.harga_jual || 0)
+                harga_pokok: hargaPokok,
+                harga_jual: hargaJual
             };
         });
+        previousSatuanRows = JSON.parse(JSON.stringify(satuanRows));
         renderHargaTable();
     }
 
