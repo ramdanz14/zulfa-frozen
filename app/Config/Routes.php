@@ -185,6 +185,20 @@ $routes->group('lapjual', static function ($route) {
     $route->post('summary', 'Lapjual::summary');
 });
 
+$routes->group('bap', static function ($route) {
+    $route->get('', 'Bap::index');
+    $route->get('add', 'Bap::add');
+    $route->get('edit/(:segment)', 'Bap::edit/$1');
+    $route->get('show/(:segment)', 'Bap::show/$1');
+    $route->get('print/(:segment)', 'Bap::print/$1');
+    $route->get('search-item', 'Bap::searchItem');
+    $route->get('item-detail/(:segment)', 'Bap::itemDetail/$1');
+    $route->post('ajax', 'Bap::ajax');
+    $route->put('', 'Bap::store');
+    $route->patch('', 'Bap::update');
+    $route->delete('', 'Bap::delete');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
