@@ -26,7 +26,7 @@ class ReturBeli extends BaseController
         $tokoId = (string) session('toko_id');
         $data['title'] = 'Tambah Retur Pembelian';
         $data['mode'] = 'create';
-        $data['purchaseOptions'] = $this->returBeliModel->getEligiblePurchaseOptions($tokoId);
+        $data['supplierOptions'] = $this->returBeliModel->getSupplierOptions($tokoId);
         $data['formData'] = $this->returBeliModel->getFormData($tokoId);
         cek_akses_menu('returbeli/form', $data, 'akses_create');
     }
@@ -45,7 +45,7 @@ class ReturBeli extends BaseController
 
         $data['title'] = 'Edit Retur Pembelian';
         $data['mode'] = 'edit';
-        $data['purchaseOptions'] = $this->returBeliModel->getEligiblePurchaseOptions($tokoId, (string) ($formData['header']['beli_id'] ?? ''));
+        $data['supplierOptions'] = $this->returBeliModel->getSupplierOptions($tokoId, (string) ($formData['header']['supco'] ?? ''));
         $data['formData'] = $formData;
         cek_akses_menu('returbeli/form', $data, 'akses_update');
     }
@@ -67,20 +67,48 @@ class ReturBeli extends BaseController
         ]);
     }
 
-    public function source(string $beli_id)
+    public function source(string $supco)
     {
         $returId = trim((string) $this->request->getGet('retur_id'));
         $statusRetur = strtoupper(trim((string) $this->request->getGet('status_retur')));
-        $data = $this->returBeliModel->getSourcePurchasePayload(
+        $beliId = trim((string) $this->request->getGet('beli_id'));
+        $data = $this->returBeliModel->getSupplierItemPayload(
             (string) session('toko_id'),
-            $beli_id,
+            $supco,
             $returId !== '' ? $returId : null,
-            $statusRetur === 'SELESAI'
+            $statusRetur === 'SELESAI',
+            $beliId !== '' ? $beliId : null
         );
         if (!$data) {
-            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Data pembelian asal tidak ditemukan']);
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Data supplier retur tidak ditemukan']);
         }
         return $this->response->setJSON(['tipe' => 'success', 'data' => $data]);
+    }
+
+    public function searchItem()
+    {
+        $term = trim((string) $this->request->getGet('term'));
+        if ($term === '') {
+            return $this->response->setJSON(['results' => []]);
+        }
+        $items = $this->returBeliModel->searchItems((string) session('toko_id'), $term);
+        $results = array_map(static function ($row) {
+            return [
+                'id' => $row['kode_item'],
+                'text' => trim($row['kode_item'] . ' - ' . $row['nama_item']),
+            ];
+        }, $items);
+
+        return $this->response->setJSON(['results' => $results]);
+    }
+
+    public function itemDetail(string $kode_item)
+    {
+        $item = $this->returBeliModel->getItemPayload((string) session('toko_id'), $kode_item);
+        if (!$item) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Item tidak ditemukan']);
+        }
+        return $this->response->setJSON(['tipe' => 'success', 'data' => $item]);
     }
 
     public function show(string $retur_id)

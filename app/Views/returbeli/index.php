@@ -103,9 +103,12 @@
             },
             {
                 data: 'supplier_nama',
-                title: 'Supplier / Faktur',
+                title: 'Supplier / Settlement',
                 render: function(data, type, row) {
-                    return `<div class="fw-semibold">${data || row.supco}</div><small class="text-muted">${row.beli_id} / ${row.invoice || '-'}</small>`;
+                    const settlementText = row.settlement_mode === 'CASHBACK'
+                        ? 'Cashback Supplier'
+                        : `${row.beli_id || '-'} / ${row.invoice || '-'}`;
+                    return `<div class="fw-semibold">${data || row.supco}</div><small class="text-muted">${settlementText}</small>`;
                 }
             },
             {
@@ -184,7 +187,7 @@
                     <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">ID Retur</small><div class="fw-semibold">${data.retur_id}</div></div></div>
                     <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Tanggal</small><div class="fw-semibold">${new Date(data.tanggal).toLocaleDateString('id-ID')}</div></div></div>
                     <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Supplier</small><div class="fw-semibold">${data.supplier_nama || data.supco}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Faktur Asal</small><div class="fw-semibold">${data.beli_id} / ${data.invoice || '-'}</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Penyelesaian</small><div class="fw-semibold">${data.settlement_mode === 'CASHBACK' ? 'Cashback Supplier' : `${data.beli_id || '-'} / ${data.invoice || '-'}`}</div></div></div>
                 </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Status</small><div class="fw-semibold">${data.status_retur}</div></div></div>

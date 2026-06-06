@@ -4,10 +4,11 @@
 <?php
 /**
  * @var string $mode
- * @var array $purchaseOptions
+ * @var array $supplierOptions
  */
 $header = $formData['header'] ?? [];
-$purchase = $formData['purchase'] ?? null;
+$supplier = $formData['supplier'] ?? null;
+$debtOptions = $formData['debt_options'] ?? [];
 $detailRows = $formData['details'] ?? [];
 ?>
 <div class="body-wrapper">
@@ -17,7 +18,7 @@ $detailRows = $formData['details'] ?? [];
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h4 class="fw-semibold mb-2"><?= $mode === 'edit' ? 'Edit Retur Pembelian' : 'Tambah Retur Pembelian' ?></h4>
-                        <p class="mb-0">Retur hanya untuk pembelian kredit yang sudah `TERIMA` dan belum `LUNAS`.</p>
+                        <p class="mb-0">Pilih supplier untuk settlement, lalu tambahkan item aktif satu per satu seperti di pembelian. Stok hanya dipotong saat status `SELESAI`.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
                         <a href="<?= base_url('/returbeli') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke List</a>
@@ -53,15 +54,29 @@ $detailRows = $formData['details'] ?? [];
                             </select>
                         </div>
                         <div class="col-lg-3">
-                            <label class="form-label">Faktur Asal</label>
-                            <select class="form-select select2" name="beli_id" id="beli_id" required>
-                                <option value="">Pilih faktur pembelian</option>
-                                <?php foreach ($purchaseOptions as $option) : ?>
-                                    <option value="<?= esc($option['beli_id']) ?>" <?= ($header['beli_id'] ?? '') === $option['beli_id'] ? 'selected' : '' ?>>
-                                        <?= esc($option['beli_id']) ?> | <?= esc($option['supplier_nama'] ?? $option['supco']) ?> | <?= esc($option['invoice']) ?> | Rp <?= number_format((float) ($option['sisa_bayar'] ?? 0), 0, ',', '.') ?>
+                            <label class="form-label">Supplier</label>
+                            <select class="form-select select2" name="supco" id="supco" required>
+                                <option value="">Pilih supplier</option>
+                                <?php foreach ($supplierOptions as $option) : ?>
+                                    <option value="<?= esc($option['supco']) ?>" <?= ($header['supco'] ?? '') === $option['supco'] ? 'selected' : '' ?>>
+                                        <?= esc($option['supplier_nama'] ?? $option['supco']) ?> (<?= esc($option['supco']) ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                        <div class="col-lg-4">
+                            <label class="form-label">Penyelesaian Retur</label>
+                            <select class="form-select" name="settlement_mode" id="settlement_mode">
+                                <option value="POTONG_HUTANG" <?= ($header['settlement_mode'] ?? 'POTONG_HUTANG') === 'POTONG_HUTANG' ? 'selected' : '' ?>>POTONG HUTANG</option>
+                                <option value="CASHBACK" <?= ($header['settlement_mode'] ?? '') === 'CASHBACK' ? 'selected' : '' ?>>CASHBACK SUPPLIER</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-8" id="debt-select-wrapper">
+                            <label class="form-label">Faktur Hutang Target</label>
+                            <select class="form-select select2" name="beli_id" id="beli_id">
+                                <option value="">Pilih faktur hutang supplier</option>
+                            </select>
+                            <small class="text-muted">Dipakai hanya saat penyelesaian `POTONG HUTANG`.</small>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Keterangan</label>
@@ -71,40 +86,36 @@ $detailRows = $formData['details'] ?? [];
                 </div>
             </div>
 
-            <div id="purchase-info" class="<?= $purchase ? '' : 'd-none' ?>">
+            <div id="supplier-info" class="<?= $supplier ? '' : 'd-none' ?>">
                 <div class="card mb-3">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Informasi Pembelian Asal</h5>
+                        <h5 class="mb-0">Informasi Supplier Retur</h5>
                     </div>
-                    <div class="card-body" id="purchase-summary"></div>
+                    <div class="card-body" id="supplier-summary"></div>
+                </div>
+            </div>
+
+            <div id="debt-info" class="d-none">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Informasi Faktur Potong Hutang</h5>
+                    </div>
+                    <div class="card-body" id="debt-summary"></div>
                 </div>
             </div>
 
             <div class="card mb-3">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Detail Item Retur</h5>
-                    <small class="text-muted">Qty retur tidak boleh melebihi stok saat ini dan qty pembelian yang masih bisa diretur.</small>
+                <div class="card-header d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center">
+                    <div>
+                        <h5 class="mb-1">Detail Item Retur</h5>
+                        <small class="text-muted">Cari item aktif lalu tambahkan ke list retur.</small>
+                    </div>
+                    <div class="w-100" style="max-width: 420px;">
+                        <select class="form-select" id="item-search"></select>
+                    </div>
                 </div>
                 <div class="card-body p-2">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm align-middle mb-0" id="retur-detail-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>No</th>
-                                    <th>Item</th>
-                                    <th>Qty Beli</th>
-                                    <th>Sudah Diretur</th>
-                                    <th>Stok Saat Ini</th>
-                                    <th>Satuan Retur</th>
-                                    <th>Qty Retur</th>
-                                    <th>Qty Stok</th>
-                                    <th>Price</th>
-                                    <th>Gross Retur</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
+                    <div id="detail-list" class="d-grid gap-2"></div>
                 </div>
             </div>
 
@@ -142,11 +153,12 @@ $detailRows = $formData['details'] ?? [];
 
 <?= $this->section('javascript') ?>
 <script>
-    const mode = '<?= esc($mode) ?>';
     const existingHeader = <?= json_encode($header, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-    const initialPurchase = <?= json_encode($purchase, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const initialSupplier = <?= json_encode($supplier, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const initialDebtOptions = <?= json_encode($debtOptions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const initialDetails = <?= json_encode($detailRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-    let purchaseData = initialPurchase;
+    let supplierData = initialSupplier;
+    let debtOptions = initialDebtOptions || [];
     let detailRows = hydrateRows(initialDetails || []);
 
     $(function() {
@@ -154,143 +166,276 @@ $detailRows = $formData['details'] ?? [];
             width: '100%'
         });
 
+        $('#item-search').select2({
+            width: '100%',
+            placeholder: 'Cari item / barcode',
+            minimumInputLength: 1,
+            ajax: {
+                url: '<?= base_url('/returbeli/search-item') ?>',
+                dataType: 'json',
+                delay: 250,
+                data: params => ({
+                    term: params.term
+                }),
+                processResults: data => data
+            }
+        });
+
+        $('#item-search').on('select2:select', function(e) {
+            const kodeItem = e.params.data.id;
+            addItemByCode(kodeItem);
+            $(this).val(null).trigger('change');
+        });
+
         applyMoneyMask('#form-retur');
-        renderPurchaseSummary();
-        renderDetailTable();
+        populateDebtOptions(existingHeader.beli_id || '');
+        renderSupplierSummary();
+        renderDebtSummary();
+        renderDetailList();
         recalcSummary();
+        toggleSettlementFields();
     });
 
-    $('#beli_id').on('change', function() {
-        const beliId = $(this).val();
-        if (!beliId) {
-            purchaseData = null;
-            detailRows = [];
-            renderPurchaseSummary();
-            renderDetailTable();
+    $('#supco').on('change', function() {
+        const supco = $(this).val();
+        if (!supco) {
+            supplierData = null;
+            debtOptions = [];
+            populateDebtOptions('');
+            renderSupplierSummary();
+            renderDebtSummary();
             recalcSummary();
             return;
         }
 
-        $.getJSON(`<?= base_url('/returbeli/source') ?>/${beliId}`, {
+        $.getJSON(`<?= base_url('/returbeli/source') ?>/${supco}`, {
             retur_id: $('#retur_id').val(),
-            status_retur: $('#status_retur').val()
+            status_retur: $('#status_retur').val(),
+            beli_id: $('#beli_id').val()
         }, function(res) {
             if (res.tipe !== 'success') {
-                toastr.error(res.data || 'Gagal memuat pembelian asal');
+                toastr.error(res.data || 'Gagal memuat data supplier retur');
                 return;
             }
-            purchaseData = res.data.header || null;
-            detailRows = hydrateRows(res.data.details || []);
-            renderPurchaseSummary();
-            renderDetailTable();
+            supplierData = res.data.header || null;
+            debtOptions = res.data.debt_options || [];
+            populateDebtOptions(existingHeader.beli_id || '');
+            renderSupplierSummary();
+            renderDebtSummary();
             recalcSummary();
         }).fail(function(xhr) {
-            toastr.error(extractErrorMessage(xhr, 'Gagal memuat pembelian asal'));
+            toastr.error(extractErrorMessage(xhr, 'Gagal memuat data supplier retur'));
         });
     });
 
-    $('#status_retur').on('change', function() {
+    $('#status_retur, #settlement_mode').on('change', function() {
+        toggleSettlementFields();
+        renderDebtSummary();
         renderWarning();
     });
 
-    function renderPurchaseSummary() {
-        if (!purchaseData) {
-            $('#purchase-info').addClass('d-none');
-            $('#purchase-summary').empty();
+    $('#beli_id').on('change', function() {
+        renderDebtSummary();
+        renderWarning();
+    });
+
+    function addItemByCode(kodeItem) {
+        if (detailRows.some((row) => String(row.kode_item) === String(kodeItem))) {
+            toastr.error('Item sudah ada di list retur');
             return;
         }
 
-        $('#purchase-info').removeClass('d-none');
-        $('#purchase-summary').html(`
+        $.getJSON(`<?= base_url('/returbeli/item-detail') ?>/${kodeItem}`, function(res) {
+            if (res.tipe !== 'success') {
+                toastr.error(res.data || 'Item tidak ditemukan');
+                return;
+            }
+
+            const item = res.data || {};
+            const satuan = item.satuan || [];
+            const firstSat = satuan[0] || {
+                sat_id: '-',
+                qty_konversi: 1,
+                harga_pokok: 0
+            };
+            detailRows.push({
+                kode_item: item.kode_item,
+                barcode: item.barcode || '',
+                nama_item: item.nama_item || item.kode_item,
+                stok_aktual: Number(item.stok_aktual || 0),
+                satuan_options: satuan,
+                source_sat_id: firstSat.sat_id,
+                source_qty_konversi: Number(firstSat.qty_konversi || 1),
+                source_price: Number(firstSat.harga_pokok || 0),
+                base_price_unit: roundNumber(Number(firstSat.harga_pokok || 0) / Math.max(Number(firstSat.qty_konversi || 1), 1), 4),
+                sat_id: firstSat.sat_id,
+                qty_konversi: Number(firstSat.qty_konversi || 1),
+                qty_retur: 0,
+                qty_stok: 0,
+                price: Number(firstSat.harga_pokok || 0),
+                gross_retur: 0
+            });
+            renderDetailList();
+            recalcSummary();
+        }).fail(function(xhr) {
+            toastr.error(extractErrorMessage(xhr, 'Gagal memuat item'));
+        });
+    }
+
+    function populateDebtOptions(selectedValue = '') {
+        const select = $('#beli_id');
+        select.empty().append('<option value="">Pilih faktur hutang supplier</option>');
+        debtOptions.forEach((row) => {
+            const option = new Option(
+                `${row.beli_id} | ${row.invoice || '-'} | Rp ${formatMoneyValue(row.sisa_bayar_form || 0)}`,
+                row.beli_id,
+                false,
+                String(selectedValue) === String(row.beli_id)
+            );
+            select.append(option);
+        });
+        select.trigger('change.select2');
+    }
+
+    function toggleSettlementFields() {
+        const isPotongHutang = $('#settlement_mode').val() === 'POTONG_HUTANG';
+        $('#debt-select-wrapper').toggleClass('d-none', !isPotongHutang);
+        if (!isPotongHutang) {
+            $('#debt-info').addClass('d-none');
+        }
+    }
+
+    function renderSupplierSummary() {
+        if (!supplierData) {
+            $('#supplier-info').addClass('d-none');
+            $('#supplier-summary').empty();
+            return;
+        }
+
+        $('#supplier-info').removeClass('d-none');
+        $('#supplier-summary').html(`
             <div class="row g-3">
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Supplier</small><div class="fw-semibold">${purchaseData.supplier_nama || purchaseData.supco}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Invoice</small><div class="fw-semibold">${purchaseData.invoice || '-'}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Total Gross</small><div class="fw-semibold">Rp ${formatMoneyValue(purchaseData.total_gross || 0)}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Sisa Hutang Saat Ini</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(purchaseData.sisa_bayar_form || 0)}</div></div></div>
+                <div class="col-lg-6"><div class="border rounded p-3 h-100"><small class="text-muted">Supplier</small><div class="fw-semibold">${supplierData.supplier_nama || supplierData.supco}</div></div></div>
+                <div class="col-lg-6"><div class="border rounded p-3 h-100"><small class="text-muted">Total Hutang Supplier Tersedia</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(supplierData.total_outstanding_debt || 0)}</div></div></div>
             </div>
         `);
     }
 
-    function renderDetailTable() {
-        const tbody = $('#retur-detail-table tbody');
-        tbody.empty();
+    function getSelectedDebt() {
+        const selectedId = $('#beli_id').val();
+        return (debtOptions || []).find((row) => String(row.beli_id) === String(selectedId)) || null;
+    }
+
+    function renderDebtSummary() {
+        const isPotongHutang = $('#settlement_mode').val() === 'POTONG_HUTANG';
+        const debt = getSelectedDebt();
+        if (!isPotongHutang || !debt) {
+            $('#debt-info').addClass('d-none');
+            $('#debt-summary').empty();
+            return;
+        }
+
+        $('#debt-info').removeClass('d-none');
+        $('#debt-summary').html(`
+            <div class="row g-3">
+                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Beli ID</small><div class="fw-semibold">${debt.beli_id}</div></div></div>
+                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Invoice</small><div class="fw-semibold">${debt.invoice || '-'}</div></div></div>
+                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Status Bayar</small><div class="fw-semibold">${debt.status_bayar || '-'}</div></div></div>
+                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Sisa Hutang</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(debt.sisa_bayar_form || 0)}</div></div></div>
+            </div>
+        `);
+    }
+
+    function renderDetailList() {
+        const wrapper = $('#detail-list');
+        wrapper.empty();
 
         if (!detailRows.length) {
-            tbody.append('<tr><td colspan="10" class="text-center text-muted py-4">Pilih faktur pembelian asal terlebih dulu.</td></tr>');
+            wrapper.html('<div class="text-center text-muted py-4">Cari item aktif untuk menambahkan ke retur.</div>');
             return;
         }
 
         detailRows.forEach((row, idx) => {
-            const satOptions = (row.satuan_options || []).map((opt) => `<option value="${opt.sat_id}" data-konversi="${opt.qty_konversi}" ${String(row.sat_id || row.source_sat_id) === String(opt.sat_id) ? 'selected' : ''}>${opt.sat_id}</option>`).join('');
+            const satOptions = (row.satuan_options || []).map((opt) => `<option value="${opt.sat_id}" data-konversi="${opt.qty_konversi}" data-hpp="${opt.harga_pokok || 0}" ${String(row.sat_id || row.source_sat_id) === String(opt.sat_id) ? 'selected' : ''}>${opt.sat_id}</option>`).join('');
             const maxSelected = getMaxSelectedQty(row);
-            tbody.append(`
-                <tr data-index="${idx}">
-                    <td class="text-center">${idx + 1}</td>
-                    <td>
-                        <div class="fw-semibold">${row.nama_item || row.kode_item}</div>
-                        <small class="text-muted">${row.kode_item} ${row.barcode ? '/ ' + row.barcode : ''}</small>
-                    </td>
-                    <td>
-                        <div class="text-end">${Number(row.qty_beli || 0).toLocaleString('id-ID')}</div>
-                        <small class="text-muted">${row.source_sat_id}</small>
-                    </td>
-                    <td class="text-end">${Number(row.returned_qty_stock || 0).toLocaleString('id-ID')} <small class="text-muted d-block">stok dasar</small></td>
-                    <td class="text-end">${Number(row.stok_aktual || 0).toLocaleString('id-ID')} <small class="text-muted d-block">stok dasar</small></td>
-                    <td>
-                        <select class="form-select form-select-sm row-sat">
-                            ${satOptions}
-                        </select>
-                        <small class="text-muted hint-max">Maks: ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id || row.source_sat_id}</small>
-                    </td>
-                    <td>
-                        <input type="number" min="0" step="1" class="form-control form-control-sm text-end row-qty" value="${row.qty_retur || 0}">
-                    </td>
-                    <td class="text-end row-qty-stock">${Number(row.qty_stok || 0).toLocaleString('id-ID')}</td>
-                    <td><input type="text" class="form-control form-control-sm money text-end row-price" value="${row.price || 0}" readonly></td>
-                    <td><input type="text" class="form-control form-control-sm money text-end row-gross" value="${row.gross_retur || 0}" readonly></td>
-                </tr>
+            wrapper.append(`
+                <div class="border rounded p-1" data-index="${idx}">
+                    <div class="row align-items-center">
+                        <div class="col-10 col-md-3">
+                            <div class="fw-semibold">${row.nama_item || row.kode_item}</div>
+                            <small class="text-muted">${row.kode_item} || Stok dasar tersedia: ${Number(row.stok_aktual || 0).toLocaleString('id-ID')}</small></br>
+                            <small class="text-muted">Maks retur sesuai stok saat ini: ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id || row.source_sat_id}. </small>
+
+                        </div>
+                         <div class="col-1 col-md-1 text-end order-md-last">
+                            <button type="button" class="btn btn-sm btn-outline-danger row-delete"><i class="ti ti-trash fs-5"></i></button>
+                        </div>
+                        <div class="col-6 col-md-2 col-lg-2">
+                            <label class="form-label">Satuan</label>
+                            <select class="form-select form-select-sm row-sat">${satOptions}</select>
+                        </div>
+                       <div class="col-6 col-md-2 col-lg-2">
+                            <label class="form-label">Qty Retur</label>
+                            <input type="number" min="0" step="1" class="form-control form-control-sm text-end row-qty" value="${row.qty_retur || 0}">
+                        </div>
+                       
+                        <div class="col-6 col-md-2 col-lg-2">
+                            <label class="form-label">Price</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-price" value="${row.price || 0}" readonly>
+                        </div>
+                       <div class="col-6 col-md-2 col-lg-2">
+                        <label class="form-label">Gross</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-gross" value="${row.gross_retur || 0}" readonly>
+                        </div>
+                        <input type="hidden" class="form-control form-control-sm text-end row-qty-stock" value="${Number(row.qty_stok || 0).toLocaleString('id-ID')}" readonly>
+                       
+                    </div>
+                    
+                </div>
             `);
         });
 
-        applyMoneyMask('#retur-detail-table');
+        applyMoneyMask('#detail-list');
     }
 
-    $('#retur-detail-table').on('change', '.row-sat', function() {
-        const tr = $(this).closest('tr');
-        const idx = Number(tr.data('index'));
+    $('#detail-list').on('change', '.row-sat', function() {
+        const card = $(this).closest('[data-index]');
+        const idx = Number(card.data('index'));
         const row = detailRows[idx];
         const option = $(this).find(':selected');
         row.sat_id = option.val();
         row.qty_konversi = Number(option.data('konversi') || 1);
-        $('#retur-detail-table .row-qty').each(function() {
-            // Memicu event input untuk setiap baris .row-qty yang ada di tabel
-            $(this).trigger('input');
-        });
+        row.base_price_unit = roundNumber(Number(option.data('hpp') || 0) / Math.max(row.qty_konversi, 1), 4);
         recalcRow(row);
-        renderDetailTable();
+        renderDetailList();
         recalcSummary();
     });
 
-    $('#retur-detail-table').on('input', '.row-qty', function() {
-        const tr = $(this).closest('tr');
-        const idx = Number(tr.data('index'));
+    $('#detail-list').on('input', '.row-qty', function() {
+        const card = $(this).closest('[data-index]');
+        const idx = Number(card.data('index'));
         const row = detailRows[idx];
         row.qty_retur = Number($(this).val() || 0);
         recalcRow(row);
         const maxSelected = getMaxSelectedQty(row);
         if (row.qty_retur - maxSelected > 0.0001) {
-            toastr.error(`Qty retur ${row.kode_item} melebihi batas maksimal ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id}`);
+            toastr.error(`Qty retur ${row.kode_item} melebihi stok tersedia`);
             row.qty_retur = maxSelected;
             recalcRow(row);
-            renderDetailTable();
+            renderDetailList();
         } else {
-            const currentTr = $('#retur-detail-table tbody').find(`tr[data-index="${idx}"]`);
-            currentTr.find('.row-qty-stock').text(Number(row.qty_stok || 0).toLocaleString('id-ID'));
-            currentTr.find('.row-price').val(row.price || 0);
-            currentTr.find('.row-gross').val(row.gross_retur || 0);
-            currentTr.find('.hint-max').text(`Maks: ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id}`);
-            applyMoneyMask('#retur-detail-table');
+            card.find('.row-qty-stock').val(Number(row.qty_stok || 0).toLocaleString('id-ID'));
+            card.find('.row-price').val(row.price || 0);
+            card.find('.row-gross').val(row.gross_retur || 0);
+            applyMoneyMask('#detail-list');
         }
+        recalcSummary();
+    });
+
+    $('#detail-list').on('click', '.row-delete', function() {
+        const idx = Number($(this).closest('[data-index]').data('index'));
+        detailRows.splice(idx, 1);
+        renderDetailList();
         recalcSummary();
     });
 
@@ -304,9 +449,8 @@ $detailRows = $formData['details'] ?? [];
 
     function getMaxSelectedQty(row) {
         const qtyKonversi = Number(row.qty_konversi || row.source_qty_konversi || 1);
-        const maxBySource = Number(row.max_qty_stock_source || 0) / qtyKonversi;
         const maxByStock = Number(row.stok_aktual || 0) / qtyKonversi;
-        return roundNumber(Math.max(Math.min(maxBySource, maxByStock), 0), 2);
+        return roundNumber(Math.max(maxByStock, 0), 2);
     }
 
     function recalcSummary() {
@@ -331,33 +475,40 @@ $detailRows = $formData['details'] ?? [];
 
     function renderWarning() {
         const totalRetur = getCurrentTotalRetur();
-        const sisaBayar = Number(purchaseData?.sisa_bayar_form || 0);
         const isSelesai = $('#status_retur').val() === 'SELESAI';
+        const settlementMode = $('#settlement_mode').val();
+        const debt = getSelectedDebt();
         const warningBox = $('#retur-warning');
         warningBox.empty();
 
-        if (!isSelesai || !purchaseData || totalRetur <= 0) {
+        if (!isSelesai || totalRetur <= 0) {
             return;
         }
 
-        if (totalRetur - sisaBayar > 0.0001) {
-            warningBox.html(`
-                <div class="alert customize-alert alert-dismissible alert-light-danger bg-danger-subtle text-danger fade show remove-close-icon" role="alert">
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    <div class="d-flex align-items-center me-3 me-md-0">
-                        <i class="ti ti-cancel fs-5 me-2 text-danger"></i>
-                        <span class="text-dark">Total retur sebesar <strong class="text-danger font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> melebihi <strong>sisa hutang</strong> pembelian asal sebesar <strong class="text-primary">Rp ${formatMoneyValue(sisaBayar)}</strong>.</span>
+        if (settlementMode === 'POTONG_HUTANG') {
+            if (!debt) {
+                warningBox.html('<div class="alert alert-warning border-warning-subtle">Pilih faktur hutang supplier terlebih dulu untuk menyelesaikan retur dengan potong hutang.</div>');
+                return;
+            }
+
+            if (totalRetur - Number(debt.sisa_bayar_form || 0) > 0.0001) {
+                warningBox.html(`
+                    <div class="alert customize-alert alert-dismissible alert-light-danger bg-danger-subtle text-danger fade show remove-close-icon" role="alert">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <div class="d-flex align-items-center me-3 me-md-0">
+                            <i class="ti ti-cancel fs-5 me-2 text-danger"></i>
+                            <span class="text-dark">Total retur sebesar <strong class="text-danger font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> melebihi <strong>sisa hutang</strong> faktur terpilih sebesar <strong class="text-primary">Rp ${formatMoneyValue(debt.sisa_bayar_form || 0)}</strong>.</span>
+                        </div>
                     </div>
-                </div>
-            `);
+                `);
+                return;
+            }
+
+            warningBox.html(`<div class="alert alert-warning border-warning-subtle">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>POTONGAN RETUR</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> ke faktur <strong>${debt.beli_id}</strong>.</div>`);
             return;
         }
 
-        warningBox.html(`
-            <div class="alert alert-warning border-warning-subtle">
-                Saat retur diselesaikan, stok akan dikurangi dari gudang dan sistem akan mencatat <strong>POTONGAN RETUR</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> ke histori pembayaran pembelian.
-            </div>
-        `);
+        warningBox.html(`<div class="alert alert-info border-info-subtle">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>kas masuk</strong> akun <strong>RETUR PEMBELIAN</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> dengan keterangan nomor retur ini.</div>`);
     }
 
     function getCurrentTotalRetur() {
@@ -367,13 +518,13 @@ $detailRows = $formData['details'] ?? [];
     $('#form-retur').on('submit', function(e) {
         e.preventDefault();
 
-        if (!$('#beli_id').val()) {
-            toastr.error('Faktur pembelian asal wajib dipilih');
-            $('#beli_id').next('.select2-container').find('.select2-selection').addClass('is-invalid');
+        if (!$('#supco').val()) {
+            toastr.error('Supplier wajib dipilih');
+            $('#supco').next('.select2-container').find('.select2-selection').addClass('is-invalid');
             return;
         }
+        $('#supco').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
 
-        $('#beli_id').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
         const payloadDetails = detailRows.map((row) => ({
             kode_item: row.kode_item,
             sat_id: row.sat_id || row.source_sat_id,
@@ -390,9 +541,16 @@ $detailRows = $formData['details'] ?? [];
             return;
         }
 
-        if ($('#status_retur').val() === 'SELESAI' && getCurrentTotalRetur() - Number(purchaseData?.sisa_bayar_form || 0) > 0.0001) {
-            toastr.error('Total retur melebihi sisa hutang pembelian asal');
-            return;
+        if ($('#status_retur').val() === 'SELESAI' && $('#settlement_mode').val() === 'POTONG_HUTANG') {
+            const debt = getSelectedDebt();
+            if (!debt) {
+                toastr.error('Faktur hutang target wajib dipilih');
+                return;
+            }
+            if (getCurrentTotalRetur() - Number(debt.sisa_bayar_form || 0) > 0.0001) {
+                toastr.error('Total retur melebihi sisa hutang pada faktur yang dipilih');
+                return;
+            }
         }
 
         $('#detail_json').val(JSON.stringify(payloadDetails));
@@ -425,6 +583,7 @@ $detailRows = $formData['details'] ?? [];
     function hydrateRows(rows) {
         return (rows || []).map((row) => ({
             ...row,
+            stok_aktual: Number(row.stok_aktual || 0),
             qty_retur: Number(row.qty_retur || 0),
             qty_konversi: Number(row.qty_konversi || row.source_qty_konversi || 1),
             qty_stok: Number(row.qty_retur || 0) > 0 ? Number(row.qty_stok || 0) : 0,

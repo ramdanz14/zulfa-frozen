@@ -284,6 +284,8 @@ $routes->group('returbeli', static function ($route) {
     $route->post('ajax', 'ReturBeli::ajax');
     $route->get('add', 'ReturBeli::add');
     $route->get('edit/(:segment)', 'ReturBeli::edit/$1');
+    $route->get('search-item', 'ReturBeli::searchItem');
+    $route->get('item-detail/(:segment)', 'ReturBeli::itemDetail/$1');
     $route->get('source/(:segment)', 'ReturBeli::source/$1');
     $route->get('show/(:segment)', 'ReturBeli::show/$1');
     $route->put('', 'ReturBeli::store');
