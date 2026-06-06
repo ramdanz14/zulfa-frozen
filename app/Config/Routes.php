@@ -217,6 +217,28 @@ $routes->group('konversi', static function ($route) {
     $route->delete('recipe', 'Konversi::recipeDelete');
 });
 
+$routes->group('akunkas', static function ($route) {
+    $route->get('', 'Akunkas::index');
+    $route->post('ajax', 'Akunkas::ajax');
+    $route->put('', 'Akunkas::store');
+    $route->patch('', 'Akunkas::update');
+    $route->delete('', 'Akunkas::delete');
+});
+
+$routes->group('kas', static function ($route) {
+    $route->get('', 'Kas::index');
+    $route->post('ajax', 'Kas::ajax');
+    $route->put('', 'Kas::store');
+    $route->patch('', 'Kas::update');
+    $route->delete('', 'Kas::delete');
+});
+
+$routes->group('summarykas', static function ($route) {
+    $route->get('', 'Summarykas::index');
+    $route->post('ajax', 'Summarykas::ajax');
+    $route->post('summary', 'Summarykas::summary');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
