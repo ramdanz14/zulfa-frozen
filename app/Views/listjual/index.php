@@ -187,7 +187,7 @@
                             `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockedNotice()"><i class="ti ti-lock text-danger"></i> Hapus Terkunci</a>`) :
                         '';
                     const returBtn = akses_menu?.akses_create === 'Y' ?
-                        `<a class="dropdown-item" href="<?= base_url('/returjual') ?>?jual_id=${encodeURIComponent(data.jual_id)}"><i class="ti ti-repeat text-primary"></i> Buat Retur</a>` :
+                        `<a class="dropdown-item" href="<?= base_url('/returjual/add') ?>?jual_id=${encodeURIComponent(data.jual_id)}"><i class="ti ti-repeat text-primary"></i> Buat Retur</a>` :
                         '';
                     return `<span class="dropdown">
                         <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-toggle="dropdown">Actions</button>
