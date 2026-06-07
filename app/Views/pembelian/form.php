@@ -9,7 +9,7 @@
 ?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
+        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden">
             <div class="card-body px-4 py-3">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
@@ -29,9 +29,9 @@
             <input type="hidden" name="payment_json" id="payment_json">
 
             <div class="row g-3">
-                <div class="col-xl-8">
+                <div class="col-xl-8 mt-1">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header py-1">
                             <h5 class="mb-0">Informasi Pembelian</h5>
                         </div>
                         <div class="card-body">
@@ -78,34 +78,19 @@
                         <div class="card-header d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center">
                             <div>
                                 <h5 class="mb-1">Detail Item</h5>
-                                <small class="text-muted">Cari item dengan nama, kode, atau barcode lalu tambahkan ke tabel.</small>
+                                <small class="text-muted">Cari item dengan nama, kode, atau barcode lalu tambahkan ke daftar.</small>
                             </div>
                             <div class="w-100" style="max-width: 420px;">
                                 <select class="form-select" id="item-search"></select>
                             </div>
                         </div>
                         <div class="card-body p-2">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-sm align-middle mb-0" id="detail-table">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="min-width: 220px;">Item</th>
-                                            <th style="min-width: 140px;">Satuan</th>
-                                            <th style="min-width: 110px;">Qty Beli</th>
-                                            <th style="min-width: 170px;">Hint Stok</th>
-                                            <th style="min-width: 140px;">Price</th>
-                                            <th style="min-width: 140px;">Gross</th>
-                                            <th style="width: 60px;">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
+                            <div id="detail-list" class="d-grid gap-2"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-4">
+                <div class="col-xl-4 mt-1">
                     <div class="card" id="summary-card">
                         <div class="card-header">
                             <h5 class="mb-0">Summary</h5>
@@ -332,7 +317,7 @@
             detailRows = detailRows.map(row => normalizeInitialRow(row));
         }
 
-        renderDetailTable();
+        renderDetailList();
         renderExistingPaymentTable();
         bindEvents();
         updateSummary();
@@ -434,18 +419,18 @@
                     harga_pokok: Number(opt.harga_pokok || 0)
                 }))
             });
-            renderDetailTable();
+            renderDetailList();
             updateSummary();
         }).fail(function(xhr) {
             toastr.error(extractErrorMessage(xhr, 'Gagal mengambil detail item'));
         });
     }
 
-    function renderDetailTable() {
-        const $tbody = $('#detail-table tbody');
-        $tbody.empty();
+    function renderDetailList() {
+        const wrapper = $('#detail-list');
+        wrapper.empty();
         if (!detailRows.length) {
-            $tbody.append('<tr><td colspan="7" class="text-center text-muted py-4">Belum ada item dipilih</td></tr>');
+            wrapper.html('<div class="text-center text-muted py-4">Belum ada item dipilih</div>');
             return;
         }
 
@@ -456,96 +441,98 @@
                 </option>
             `).join('');
 
-            $tbody.append(`
-                <tr data-idx="${idx}">
-                    <td>
-                        <div class="fw-semibold">${row.kode_item} - ${row.nama_item}</div>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm row-satuan">
-                            ${satuanOptions}
-                        </select>
-                    </td>
-                    <td>
-                        <input type="number" min="0.01" step="0.01" class="form-control form-control-sm row-qty" value="${row.qty_beli}">
-                    </td>
-                    <td><small class="text-muted row-stock-hint">${stockHint(row)}</small></td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm money row-price" value="${row.price}" data-last="price">
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm money row-gross" value="${row.gross}" data-last="gross">
-                    </td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger row-delete"><i class="ti ti-trash"></i></button>
-                    </td>
-                </tr>
+            wrapper.append(`
+                <div class="border rounded px-2" data-idx="${idx}">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-10 col-lg-4">
+                            <div class="fw-semibold">${row.kode_item} - ${row.nama_item}</div>
+                            <small class="text-muted row-stock-hint">${stockHint(row)}</small>
+                        </div>
+                        <div class="col-2 col-lg-1 text-end order-lg-last">
+                            <button type="button" class="btn btn-sm btn-outline-danger row-delete"><i class="ti ti-trash fs-5"></i></button>
+                        </div>
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <label class="form-label">Satuan</label>
+                            <select class="form-select form-select-sm row-satuan">
+                                ${satuanOptions}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3 col-lg-1">
+                            <label class="form-label">Qty Beli</label>
+                            <input type="number" min="0.01" step="0.01" class="form-control form-control-sm text-end row-qty" value="${row.qty_beli}">
+                        </div>
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <label class="form-label">Price</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-price" value="${row.price}" data-last="price">
+                        </div>
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <label class="form-label">Gross</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-gross" value="${row.gross}" data-last="gross">
+                        </div>
+                    </div>
+                </div>
             `);
         });
 
-        applyMoneyMask('#detail-table');
-        bindDetailRowEvents();
-    }
-
-    function bindDetailRowEvents() {
-        $('#detail-table .row-satuan').off('change').on('change', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            const selected = $(this).find(':selected');
-            const defaultPrice = Number(selected.data('price') || 0);
-            detailRows[idx].sat_id = selected.val();
-            detailRows[idx].qty_konversi = Number(selected.data('qty') || 1);
-            detailRows[idx].qty_stock = Number(detailRows[idx].qty_beli || 0) * detailRows[idx].qty_konversi;
-            detailRows[idx].price = defaultPrice;
-            detailRows[idx].gross = Math.round(Number(detailRows[idx].qty_beli || 0) * Number(detailRows[idx].price || 0));
-            syncDetailRow(idx);
-            updateSummary();
-        });
-
-        $('#detail-table .row-qty').off('input').on('input', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            detailRows[idx].qty_beli = Number($(this).val() || 0);
-            detailRows[idx].qty_stock = detailRows[idx].qty_beli * Number(detailRows[idx].qty_konversi || 1);
-            detailRows[idx].gross = Math.round(detailRows[idx].qty_beli * Number(detailRows[idx].price || 0));
-            syncDetailRow(idx);
-            updateSummary();
-        });
-
-        $('#detail-table .row-price').off('input blur').on('input blur', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            detailRows[idx].price = Number(normalizeMoneyValue($(this).val() || 0));
-            detailRows[idx].gross = Math.round(Number(detailRows[idx].qty_beli || 0) * detailRows[idx].price);
-            syncDetailRow(idx);
-            updateSummary();
-        });
-
-        $('#detail-table .row-gross').off('input blur').on('input blur', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            detailRows[idx].gross = Number(normalizeMoneyValue($(this).val() || 0));
-            const qty = Number(detailRows[idx].qty_beli || 0);
-            detailRows[idx].price = qty > 0 ? Math.round(detailRows[idx].gross / qty) : 0;
-            syncDetailRow(idx);
-            updateSummary();
-        });
-
-        $('#detail-table .row-delete').off('click').on('click', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            detailRows.splice(idx, 1);
-            renderDetailTable();
-            updateSummary();
-        });
-    }
-
-    function syncDetailRow(idx) {
-        const tr = $(`#detail-table tbody tr[data-idx="${idx}"]`);
-        tr.find('.row-stock-hint').text(stockHint(detailRows[idx]));
-        tr.find('.row-price').val(formatMoneyValue(detailRows[idx].price));
-        tr.find('.row-gross').val(formatMoneyValue(detailRows[idx].gross));
+        applyMoneyMask('#detail-list');
     }
 
     function stockHint(row) {
         const qtyStock = Number(row.qty_beli || 0) * Number(row.qty_konversi || 1);
         return `Stok bertambah ${qtyStock.toLocaleString('id-ID')} ${row.base_sat_id || row.sat_id}`;
     }
+
+    $('#detail-list').on('change', '.row-satuan', function() {
+        const idx = Number($(this).closest('[data-idx]').data('idx'));
+        const selected = $(this).find(':selected');
+        const defaultPrice = Number(selected.data('price') || 0);
+        detailRows[idx].sat_id = selected.val();
+        detailRows[idx].qty_konversi = Number(selected.data('qty') || 1);
+        detailRows[idx].qty_stock = Number(detailRows[idx].qty_beli || 0) * detailRows[idx].qty_konversi;
+        detailRows[idx].price = defaultPrice;
+        detailRows[idx].gross = Math.round(Number(detailRows[idx].qty_beli || 0) * Number(detailRows[idx].price || 0));
+        renderDetailList();
+        updateSummary();
+    });
+
+    $('#detail-list').on('input', '.row-qty', function() {
+        const card = $(this).closest('[data-idx]');
+        const idx = Number(card.data('idx'));
+        detailRows[idx].qty_beli = Number($(this).val() || 0);
+        detailRows[idx].qty_stock = detailRows[idx].qty_beli * Number(detailRows[idx].qty_konversi || 1);
+        detailRows[idx].gross = Math.round(detailRows[idx].qty_beli * Number(detailRows[idx].price || 0));
+        card.find('.row-stock-hint').text(stockHint(detailRows[idx]));
+        card.find('.row-gross').val(formatMoneyValue(detailRows[idx].gross));
+        updateSummary();
+    });
+
+    $('#detail-list').on('input blur', '.row-price', function() {
+        const card = $(this).closest('[data-idx]');
+        const idx = Number(card.data('idx'));
+        detailRows[idx].price = Number(normalizeMoneyValue($(this).val() || 0));
+        detailRows[idx].gross = Math.round(Number(detailRows[idx].qty_beli || 0) * detailRows[idx].price);
+        card.find('.row-gross').val(formatMoneyValue(detailRows[idx].gross));
+        applyMoneyMask('#detail-list');
+        updateSummary();
+    });
+
+    $('#detail-list').on('input blur', '.row-gross', function() {
+        const card = $(this).closest('[data-idx]');
+        const idx = Number(card.data('idx'));
+        detailRows[idx].gross = Number(normalizeMoneyValue($(this).val() || 0));
+        const qty = Number(detailRows[idx].qty_beli || 0);
+        detailRows[idx].price = qty > 0 ? Math.round(detailRows[idx].gross / qty) : 0;
+        card.find('.row-price').val(formatMoneyValue(detailRows[idx].price));
+        applyMoneyMask('#detail-list');
+        updateSummary();
+    });
+
+    $('#detail-list').on('click', '.row-delete', function() {
+        const idx = Number($(this).closest('[data-idx]').data('idx'));
+        detailRows.splice(idx, 1);
+        renderDetailList();
+        updateSummary();
+    });
 
     function renderPaymentTable() {
         const $tbody = $('#payment-table tbody');
