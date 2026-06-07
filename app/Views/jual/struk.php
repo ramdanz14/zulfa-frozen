@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="id">
 
+<?php
+
+/**
+ * @var array $document
+ * @var boolean $isMobile
+ */
+?>
+
 <head>
     <meta charset="utf-8">
     <title><?= esc($title ?? 'Struk POS') ?></title>
@@ -267,7 +275,7 @@
 </body>
 
 <script>
-    const isMobile = true;
+    const isMobile = <?= $isMobile ?>;
     var lama = 15000;
     t = null;
 

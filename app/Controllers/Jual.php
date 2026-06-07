@@ -120,11 +120,13 @@ class Jual extends BaseController
     public function struk(string $jual_id)
     {
         $data['title'] = 'Struk POS';
+        $data['isMobile'] = cekMobile();
+
         $data['receipt'] = $this->jualModel->getReceiptData((string) session('toko_id'), trim($jual_id));
         if (! $data['receipt']) {
             return redirect()->to('/jual');
         }
 
-        echo view('jual/struk', $data);
+        return view('jual/struk', $data);
     }
 }
