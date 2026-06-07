@@ -124,6 +124,13 @@ $routes->group('settingharga', static function ($route) {
     $route->patch('', 'Settingharga::save');
 });
 
+$routes->group('stock', static function ($route) {
+    $route->get('', 'Stock::index');
+    $route->post('ajax', 'Stock::ajax');
+    $route->get('history/(:segment)', 'Stock::history/$1');
+    $route->post('recalculate', 'Stock::recalculate');
+});
+
 $routes->group('historybeli', static function ($route) {
     $route->get('', 'Historybeli::index');
     $route->post('ajax', 'Historybeli::ajax');
