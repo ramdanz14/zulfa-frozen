@@ -24,9 +24,9 @@ class SupmastModel extends Model
 
             $total_filter = $this->db->query("SELECT count(*) total FROM supmast  WHERE supco like :search_value: OR nama like :search_value: OR alamat like :search_value: OR kontak like :search_value:  ", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getRow();
 
-            $data = $this->db->query("SELECT *,(SELECT COUNT(*) FROM prodmast WHERE supco=s.supco) AS jml_item  FROM supmast s WHERE supco like :search_value: OR nama like :search_value: OR alamat like :search_value: OR kontak like :search_value:  $queryLimit", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
+            $data = $this->db->query("SELECT *,(SELECT COUNT(DISTINCT CONCAT(toko_id,'|',kode_item)) FROM prodmast_store WHERE supco=s.supco) AS jml_item  FROM supmast s WHERE supco like :search_value: OR nama like :search_value: OR alamat like :search_value: OR kontak like :search_value:  $queryLimit", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
         } else {
-            $data = $this->db->query("SELECT *,(SELECT COUNT(*) FROM prodmast WHERE supco=s.supco) AS jml_item   FROM supmast s $queryLimit  ")->getResult();
+            $data = $this->db->query("SELECT *,(SELECT COUNT(DISTINCT CONCAT(toko_id,'|',kode_item)) FROM prodmast_store WHERE supco=s.supco) AS jml_item   FROM supmast s $queryLimit  ")->getResult();
         }
 
         return array('data' => $data, 'total_count' => $total_count ?? 0, 'total_filtered' => $total_filter->total ?? $total_count);

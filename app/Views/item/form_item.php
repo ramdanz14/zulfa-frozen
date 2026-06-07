@@ -67,7 +67,7 @@
                                 <select class="form-select select2" name="supco" id="supco">
                                     <option value="">Pilih Supplier</option>
                                     <?php foreach ($supplierOptions as $row) : ?>
-                                        <option value="<?= esc($row['supco']) ?>" <?= ($formData['prodmast']['supco'] ?? '') === $row['supco'] ? 'selected' : '' ?>><?= esc($row['supco']) ?> - <?= esc($row['nama']) ?></option>
+                                        <option value="<?= esc($row['supco']) ?>" <?= ($formData['store_supco'] ?? '') === $row['supco'] ? 'selected' : '' ?>><?= esc($row['supco']) ?> - <?= esc($row['nama']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>

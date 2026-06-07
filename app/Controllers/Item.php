@@ -46,7 +46,8 @@ class Item extends BaseController
         $data['formData'] = [
             'prodmast' => ['kode_item' => $this->itemModel->getLastID()],
             'satuan' => [],
-            'store' => []
+            'store' => [],
+            'store_supco' => '',
         ];
         $data['kategoriOptions'] = $this->itemModel->getKategoriOptions();
         $data['supplierOptions'] = $this->itemModel->getSupplierOptions();
@@ -165,7 +166,6 @@ class Item extends BaseController
                 'nama_item' => $nama_item,
                 'kat_id' => $kat_id,
                 'keterangan' => $keterangan,
-                'supco' => $supco !== '' ? $supco : null,
                 'updid' => $username,
                 'updtime' => date('Y-m-d H:i:s')
             ]);
@@ -175,7 +175,6 @@ class Item extends BaseController
                 'nama_item' => $nama_item,
                 'kat_id' => $kat_id,
                 'keterangan' => $keterangan,
-                'supco' => $supco !== '' ? $supco : null,
                 'updid' => $username,
                 'updtime' => date('Y-m-d H:i:s')
             ]);
@@ -197,6 +196,7 @@ class Item extends BaseController
                 'toko_id' => $toko_id,
                 'kode_item' => $kode_item,
                 'sat_id' => $sid,
+                'supco' => $supco !== '' ? $supco : null,
                 'harga_pokok' => $price['harga_pokok'],
                 'harga_jual' => $price['harga_jual'],
                 'target_psn_margin' => $price['target_psn_margin'],

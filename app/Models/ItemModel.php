@@ -75,8 +75,13 @@ class ItemModel extends Model
     {
         $prodmast = $this->db->query("SELECT * FROM prodmast WHERE kode_item=:kode_item:", ['kode_item' => $kode_item])->getRowArray();
         $satuan = $this->db->query("SELECT sat_id,qty_konversi FROM prodmast_satuan WHERE kode_item=:kode_item: ORDER BY qty_konversi,sat_id", ['kode_item' => $kode_item])->getResultArray();
-        $store = $this->db->query("SELECT sat_id,harga_pokok,harga_jual,target_psn_margin,status_item FROM prodmast_store WHERE kode_item=:kode_item: AND toko_id=:toko_id: ORDER BY sat_id", ['kode_item' => $kode_item, 'toko_id' => $toko_id])->getResultArray();
-        return ['prodmast' => $prodmast, 'satuan' => $satuan, 'store' => $store];
+        $store = $this->db->query("SELECT sat_id,supco,harga_pokok,harga_jual,target_psn_margin,status_item FROM prodmast_store WHERE kode_item=:kode_item: AND toko_id=:toko_id: ORDER BY sat_id", ['kode_item' => $kode_item, 'toko_id' => $toko_id])->getResultArray();
+        return [
+            'prodmast' => $prodmast,
+            'satuan' => $satuan,
+            'store' => $store,
+            'store_supco' => (string) ($store[0]['supco'] ?? ''),
+        ];
     }
 
     public function getDetailData(string $kode_item): array
@@ -85,6 +90,11 @@ class ItemModel extends Model
         $prodmast = $this->db->query("SELECT * FROM prodmast WHERE kode_item=:kode_item:", ['kode_item' => $kode_item])->getRowArray();
         $satuan = $this->db->query("SELECT * FROM prodmast_satuan WHERE kode_item=:kode_item: ORDER BY qty_konversi,sat_id", ['kode_item' => $kode_item])->getResultArray();
         $store = $this->db->query("SELECT * FROM prodmast_store WHERE kode_item=:kode_item: and toko_id=:toko_id: ORDER BY toko_id,sat_id", ['kode_item' => $kode_item, 'toko_id' => $toko_id])->getResultArray();
-        return ['prodmast' => $prodmast, 'satuan' => $satuan, 'store' => $store];
+        return [
+            'prodmast' => $prodmast,
+            'satuan' => $satuan,
+            'store' => $store,
+            'store_supco' => (string) ($store[0]['supco'] ?? ''),
+        ];
     }
 }

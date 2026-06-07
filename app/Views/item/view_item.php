@@ -47,7 +47,7 @@
 
                     <div class="col-6 col-md-3">
                         <span class="text-muted d-block small text-uppercase fw-semibold">Supplier Code</span>
-                        <span class="text-muted italic"><?= esc($detail['prodmast']['supco']) ?? "-" ?></span>
+                        <span class="text-muted italic"><?= esc($detail['store_supco'] ?? '-') ?></span>
                     </div>
                     <div class="col-6 col-md-3">
                         <span class="text-muted d-block small text-uppercase fw-semibold">Keterangan</span>

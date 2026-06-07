@@ -73,7 +73,7 @@ class JualModel extends Model
         $search = '%' . $this->db->escapeLikeString($term) . '%';
 
         return $this->db->query(
-            "SELECT p.kode_item, p.barcode, p.nama_item, p.supco,
+            "SELECT p.kode_item, p.barcode, p.nama_item, store.supco,
                     COALESCE(base.sat_id, '-') AS sat_dasar,
                     COALESCE(base.qty_konversi, 1) AS qty_dasar,
                     COALESCE(store.harga_pokok, 0) AS harga_default,
@@ -123,9 +123,15 @@ class JualModel extends Model
     public function getItemPayload(string $toko_id, string $kode_item): ?array
     {
         $item = $this->db->query(
-            "SELECT p.kode_item, p.barcode, p.nama_item, p.supco,
+            "SELECT p.kode_item, p.barcode, p.nama_item, base_store.supco,
                     COALESCE(st.qty, 0) AS stok_base
              FROM prodmast p
+             LEFT JOIN (
+                SELECT kode_item, MAX(COALESCE(supco, '')) AS supco
+                FROM prodmast_store
+                WHERE toko_id=:toko_id: AND status_item='Y'
+                GROUP BY kode_item
+             ) base_store ON base_store.kode_item=p.kode_item
              LEFT JOIN stmast st ON st.toko_id=:toko_id: AND st.kode_item=p.kode_item
              WHERE p.kode_item=:kode_item:
              LIMIT 1",

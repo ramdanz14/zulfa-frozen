@@ -187,7 +187,7 @@ class PembelianModel extends Model
     {
         $search = '%' . $this->db->escapeLikeString($term) . '%';
         return $this->db->query(
-            "SELECT p.kode_item, p.barcode, p.nama_item, p.supco,
+            "SELECT p.kode_item, p.barcode, p.nama_item, store.supco,
                     COALESCE(base.sat_id, '-') AS sat_dasar,
                     COALESCE(base.qty_konversi, 1) AS qty_dasar,
                     COALESCE(store.harga_pokok, 0) AS harga_default
@@ -229,10 +229,17 @@ class PembelianModel extends Model
     public function getItemPayload(string $toko_id, string $kode_item): ?array
     {
         $item = $this->db->query(
-            "SELECT p.kode_item, p.barcode, p.nama_item, p.supco
+            "SELECT p.kode_item, p.barcode, p.nama_item, base_store.supco
              FROM prodmast p
-             WHERE p.kode_item=:kode_item:",
-            ['kode_item' => $kode_item]
+             LEFT JOIN (
+                SELECT kode_item, MAX(COALESCE(supco, '')) AS supco
+                FROM prodmast_store
+                WHERE toko_id=:toko_id:
+                GROUP BY kode_item
+             ) base_store ON base_store.kode_item=p.kode_item
+             WHERE p.kode_item=:kode_item:
+             LIMIT 1",
+            ['toko_id' => $toko_id, 'kode_item' => $kode_item]
         )->getRowArray();
 
         if (!$item) {
@@ -666,7 +673,7 @@ class PembelianModel extends Model
 
         $this->syncPaymentSummary($toko_id, $headerId);
         if ($statusNota === 'TERIMA') {
-            $this->applyStoreCostUpdates($toko_id, $headerId, $tanggal, $sanitizedDetails);
+            $this->applyStoreCostUpdates($toko_id, $headerId, $tanggal, $supco, $sanitizedDetails);
         }
         if ($statusNota === 'TERIMA' || (($existing['status_nota'] ?? '') === 'TERIMA')) {
             HitungStock($toko_id);
@@ -859,7 +866,7 @@ class PembelianModel extends Model
             ->update($dataUpdate);
     }
 
-    private function applyStoreCostUpdates(string $toko_id, string $beli_id, string $tanggal, array $details): void
+    private function applyStoreCostUpdates(string $toko_id, string $beli_id, string $tanggal, string $supco, array $details): void
     {
         $cekgram = $this->db->query("SELECT * FROM CONST WHERE rkey='satuan_gramasi'")->getRow();
         $satGramasiRaw = $cekgram->nilai ?? "GR;GRAM;ML";
@@ -891,7 +898,14 @@ class PembelianModel extends Model
                 continue;
             }
 
-
+            $this->db->table('prodmast_store')
+                ->where('toko_id', $toko_id)
+                ->where('kode_item', $detail['kode_item'])
+                ->update([
+                    'supco' => $supco !== '' ? $supco : null,
+                    'updid' => $beli_id,
+                    'updtime' => date('Y-m-d H:i:s'),
+                ]);
 
             foreach ($stores as $store) {
                 $hargaPokokOld = (float) ($store['harga_pokok'] ?? 0);
