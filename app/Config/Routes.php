@@ -292,3 +292,16 @@ $routes->group('returbeli', static function ($route) {
     $route->patch('', 'ReturBeli::update');
     $route->delete('', 'ReturBeli::delete');
 });
+
+$routes->group('returjual', static function ($route) {
+    $route->get('', 'Returjual::index');
+    $route->get('add', 'Returjual::add');
+    $route->get('edit/(:segment)', 'Returjual::edit/$1');
+    $route->post('ajax', 'Returjual::ajax');
+    $route->get('sale/(:segment)', 'Returjual::sale/$1');
+    $route->get('show/(:segment)', 'Returjual::show/$1');
+    $route->get('struk/(:segment)', 'Returjual::struk/$1');
+    $route->put('', 'Returjual::store');
+    $route->patch('', 'Returjual::update');
+    $route->delete('', 'Returjual::delete');
+});

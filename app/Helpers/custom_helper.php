@@ -82,8 +82,18 @@ function HitungStock(string $toko_id)
     }
     $cek =  $db->query("UPDATE stmast a  LEFT JOIN (SELECT toko_id,kode_item,SUM(qty_stock) AS jml FROM pembelian_detail LEFT JOIN pembelian USING(toko_id,beli_id) WHERE status_nota='TERIMA' and toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=EXTRACT(YEAR_MONTH FROM CURDATE()) GROUP BY toko_id,kode_item) b USING(toko_id,kode_item) SET a.beli=IFNULL(b.jml,0) WHERE toko_id='$toko_id';");
     $cek =  $db->query("UPDATE stmast a  LEFT JOIN (
-        SELECT toko_id,kode_item,SUM(qty_stock) AS jml_jual FROM penjualan_detail  LEFT JOIN penjualan USING(toko_id,jual_id) WHERE  toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tgl)=EXTRACT(YEAR_MONTH FROM CURDATE()) GROUP BY toko_id,kode_item) b USING(toko_id,kode_item) SET a.jual=ifnull(b.jml_JUAL,0) WHERE toko_id='$toko_id';");
-    // $cek =  $db->query("UPDATE stmast a  JOIN (SELECT toko_id,kode_item,SUM(qty_stock) AS jml FROM retur_jual_detail LEFT JOIN retur_jual USING(rj_id) WHERE  toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=EXTRACT(YEAR_MONTH FROM CURDATE()) GROUP BY toko_id,kode_item) b USING(toko_id,kode_item) SET a.retur_jual=b.jml WHERE toko_id='$toko_id';");
+        SELECT toko_id,kode_item,SUM(qty_stock) AS jml_jual FROM penjualan_detail  
+        LEFT JOIN penjualan USING(toko_id,jual_id) WHERE  toko_id='$toko_id' 
+        AND EXTRACT(YEAR_MONTH FROM tgl)=EXTRACT(YEAR_MONTH FROM CURDATE()) GROUP BY toko_id,kode_item) b 
+        USING(toko_id,kode_item) SET a.jual=ifnull(b.jml_JUAL,0) WHERE toko_id='$toko_id';");
+    $cek =  $db->query("UPDATE stmast a  LEFT JOIN (
+        SELECT d.toko_id,d.kode_item,SUM(d.qty_stock) AS jml
+        FROM retur_jual_detail d
+        LEFT JOIN retur_jual h ON h.rj_id=d.rj_id AND h.toko_id=d.toko_id
+        WHERE d.toko_id='$toko_id'
+          AND EXTRACT(YEAR_MONTH FROM h.tanggal)=EXTRACT(YEAR_MONTH FROM CURDATE())
+        GROUP BY d.toko_id,d.kode_item
+    ) b USING(toko_id,kode_item) SET a.retur_jual=IFNULL(b.jml,0) WHERE a.toko_id='$toko_id';");
     $cek =  $db->query("UPDATE stmast a  LEFT JOIN (SELECT rd.toko_id,rd.kode_item,SUM(rd.qty_stok) AS jml FROM pembelian_retur_detail rd LEFT JOIN pembelian_retur r ON r.toko_id=rd.toko_id AND r.retur_id=rd.retur_id WHERE r.status_retur='SELESAI' AND rd.toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM r.tanggal)=EXTRACT(YEAR_MONTH FROM CURDATE()) GROUP BY rd.toko_id,rd.kode_item) b USING(toko_id,kode_item) SET a.retur_beli=IFNULL(b.jml,0) WHERE toko_id='$toko_id';");
     $cek =  $db->query("UPDATE stmast a
         LEFT JOIN (
@@ -104,11 +114,11 @@ function HitungStock(string $toko_id)
     return $cek;
 }
 
-function HitungStockBulan($toko_id, $bln)
+function HitungStockBulan(string $toko_id, string $bln)
 {
     $db = \Config\Database::connect();
+    $cek = $db->query("INSERT IGNORE  INTO  stmast(toko_id,kode_item) SELECT toko_id,kode_item FROM prodmast_satuan JOIN prodmast_store USING(kode_item,sat_id) WHERE toko_id=:toko_id: AND qty_konversi=1 AND status_item='Y'; ", ['toko_id' => $toko_id]);
 
-    $cek = $db->query("INSERT IGNORE  INTO  stmast(toko_id,kode_item) select '$toko_id',kode_item from prodmast ");
     // cari table stmast dari periode $bln sebelumnya
     $dt = \DateTime::createFromFormat("Ym", $bln);
     $prd_lama = date("Ym", strtotime("-1 month", strtotime($dt->format("Y-m-d"))));
@@ -122,10 +132,18 @@ function HitungStockBulan($toko_id, $bln)
 
 
     $cek =  $db->query("UPDATE stmast a  JOIN (SELECT toko_id,kode_item,SUM(qty_stock) AS jml FROM pembelian_detail LEFT JOIN pembelian USING(beli_id) WHERE status_nota='TERIMA' and toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY toko_id,kode_item) b USING(toko_id,kode_item) SET a.beli=b.jml WHERE toko_id='$toko_id';");
-    $cek =  $db->query("UPDATE stmast a  JOIN (SELECT toko_id,kode_item,IFNULL(jml_jual,0)+IFNULL(jml_pesan,0) jml FROM (
-        SELECT toko_id,kode_item,SUM(qty_stock) AS jml_jual FROM penjualan_detail  LEFT JOIN penjualan USING(trx_id) WHERE  toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY toko_id,kode_item) pj LEFT JOIN (
-        SELECT toko_id,kode_item,SUM(qty_stock) AS jml_pesan FROM pesanan_detail  LEFT JOIN pesanan USING(pesanan_id) WHERE  toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=$bln AND status_pesanan='pesan' GROUP BY toko_id,kode_item ) ps USING (toko_id,kode_item)) b USING(toko_id,kode_item) SET a.jual=b.jml WHERE toko_id='$toko_id';");
-    $cek =  $db->query("UPDATE stmast a  JOIN (SELECT toko_id,kode_item,SUM(qty_stock) AS jml FROM retur_jual_detail LEFT JOIN retur_jual USING(rj_id) WHERE  toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY toko_id,kode_item) b USING(toko_id,kode_item) SET a.retur_jual=b.jml WHERE toko_id='$toko_id';");
+    $cek =  $db->query("UPDATE stmast a  LEFT JOIN (
+        SELECT toko_id,kode_item,SUM(qty_stock) AS jml_jual FROM penjualan_detail  
+        LEFT JOIN penjualan USING(toko_id,jual_id) WHERE  toko_id='$toko_id' 
+        AND EXTRACT(YEAR_MONTH FROM tgl)=$bln GROUP BY toko_id,kode_item) b 
+        USING(toko_id,kode_item) SET a.jual=ifnull(b.jml_JUAL,0) WHERE toko_id='$toko_id';");
+    $cek =  $db->query("UPDATE stmast a  JOIN (
+        SELECT d.toko_id,d.kode_item,SUM(d.qty_stock) AS jml
+        FROM retur_jual_detail d
+        LEFT JOIN retur_jual h ON h.rj_id=d.rj_id AND h.toko_id=d.toko_id
+        WHERE d.toko_id='$toko_id' AND EXTRACT(YEAR_MONTH FROM h.tanggal)=$bln
+        GROUP BY d.toko_id,d.kode_item
+    ) b USING(toko_id,kode_item) SET a.retur_jual=b.jml WHERE toko_id='$toko_id';");
     $cek =  $db->query("UPDATE stmast a  LEFT JOIN (SELECT rd.toko_id,rd.kode_item,SUM(rd.qty_stok) AS jml FROM pembelian_retur_detail rd LEFT JOIN pembelian_retur r ON r.toko_id=rd.toko_id AND r.retur_id=rd.retur_id WHERE r.status_retur='SELESAI' AND rd.toko_id='$toko_id' and EXTRACT(YEAR_MONTH FROM r.tanggal)=$bln GROUP BY rd.toko_id,rd.kode_item) b USING(toko_id,kode_item) SET a.retur_beli=IFNULL(b.jml,0) WHERE toko_id='$toko_id';");
     $cek =  $db->query("UPDATE stmast a
         LEFT JOIN (
@@ -137,44 +155,19 @@ function HitungStockBulan($toko_id, $bln)
         ) b USING(toko_id,kode_item)
         SET a.adj=IFNULL(b.adj_qty,0)
         WHERE a.toko_id='$toko_id';");
-    $cek =  $db->query("UPDATE stmast a  LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS trf_out FROM mutasi_transfer  WHERE toko_kirim='$toko_id' AND  EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) 
-    LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS trf_in FROM mutasi_transfer WHERE  toko_terima='$toko_id' AND EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item)c USING(kode_item)
-    SET a.trf=IFNULL(c.trf_in,0)-IFNULL(b.trf_out,0) WHERE toko_id='$toko_id';");
-    $cek = $db->query("UPDATE stmast SET qty=begbal+trf+beli-retur_beli-jual+retur_jual+adj WHERE toko_id='$toko_id'");
+    // $cek =  $db->query("UPDATE stmast a  LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS trf_out FROM mutasi_transfer  WHERE toko_kirim='$toko_id' AND  EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) 
+    // LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS trf_in FROM mutasi_transfer WHERE  toko_terima='$toko_id' AND EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item)c USING(kode_item)
+    // SET a.trf=IFNULL(c.trf_in,0)-IFNULL(b.trf_out,0) WHERE toko_id='$toko_id';");
+    $cek = $db->query("UPDATE stmast SET qty=begbal+beli-retur_beli-jual+retur_jual+adj WHERE toko_id='$toko_id'");
     $cek = $db->query("UPDATE stmast a  JOIN (SELECT * FROM konversi WHERE qty_konversi=1) b USING(kode_item ) SET a.`ACOST`=b.harga_pokok WHERE toko_id='$toko_id'; ");
     $cek = $db->query("UPDATE stmast SET rp_saldo_akh=qty*acost WHERE toko_id='$toko_id'");
 
-    // $cek = $db->query("INSERT IGNORE  INTO  stmast(kode_item) select kode_item from prodmast ");
-    // $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM pembelian_detail LEFT JOIN pembelian USING(beli_id) WHERE status_beli='Terima' and EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) SET a.beli=b.jml;");
-    // $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM penjualan_detail  LEFT JOIN penjualan USING(trx_id) WHERE EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) SET a.jual=b.jml;");
-    // $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM retur_jual_detail LEFT JOIN retur_jual USING(rj_id) WHERE  EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) SET a.retur_jual=b.jml;");
-    // $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM retur_beli_detail LEFT JOIN retur_beli USING(rb_id) WHERE  EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) SET a.retur_beli=b.jml;");
-    // $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_so) AS jml FROM adj_so  WHERE  EXTRACT(YEAR_MONTH FROM tanggal)=$bln GROUP BY kode_item) b USING(kode_item) SET a.adj=b.jml;");
-    // $cek = $db->query("UPDATE stmast SET qty=begbal+beli-retur_beli-jual+retur_jual+adj");
-    // $cek = $db->query("UPDATE stmast a LEFT JOIN (SELECT * FROM konversi WHERE qty_konversi=1) b USING(kode_item ) SET a.`ACOST`=b.harga_pokok;");
-    // $cek = $db->query("UPDATE stmast SET rp_saldo_akh=qty*acost");
+
     return $cek;
 }
 
-function HitungStockAll()
-{
-    $db = \Config\Database::connect();
-    $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM pembelian_detail LEFT JOIN pembelian USING(beli_id) WHERE status_nota='TERIMA' GROUP BY kode_item) b USING(kode_item) SET a.beli=b.jml;");
-    $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT kode_item,SUM(qty_stock) AS jml FROM penjualan_detail GROUP BY kode_item) b USING(kode_item) SET a.jual=b.jml;");
-    $cek =  $db->query("UPDATE stmast a LEFT JOIN (SELECT rd.kode_item,SUM(rd.qty_stok) AS jml FROM pembelian_retur_detail rd LEFT JOIN pembelian_retur r ON r.toko_id=rd.toko_id AND r.retur_id=rd.retur_id WHERE r.status_retur='SELESAI' GROUP BY rd.kode_item) b USING(kode_item) SET a.retur_beli=IFNULL(b.jml,0);");
-    $cek =  $db->query("UPDATE stmast a
-        LEFT JOIN (
-            SELECT toko_id,kode_item,SUM(qty_stock) AS adj_qty
-            FROM `adjust`
-            GROUP BY toko_id,kode_item
-        ) b USING(toko_id,kode_item)
-        SET a.adj=IFNULL(b.adj_qty,0)");
-    $cek = $db->query("UPDATE stmast SET qty=begbal+beli-retur_beli-jual+retur_jual+adj");
-    $cek = $db->query("UPDATE stmast SET rp_saldo_akh=qty*acost");
-    return $cek;
-}
 
-function HitungHutang($hutang_id)
+function HitungHutang(string $hutang_id)
 {
     $db = \Config\Database::connect();
     $cek =  $db->query("UPDATE hutang a LEFT JOIN (SELECT hutang_id,SUM(jml_bayar) total_bayar FROM bayar_hutang GROUP BY hutang_id) b USING (hutang_id) SET a.`total_bayar` = b.total_bayar WHERE hutang_id='$hutang_id';");
