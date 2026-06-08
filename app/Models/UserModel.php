@@ -101,4 +101,52 @@ class UserModel extends Model
              ORDER BY fullname, karyawan_id"
         )->getResultArray();
     }
+
+    public function getProfileByUsername(string $username): ?array
+    {
+        $row = $this->db->query(
+            "SELECT u.karyawan_id, u.username, u.fullname, u.email, u.phone, u.avatar, u.alamat,
+                    r.level_name
+             FROM tb_user u
+             LEFT JOIN role_user r USING(level_id)
+             WHERE u.username=:username:
+             LIMIT 1",
+            ['username' => $username]
+        )->getRowArray();
+
+        return $row ?: null;
+    }
+
+    public function verifyPassword(string $username, string $password): bool
+    {
+        $row = $this->db->query(
+            "SELECT karyawan_id
+             FROM tb_user
+             WHERE username=:username: AND `password`=PASSWORD(:password:)
+             LIMIT 1",
+            ['username' => $username, 'password' => $password]
+        )->getRowArray();
+
+        return !empty($row['karyawan_id']);
+    }
+
+    public function updatePasswordByUsername(string $username, string $newPassword): bool
+    {
+        return (bool) $this->db->query(
+            "UPDATE tb_user
+             SET `password`=PASSWORD(:password:)
+             WHERE username=:username:",
+            ['password' => $newPassword, 'username' => $username]
+        );
+    }
+
+    public function updateAvatarByUsername(string $username, string $avatar): bool
+    {
+        return (bool) $this->db->query(
+            "UPDATE tb_user
+             SET avatar=:avatar:
+             WHERE username=:username:",
+            ['avatar' => $avatar, 'username' => $username]
+        );
+    }
 }

@@ -1,3 +1,4 @@
+<?php $sessionAvatar = trim((string) (session('avatar') ?? 'user-1.jpg')); ?>
 <header class="topbar">
     <div class="with-vertical">
         <nav class="navbar navbar-expand-lg p-0">
@@ -37,7 +38,7 @@
                             <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" aria-expanded="false">
                                 <div class="d-flex align-items-center">
                                     <div class="user-profile-img">
-                                        <img src="<?= base_url() ?>/assets/images/profile/user-1.jpg" class="rounded-circle" width="35" height="35" alt="modernize-img" />
+                                        <img src="<?= base_url('/assets/images/profile/' . $sessionAvatar) ?>" class="rounded-circle topbar-avatar" width="35" height="35" alt="modernize-img" />
                                     </div>
                                 </div>
                             </a>
@@ -47,7 +48,7 @@
                                         <h5 class="mb-0 fs-5 fw-semibold">User Profile</h5>
                                     </div>
                                     <div class="d-flex align-items-center py-9 mx-7 border-bottom">
-                                        <img src="<?= base_url() ?>/assets/images/profile/user-1.jpg" class="rounded-circle" width="80" height="80" alt="modernize-img" />
+                                        <img src="<?= base_url('/assets/images/profile/' . $sessionAvatar) ?>" class="rounded-circle topbar-avatar-lg" width="80" height="80" alt="modernize-img" />
                                         <div class="ms-3">
                                             <h5 class="mb-1 fs-3"><?= session("fullname") ?></h5>
                                             <span class="mb-1 d-block"><?= session("level_name") ?></span>
