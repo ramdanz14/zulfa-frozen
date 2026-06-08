@@ -32,6 +32,21 @@ $routes->group('user', static function ($route) {
     $route->delete('/', 'User::Delete');
 });
 
+$routes->group('absensi', static function ($route) {
+    $route->get('', 'Absensi::index');
+    $route->get('input', 'Absensi::input');
+    $route->get('input/(:segment)', 'Absensi::input/$1');
+    $route->get('pay', 'Absensi::pay');
+    $route->post('ajax', 'Absensi::ajax');
+    $route->post('ajax-payment', 'Absensi::ajaxPayment');
+    $route->get('show/(:segment)', 'Absensi::show/$1');
+    $route->get('show-payment/(:segment)', 'Absensi::showPayment/$1');
+    $route->post('process-payment', 'Absensi::processPayment');
+    $route->get('struk/(:segment)/(:segment)', 'Absensi::struk/$1/$2');
+    $route->put('', 'Absensi::store');
+    $route->delete('', 'Absensi::delete');
+});
+
 $routes->group('menu', static function ($route) {
     $route->get('', 'Menu::index');
     $route->post('ajax', 'Menu::ajax');
