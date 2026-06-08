@@ -8,7 +8,7 @@ class UserModel extends Model
 {
     protected $table            = 'tb_user';
     protected $primaryKey       = 'karyawan_id';
-    protected $allowedFields    = ['karyawan_id', 'username', 'fullname', 'password', 'email', 'phone', 'level_id', 'active', 'avatar', 'alamat', 'absensi',  'toko_id', 'updid', 'updtime'];
+    protected $allowedFields    = ['karyawan_id', 'username', 'fullname', 'password', 'email', 'phone', 'level_id', 'active', 'avatar', 'alamat', 'absensi', 'gaji', 'toko_id', 'updid', 'updtime'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -51,9 +51,9 @@ class UserModel extends Model
         $queryLimit = $length != "-1" ? " limit $start, $length " : "";
         if (!empty($search_value)) {
 
-            $total_filter = $this->db->query("SELECT count(*) total FROM tb_user  WHERE karyawan_id like :search_value: OR username like :search_value: OR fullname like :search_value: OR level_id like :search_value:  ", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getRow();
+            $total_filter = $this->db->query("SELECT count(*) total FROM tb_user  WHERE karyawan_id like :search_value: OR username like :search_value: OR fullname like :search_value: OR level_id like :search_value: OR toko_id like :search_value:  ", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getRow();
 
-            $data = $this->db->query("SELECT * FROM tb_user WHERE karyawan_id like :search_value: OR username like :search_value: OR fullname like :search_value: OR level_id like :search_value:   $queryLimit", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
+            $data = $this->db->query("SELECT * FROM tb_user WHERE karyawan_id like :search_value: OR username like :search_value: OR fullname like :search_value: OR level_id like :search_value: OR toko_id like :search_value:   $queryLimit", array("search_value" => '%' . $this->db->escapeLikeString($search_value) . '%'))->getResult();
         } else {
             $data = $this->db->query("SELECT *  FROM tb_user  $queryLimit  ")->getResult();
         }
@@ -90,5 +90,15 @@ class UserModel extends Model
     public function ResetPassword(string $karyawan_id)
     {
         return $this->db->query("UPDATE tb_user SET `password`=PASSWORD(lower(username)) WHERE karyawan_id= ? ", [$karyawan_id]);
+    }
+
+    public function getAbsensiUsers(): array
+    {
+        return $this->db->query(
+            "SELECT karyawan_id, fullname, toko_id, COALESCE(gaji, 0) AS gaji
+             FROM tb_user
+             WHERE active='Y' AND absensi='Y'
+             ORDER BY fullname, karyawan_id"
+        )->getResultArray();
     }
 }

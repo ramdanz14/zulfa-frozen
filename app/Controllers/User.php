@@ -98,6 +98,7 @@ class User extends BaseController
             'email' => 'required|valid_email',
             'level_id' => 'required',
             'toko_id' => 'required',
+            'gaji' => 'permit_empty|decimal',
         ];
 
         if (!$this->validateData($payload, $rules)) {
@@ -114,6 +115,7 @@ class User extends BaseController
     {
         $payload['active'] = ($payload['active'] ?? 'N') === 'Y' ? 'Y' : 'N';
         $payload['absensi'] = ($payload['absensi'] ?? 'N') === 'Y' ? 'Y' : 'N';
+        $payload['gaji'] = round((float) preg_replace('/[^0-9.\-]/', '', (string) ($payload['gaji'] ?? 0)), 2);
         return $payload;
     }
 
@@ -127,6 +129,13 @@ class User extends BaseController
                 "tipe" => "error",
                 "data" => "Validasi gagal",
                 "errors" => $validation['errors'],
+            ]);
+        }
+        if (($karyawan['absensi'] ?? 'N') === 'Y' && (float) ($karyawan['gaji'] ?? 0) <= 0) {
+            return $this->response->setJSON([
+                "tipe" => "error",
+                "data" => "Validasi gagal",
+                "errors" => ['gaji' => 'Gaji wajib diisi jika absensi aktif'],
             ]);
         }
 
@@ -152,6 +161,13 @@ class User extends BaseController
                 "tipe" => "error",
                 "data" => "Validasi gagal",
                 "errors" => $validation['errors'],
+            ]);
+        }
+        if (($karyawan['absensi'] ?? 'N') === 'Y' && (float) ($karyawan['gaji'] ?? 0) <= 0) {
+            return $this->response->setJSON([
+                "tipe" => "error",
+                "data" => "Validasi gagal",
+                "errors" => ['gaji' => 'Gaji wajib diisi jika absensi aktif'],
             ]);
         }
 

@@ -119,6 +119,11 @@
                                 <label class="form-check-label" for="absensi">Absensi</label>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gaji Harian</label>
+                            <input type="text" class="form-control money" id="gaji" name="gaji">
+                            <small class="text-danger" data-error="gaji"></small>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -213,10 +218,26 @@
                 }
             },
             {
+                data: "absensi",
+                title: "Absensi",
+                className: "not-mobile text-center",
+                render: function(data) {
+                    return data === "Y" ? '<i class="ti ti-check text-success fs-5"></i>' : '<i class="ti ti-x text-danger fs-5"></i>';
+                }
+            },
+            {
                 data: "toko_id",
                 title: "Toko",
                 className: "not-mobile",
 
+            },
+            {
+                data: "gaji",
+                title: "Gaji",
+                className: "not-mobile text-end",
+                render: function(data) {
+                    return 'Rp ' + formatMoneyValue(data || 0);
+                }
             },
             {
                 title: "Action",
@@ -255,6 +276,11 @@
             phone: "required",
             level_id: "required",
             toko_id: "required",
+            gaji: {
+                required: function() {
+                    return $("#absensi").is(":checked");
+                }
+            },
             email: {
                 required: true,
                 email: true
@@ -270,7 +296,8 @@
                 email: "Format email tidak valid"
             },
             level_id: "Level wajib dipilih",
-            toko_id: "Toko wajib dipilih"
+            toko_id: "Toko wajib dipilih",
+            gaji: "Gaji wajib diisi jika absensi aktif"
         },
         errorElement: 'span',
         errorPlacement: function(error, element) {
@@ -305,8 +332,10 @@
         $("#user-form")[0].reset();
         clearFormErrors();
         $("#karyawan_id").prop("readonly", true);
+        $('#gaji').val('0');
         $("#user-form :input").prop("disabled", false);
         $("#btn-save-user").prop("disabled", false).show();
+        applyMoneyMask('#user-form');
     }
 
     function loadLastId() {
@@ -348,7 +377,9 @@
                     $("#toko_id").val(data.toko_id || "");
                     $("#active").prop("checked", data.active === "Y");
                     $("#absensi").prop("checked", data.absensi === "Y");
+                    $("#gaji").val(data.gaji || 0);
                 }
+                applyMoneyMask('#user-form');
                 userModal.show();
                 break;
             case "delete":
@@ -405,7 +436,8 @@
             level_id: $("#level_id").val(),
             toko_id: $("#toko_id").val(),
             active: $("#active").is(":checked") ? "Y" : "N",
-            absensi: $("#absensi").is(":checked") ? "Y" : "N"
+            absensi: $("#absensi").is(":checked") ? "Y" : "N",
+            gaji: $("#gaji").val()
         };
 
         const method = currentAction === "edit" ? "PATCH" : "PUT";
