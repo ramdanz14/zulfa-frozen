@@ -23,6 +23,7 @@ class Pembelian extends BaseController
 
     public function add()
     {
+        $this->pembelianModel->syncGudangSuppliers();
         $data['title'] = 'Tambah Pembelian';
         $data['mode'] = 'create';
         $data['supplierOptions'] = $this->pembelianModel->getSupplierOptions();
@@ -36,6 +37,7 @@ class Pembelian extends BaseController
         if ($this->pembelianModel->isLockedTerima($tokoId, $beli_id)) {
             return redirect()->to('/pembelian')->with('error', 'Transaksi TERIMA yang sudah melewati periode closing tidak boleh diedit');
         }
+        $this->pembelianModel->syncGudangSuppliers();
         $data['title'] = 'Edit Pembelian';
         $data['mode'] = 'edit';
         $data['supplierOptions'] = $this->pembelianModel->getSupplierOptions();

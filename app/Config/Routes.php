@@ -312,3 +312,19 @@ $routes->group('returjual', static function ($route) {
     $route->patch('', 'Returjual::update');
     $route->delete('', 'Returjual::delete');
 });
+
+$routes->group('transfer', static function ($route) {
+    $route->get('', 'Transfer::index');
+    $route->post('ajax-po', 'Transfer::ajaxPo');
+    $route->post('ajax', 'Transfer::ajax');
+    $route->get('add/(:segment)/(:segment)', 'Transfer::add/$1/$2');
+    $route->get('edit/(:segment)', 'Transfer::edit/$1');
+    $route->get('show/(:segment)', 'Transfer::show/$1');
+    $route->get('search-item', 'Transfer::searchItem');
+    $route->get('item-detail/(:segment)', 'Transfer::itemDetail/$1');
+    $route->post('send/(:segment)', 'Transfer::send/$1');
+    $route->post('approve/(:segment)', 'Transfer::approve/$1');
+    $route->post('reject/(:segment)', 'Transfer::reject/$1');
+    $route->put('', 'Transfer::store');
+    $route->patch('', 'Transfer::update');
+});

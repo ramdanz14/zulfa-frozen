@@ -539,6 +539,187 @@ class JualModel extends Model
         return ['tipe' => 'success', 'data' => 'Transaksi penjualan berhasil dihapus'];
     }
 
+    public function saveInterbranchTransferSale(
+        string $toko_id,
+        string $username,
+        string $custId,
+        array $detailRows,
+        ?string $jatuhTempo = null,
+        ?string $keterangan = null
+    ): array {
+        $timestamp = date('Y-m-d H:i:s');
+        $customer = $this->getCustomerPayload($custId);
+        if (! $customer) {
+            return ['tipe' => 'error', 'data' => 'Customer tujuan transfer tidak ditemukan'];
+        }
+
+        if (empty($detailRows)) {
+            return ['tipe' => 'error', 'data' => 'Detail transfer belum diisi'];
+        }
+
+        $sanitizedDetails = [];
+        $gross = 0;
+        $seq = 1;
+        foreach ($detailRows as $row) {
+            $kodeItem = trim((string) ($row['kode_item'] ?? ''));
+            $satId = trim((string) ($row['sat_id'] ?? ''));
+            $qtyJual = round((float) ($row['qty_jual'] ?? 0), 4);
+            $qtyKonversi = round((float) ($row['qty_konversi'] ?? 0), 4);
+            $hargaPokok = round((float) ($row['harga_pokok'] ?? 0), 2);
+            $price = round((float) ($row['price'] ?? 0), 2);
+
+            if ($kodeItem === '' || $satId === '' || $qtyJual <= 0 || $qtyKonversi <= 0) {
+                return ['tipe' => 'error', 'data' => 'Ada detail transfer yang belum lengkap'];
+            }
+
+            $payload = $this->getItemPayload($toko_id, $kodeItem);
+            if (! $payload) {
+                return ['tipe' => 'error', 'data' => 'Item ' . $kodeItem . ' tidak ditemukan atau tidak aktif di gudang'];
+            }
+
+            $selected = null;
+            foreach (($payload['satuan_options'] ?? []) as $option) {
+                if (($option['sat_id'] ?? '') === $satId) {
+                    $selected = $option;
+                    break;
+                }
+            }
+            if (! $selected) {
+                return ['tipe' => 'error', 'data' => 'Satuan ' . $satId . ' untuk item ' . $kodeItem . ' tidak valid'];
+            }
+
+            $stokMax = (float) ($selected['stok_maksimal'] ?? 0);
+            if ($qtyJual - $stokMax > 0.0001) {
+                return ['tipe' => 'error', 'data' => 'Stok gudang tidak mencukupi untuk item ' . $kodeItem . ' / ' . $satId];
+            }
+
+            $qtyStock = round($qtyJual * $qtyKonversi, 4);
+            $rowGross = round((float) ($row['gross'] ?? ($qtyJual * $price)), 2);
+            if ($rowGross <= 0 || $price <= 0 || $hargaPokok <= 0) {
+                return ['tipe' => 'error', 'data' => 'Harga transfer item ' . $kodeItem . ' belum valid'];
+            }
+            if ($price + 0.0001 < $hargaPokok) {
+                return ['tipe' => 'error', 'data' => 'Harga transfer item ' . $kodeItem . ' tidak boleh lebih kecil dari HPP gudang'];
+            }
+
+            $sanitizedDetails[] = [
+                'seq_no' => $seq++,
+                'kode_item' => $kodeItem,
+                'sat_id' => $satId,
+                'qty_jual' => $qtyJual,
+                'qty_konversi' => $qtyKonversi,
+                'qty_stock' => $qtyStock,
+                'harga_pokok' => $hargaPokok,
+                'price' => $price,
+                'gross' => $rowGross,
+                'diskon_item' => 0,
+                'netto' => $rowGross,
+            ];
+            $gross += $rowGross;
+        }
+
+        $netto = round($gross, 2);
+        $jualId = $this->getNextId($toko_id);
+        $jatuhTempo = $jatuhTempo ?: date('Y-m-d', strtotime('+30 days'));
+
+        $this->db->transBegin();
+
+        $this->db->table('penjualan')->insert([
+            'jual_id' => $jualId,
+            'toko_id' => $toko_id,
+            'tgl' => $timestamp,
+            'cust_id' => $custId,
+            'gross' => $gross,
+            'diskon_nota' => 0,
+            'redeem_points' => 0,
+            'redeem_nominal' => 0,
+            'netto' => $netto,
+            'is_kredit' => '1',
+            'status_bayar' => 'BELUM',
+            'sisa_piutang' => $netto,
+            'jatuh_tempo' => $jatuhTempo,
+            'cash_received' => 0,
+            'cash_change' => 0,
+            'earned_points' => 0,
+            'updid' => $username,
+            'updtime' => $timestamp,
+        ]);
+
+        foreach ($sanitizedDetails as $row) {
+            $this->db->table('penjualan_detail')->insert([
+                'jual_id' => $jualId,
+                'toko_id' => $toko_id,
+                'seq_no' => $row['seq_no'],
+                'kode_item' => $row['kode_item'],
+                'sat_id' => $row['sat_id'],
+                'qty_jual' => $row['qty_jual'],
+                'qty_konversi' => $row['qty_konversi'],
+                'qty_stock' => $row['qty_stock'],
+                'harga_pokok' => $row['harga_pokok'],
+                'price' => $row['price'],
+                'gross' => $row['gross'],
+                'diskon_item' => 0,
+                'netto' => $row['gross'],
+            ]);
+
+            $this->db->query(
+                "INSERT IGNORE INTO stmast(toko_id, kode_item) VALUES(:toko_id:, :kode_item:)",
+                ['toko_id' => $toko_id, 'kode_item' => $row['kode_item']]
+            );
+
+            $this->db->table('stmast')
+                ->where('toko_id', $toko_id)
+                ->where('kode_item', $row['kode_item'])
+                ->set('jual', 'IFNULL(jual,0)+' . (float) $row['qty_stock'], false)
+                ->set('qty', 'IFNULL(qty,0)-' . (float) $row['qty_stock'], false)
+                ->set('rp_saldo_akh', '(IFNULL(qty,0)-' . (float) $row['qty_stock'] . ')*IFNULL(acost,0)', false)
+                ->update();
+
+            $this->db->table('prodmast_store')
+                ->where('toko_id', $toko_id)
+                ->where('kode_item', $row['kode_item'])
+                ->set('last_jual', 'NOW()', false)
+                ->update();
+        }
+
+        if (! $this->db->transStatus()) {
+            $this->db->transRollback();
+            return ['tipe' => 'error', 'data' => 'Gagal menyimpan penjualan transfer antar toko'];
+        }
+
+        $this->db->transCommit();
+
+        return [
+            'tipe' => 'success',
+            'data' => 'Penjualan transfer antar toko berhasil disimpan',
+            'jual_id' => $jualId,
+            'keterangan' => $keterangan,
+        ];
+    }
+
+    public function cancelTransferSale(string $toko_id, string $username, string $jual_id, string $reason): array
+    {
+        $existingSale = $this->getSaleAggregate($toko_id, $jual_id);
+        if (! $existingSale) {
+            return ['tipe' => 'error', 'data' => 'Transaksi penjualan transfer tidak ditemukan'];
+        }
+
+        $this->db->transBegin();
+        $this->reverseSaleEffects($existingSale, $toko_id, $username, date('Y-m-d H:i:s'), $reason);
+        $this->db->table('penjualan')
+            ->where('toko_id', $toko_id)
+            ->where('jual_id', $jual_id)
+            ->delete();
+
+        if (! $this->db->transStatus()) {
+            $this->db->transRollback();
+            return ['tipe' => 'error', 'data' => 'Gagal membatalkan penjualan transfer'];
+        }
+
+        $this->db->transCommit();
+        return ['tipe' => 'success', 'data' => 'Penjualan transfer berhasil dibatalkan'];
+    }
+
     public function incrementReprintCount(string $toko_id, string $jual_id): bool
     {
         $exists = $this->db->query(
@@ -852,6 +1033,12 @@ class JualModel extends Model
                 ->set('jual', 'IFNULL(jual,0)+' . (float) $row['qty_stock'], false)
                 ->set('qty', 'IFNULL(qty,0)-' . (float) $row['qty_stock'], false)
                 ->set('rp_saldo_akh', '(IFNULL(qty,0)-' . (float) $row['qty_stock'] . ')*IFNULL(acost,0)', false)
+                ->update();
+
+            $this->db->table('prodmast_store')
+                ->where('toko_id', $toko_id)
+                ->where('kode_item', $row['kode_item'])
+                ->set('last_jual', 'NOW()', false)
                 ->update();
         }
 

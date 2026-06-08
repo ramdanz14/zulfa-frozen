@@ -40,6 +40,19 @@ class PembelianModel extends Model
         return $this->db->query("SELECT supco,nama FROM supmast ORDER BY nama")->getResultArray();
     }
 
+    public function syncGudangSuppliers(): void
+    {
+        $this->db->query("
+            REPLACE INTO supmast(supco,nama,alamat,kontak)
+            SELECT toko_id AS supco,
+                   CONCAT('GUDANG ',toko_nama),
+                   toko_alamat,
+                   toko_phone
+            FROM toko
+            WHERE flag_gudang='Y'
+        ");
+    }
+
     public function getSaldoHutangFormData(string $toko_id, ?string $beli_id = null): array
     {
         $data = [
