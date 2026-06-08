@@ -48,7 +48,7 @@ class Poinmember extends BaseController
     public function setting()
     {
         if (! $this->hasAccess('akses_update')) {
-            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Anda tidak memiliki akses update setting poin'])->setStatusCode(403);
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Anda tidak memiliki akses update setting poin'])->setStatusCode(400);
         }
 
         $nominal = (int) ($this->request->getVar('nominal_per_poin') ?? 0);
@@ -72,7 +72,7 @@ class Poinmember extends BaseController
     public function hardReset()
     {
         if (! $this->hasAccess('akses_delete')) {
-            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Anda tidak memiliki akses hard reset poin member'])->setStatusCode(403);
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Anda tidak memiliki akses hard reset poin member'])->setStatusCode(400);
         }
 
         $result = $this->poinMemberModel->hardResetAllPoints((string) session('toko_id'), (string) session('username'));

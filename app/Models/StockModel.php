@@ -27,14 +27,14 @@ class StockModel extends Model
         $baseSql = $this->buildBaseStockSql($jenis, $urutan);
 
         $totalRow = $this->db->query(
-            "SELECT COUNT(*) AS total FROM ({$this->buildBaseStockSql($jenis, $urutan, false)}) stock_rows",
+            "SELECT COUNT(*) AS total FROM ({$this->buildBaseStockSql($jenis,$urutan, false)}) stock_rows",
             ['toko_id' => $tokoId]
         )->getRowArray();
 
         $filtered = (int) ($totalRow['total'] ?? 0);
         if ($outerWhere !== '') {
             $filteredRow = $this->db->query(
-                "SELECT COUNT(*) AS total FROM ({$this->buildBaseStockSql($jenis, $urutan, false)}) stock_rows $outerWhere",
+                "SELECT COUNT(*) AS total FROM ({$this->buildBaseStockSql($jenis,$urutan, false)}) stock_rows $outerWhere",
                 $binds
             )->getRowArray();
             $filtered = (int) ($filteredRow['total'] ?? 0);
@@ -93,6 +93,15 @@ class StockModel extends Model
              LEFT JOIN stmast st ON st.toko_id=:toko_id: AND st.kode_item=p.kode_item
              LEFT JOIN prodmast_satuan base ON base.kode_item=p.kode_item AND base.qty_konversi=1
              WHERE p.kode_item=:kode_item:
+             LIMIT 1",
+            [
+                'toko_id' => $tokoId,
+                'kode_item' => $kodeItem,
+            ]
+        )->getRowArray();
+
+        $lso = $this->db->query(
+            "SELECT last_so from  prodmast_store WHERE toko_id=:toko_id: AND kode_item=:kode_item:
              LIMIT 1",
             [
                 'toko_id' => $tokoId,
@@ -249,6 +258,7 @@ class StockModel extends Model
             'item' => [
                 'kode_item' => $item['kode_item'],
                 'nama_item' => $item['nama_item'],
+                'last_so' => $lso['last_so'],
                 'kat_id' => $item['kat_id'],
                 'sat_dasar' => $item['sat_dasar'],
                 'begbal' => (float) ($item['begbal'] ?? 0),

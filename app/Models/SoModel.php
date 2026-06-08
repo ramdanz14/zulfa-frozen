@@ -323,6 +323,12 @@ class SoModel extends Model
                 'keterangan' => 'SO ' . $active['tanggal'],
                 'updid' => $username,
             ]);
+
+            $this->db->table('prodmast_store')
+                ->where('toko_id', $tokoId)
+                ->where('kode_item', $row['kode_item'])
+                ->set('last_so', 'NOW()', false)
+                ->update();
         }
         $this->db->query(
             "UPDATE `{$active['so_table']}`
@@ -458,6 +464,12 @@ class SoModel extends Model
             'keterangan' => $keterangan !== '' ? $keterangan : 'SO satuan',
             'updid' => $username,
         ]);
+
+        $this->db->table('prodmast_store')
+            ->where('toko_id', $tokoId)
+            ->where('kode_item', $kodeItem)
+            ->set('last_so', 'NOW()', false)
+            ->update();
 
         HitungStock($tokoId);
         return ['tipe' => 'success', 'data' => 'Adjust satuan berhasil ditambahkan'];

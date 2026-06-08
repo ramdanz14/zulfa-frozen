@@ -74,6 +74,7 @@ $aksesMenuData = json_decode($akses_menu ?? '{}', true) ?: [];
                 <div>
                     <h5 class="modal-title mb-1">History Stock Item</h5>
                     <div class="small text-muted" id="stock-history-item-label">-</div>
+                    <div class="small text-muted" id="stock-lastso-label">-</div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -344,6 +345,8 @@ $aksesMenuData = json_decode($akses_menu ?? '{}', true) ?: [];
             item.kat_id ? `Kategori ${item.kat_id}` : '',
             item.sat_dasar ? `Sat ${item.sat_dasar}` : ''
         ].filter(Boolean).join(' | '));
+
+        $('#stock-lastso-label').text(`Terakhir SO : ${item.last_so} (${humanizeDate(item.last_so)}) `);
 
         if (!rows.length) {
             $('#stock-history-body').html(`

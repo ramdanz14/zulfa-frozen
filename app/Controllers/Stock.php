@@ -37,7 +37,7 @@ class Stock extends BaseController
                 'recordsFiltered' => 0,
                 'summary' => $this->stockModel->getSummary((string) session('toko_id')),
                 'message' => 'Tidak memiliki akses membaca laporan stock',
-            ])->setStatusCode(403);
+            ])->setStatusCode(400);
         }
 
         $jenis = trim((string) ($this->request->getVar('jenis') ?? 'rupiah'));
@@ -69,7 +69,7 @@ class Stock extends BaseController
             return $this->response->setJSON([
                 'tipe' => 'error',
                 'data' => 'Tidak memiliki akses membaca history stock',
-            ])->setStatusCode(403);
+            ])->setStatusCode(400);
         }
 
         $kodeItem = trim($kodeItem);
@@ -92,7 +92,7 @@ class Stock extends BaseController
             return $this->response->setJSON([
                 'tipe' => 'error',
                 'data' => 'Tidak memiliki akses hitung ulang stock',
-            ])->setStatusCode(403);
+            ])->setStatusCode(400);
         }
 
         if ((session('toko_id') ?? '') === '') {
