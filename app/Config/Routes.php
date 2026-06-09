@@ -216,6 +216,14 @@ $routes->group('lapharian', static function ($route) {
     $route->get('struk', 'Lapharian::struk');
 });
 
+$routes->group('closing', static function ($route) {
+    $route->get('', 'Closing::index');
+    $route->get('dashboard', 'Closing::dashboard');
+    $route->post('process', 'Closing::process');
+    $route->post('reclose', 'Closing::reclose');
+});
+$routes->cli('closing/cli', 'Closing::cli');
+
 $routes->group('bap', static function ($route) {
     $route->get('', 'Bap::index');
     $route->get('add', 'Bap::add');
