@@ -197,6 +197,10 @@ class KasModel extends Model
             "SELECT
                 COALESCE(SUM(CASE WHEN ak.jenis_akun='MASUK' THEN km.nominal ELSE 0 END),0) AS total_masuk,
                 COALESCE(SUM(CASE WHEN ak.jenis_akun='KELUAR' THEN km.nominal ELSE 0 END),0) AS total_keluar,
+                COALESCE(SUM(CASE WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='CASH' THEN km.nominal ELSE 0 END),0) AS total_tunai_masuk,
+                COALESCE(SUM(CASE WHEN ak.jenis_akun='KELUAR' AND COALESCE(km.saldo_channel, 'CASH')='CASH' THEN km.nominal ELSE 0 END),0) AS total_tunai_keluar,
+                COALESCE(SUM(CASE WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN km.nominal ELSE 0 END),0) AS total_nontunai_masuk,
+                COALESCE(SUM(CASE WHEN ak.jenis_akun='KELUAR' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN km.nominal ELSE 0 END),0) AS total_nontunai_keluar,
                 COUNT(*) AS total_transaksi
              FROM kas_mutasi km
              INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
@@ -211,7 +215,9 @@ class KasModel extends Model
                     km.toko_id,
                     MAX(t.toko_nama) AS toko_nama,
                     COUNT(*) AS total_transaksi,
-                    SUM(km.nominal) AS total_nominal
+                    SUM(km.nominal) AS total_nominal,
+                    COALESCE(SUM(CASE WHEN COALESCE(km.saldo_channel, 'CASH')='CASH' THEN km.nominal ELSE 0 END),0) AS total_tunai,
+                    COALESCE(SUM(CASE WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN km.nominal ELSE 0 END),0) AS total_nontunai
              FROM kas_mutasi km
              INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
              LEFT JOIN toko t ON t.toko_id=km.toko_id
@@ -235,6 +241,10 @@ class KasModel extends Model
             'summary' => [
                 'total_masuk' => (int) ($summary['total_masuk'] ?? 0),
                 'total_keluar' => (int) ($summary['total_keluar'] ?? 0),
+                'total_tunai_masuk' => (int) ($summary['total_tunai_masuk'] ?? 0),
+                'total_tunai_keluar' => (int) ($summary['total_tunai_keluar'] ?? 0),
+                'total_nontunai_masuk' => (int) ($summary['total_nontunai_masuk'] ?? 0),
+                'total_nontunai_keluar' => (int) ($summary['total_nontunai_keluar'] ?? 0),
                 'saldo_bersih' => (int) (($summary['total_masuk'] ?? 0) - ($summary['total_keluar'] ?? 0)),
                 'total_transaksi' => (int) ($summary['total_transaksi'] ?? 0),
                 'stores' => $effectiveStores,

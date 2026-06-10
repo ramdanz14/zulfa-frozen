@@ -47,35 +47,40 @@
         </div>
 
         <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
+            <div class="col-lg-6">
                 <div class="card h-100 mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">Total Kas Masuk</div>
-                        <div class="fs-6 fw-semibold mt-2 text-success" id="summary-masuk">Rp 0</div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="text-muted small">Total Tunai</div>
+                            <div class="text-muted small" id="summary-transaksi">0 transaksi</div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-muted small">Pemasukan</div>
+                                <div class="fs-6 fw-semibold mt-2 text-success" id="summary-tunai-masuk">Rp 0</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Pengeluaran</div>
+                                <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-tunai-keluar">Rp 0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
+            <div class="col-lg-6">
                 <div class="card h-100 mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">Total Kas Keluar</div>
-                        <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-keluar">Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Saldo Bersih</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-saldo">Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Jumlah Transaksi</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-transaksi">0</div>
+                        <div class="text-muted small mb-3">Total Non Tunai</div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-muted small">Pemasukan</div>
+                                <div class="fs-6 fw-semibold mt-2 text-success" id="summary-nontunai-masuk">Rp 0</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Pengeluaran</div>
+                                <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-nontunai-keluar">Rp 0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -345,6 +350,18 @@
                 title: 'Total Nominal',
                 className: 'text-end',
                 render: data => 'Rp ' + formatMoneyValue(data || 0)
+            },
+            {
+                data: 'total_tunai',
+                title: 'Total Tunai',
+                className: 'text-end',
+                render: data => 'Rp ' + formatMoneyValue(data || 0)
+            },
+            {
+                data: 'total_nontunai',
+                title: 'Total Non Tunai',
+                className: 'text-end',
+                render: data => 'Rp ' + formatMoneyValue(data || 0)
             }
         ]
     });
@@ -392,10 +409,11 @@
             success: function(res) {
                 const data = res?.data || {};
                 const summary = data.summary || {};
-                $('#summary-masuk').text(`Rp ${formatMoneyValue(summary.total_masuk || 0)}`);
-                $('#summary-keluar').text(`Rp ${formatMoneyValue(summary.total_keluar || 0)}`);
-                $('#summary-saldo').text(`Rp ${formatMoneyValue(summary.saldo_bersih || 0)}`);
-                $('#summary-transaksi').text(Number(summary.total_transaksi || 0).toLocaleString('id-ID'));
+                $('#summary-tunai-masuk').text(`Rp ${formatMoneyValue(summary.total_tunai_masuk || 0)}`);
+                $('#summary-tunai-keluar').text(`Rp ${formatMoneyValue(summary.total_tunai_keluar || 0)}`);
+                $('#summary-nontunai-masuk').text(`Rp ${formatMoneyValue(summary.total_nontunai_masuk || 0)}`);
+                $('#summary-nontunai-keluar').text(`Rp ${formatMoneyValue(summary.total_nontunai_keluar || 0)}`);
+                $('#summary-transaksi').text(`${Number(summary.total_transaksi || 0).toLocaleString('id-ID')} transaksi`);
                 refreshChart(data.chart_rows || []);
             },
             error: function(xhr) {
