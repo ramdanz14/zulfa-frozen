@@ -210,6 +210,11 @@ $routes->group('lapjual', static function ($route) {
     $route->post('summary', 'Lapjual::summary');
 });
 
+$routes->group('lapcash', static function ($route) {
+    $route->get('', 'Lapcash::index');
+    $route->post('report', 'Lapcash::report');
+});
+
 $routes->group('lapharian', static function ($route) {
     $route->get('', 'Lapharian::index');
     $route->post('report', 'Lapharian::report');
