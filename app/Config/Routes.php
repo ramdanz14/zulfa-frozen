@@ -210,6 +210,13 @@ $routes->group('lapjual', static function ($route) {
     $route->post('summary', 'Lapjual::summary');
 });
 
+$routes->group('lapanalisamargin', static function ($route) {
+    $route->get('', 'Lapanalisamargin::index');
+    $route->get('detail', 'Lapanalisamargin::detailPage');
+    $route->post('report', 'Lapanalisamargin::report');
+    $route->post('detail', 'Lapanalisamargin::detail');
+});
+
 $routes->group('lapcash', static function ($route) {
     $route->get('', 'Lapcash::index');
     $route->post('report', 'Lapcash::report');
