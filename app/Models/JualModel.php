@@ -361,13 +361,11 @@ class JualModel extends Model
         $data = $this->db->query(
             "SELECT j.*,
                     COALESCE(c.nama, 'Pelanggan Umum') AS customer_nama,
-                    COUNT(d.seq_no) AS jml_item,
-                    COALESCE(SUM(d.qty_jual), 0) AS total_qty
+                    COALESCE(j.total_item, 0) AS jml_item,
+                    COALESCE(j.total_qty, 0) AS total_qty
              FROM penjualan j
              LEFT JOIN customer c ON c.cust_id=j.cust_id
-             LEFT JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
              $where
-             GROUP BY j.toko_id, j.jual_id
              ORDER BY j.tgl DESC, j.jual_id DESC
              $queryLimit",
             $binds
@@ -619,6 +617,7 @@ class JualModel extends Model
         }
 
         $netto = round($gross, 2);
+        $saleSummary = $this->buildSaleDetailSummary($sanitizedDetails);
         $jualId = $this->getNextId($toko_id);
         $jatuhTempo = $jatuhTempo ?: date('Y-m-d', strtotime('+30 days'));
 
@@ -634,6 +633,11 @@ class JualModel extends Model
             'redeem_points' => 0,
             'redeem_nominal' => 0,
             'netto' => $netto,
+            'margin_bruto' => $saleSummary['margin_bruto'],
+            'total_hpp' => $saleSummary['total_hpp'],
+            'total_qty' => $saleSummary['total_qty'],
+            'total_item' => $saleSummary['total_item'],
+            'total_diskon_item' => $saleSummary['total_diskon_item'],
             'is_kredit' => '1',
             'status_bayar' => 'BELUM',
             'sisa_piutang' => $netto,
@@ -949,6 +953,7 @@ class JualModel extends Model
         $isKredit = $sisaPiutang > 0.0001 ? '1' : '0';
         $statusBayar = $sisaPiutang <= 0.0001 ? 'LUNAS' : ($totalPaymentAllocated > 0 ? 'CICIL' : 'BELUM');
         $jualId = $existingSale['jual_id'] ?? $this->getNextId($toko_id);
+        $saleSummary = $this->buildSaleDetailSummary($sanitizedDetails);
 
         if ($existingSale) {
             $this->db->table('penjualan_detail')
@@ -969,6 +974,11 @@ class JualModel extends Model
                     'redeem_points' => $redeemPoints,
                     'redeem_nominal' => round($redeemNominal, 2),
                     'netto' => round($netto, 2),
+                    'margin_bruto' => $saleSummary['margin_bruto'],
+                    'total_hpp' => $saleSummary['total_hpp'],
+                    'total_qty' => $saleSummary['total_qty'],
+                    'total_item' => $saleSummary['total_item'],
+                    'total_diskon_item' => $saleSummary['total_diskon_item'],
                     'is_kredit' => $isKredit,
                     'status_bayar' => $statusBayar,
                     'sisa_piutang' => $sisaPiutang,
@@ -990,6 +1000,11 @@ class JualModel extends Model
                 'redeem_points' => $redeemPoints,
                 'redeem_nominal' => round($redeemNominal, 2),
                 'netto' => round($netto, 2),
+                'margin_bruto' => $saleSummary['margin_bruto'],
+                'total_hpp' => $saleSummary['total_hpp'],
+                'total_qty' => $saleSummary['total_qty'],
+                'total_item' => $saleSummary['total_item'],
+                'total_diskon_item' => $saleSummary['total_diskon_item'],
                 'is_kredit' => $isKredit,
                 'status_bayar' => $statusBayar,
                 'sisa_piutang' => $sisaPiutang,
@@ -1106,6 +1121,38 @@ class JualModel extends Model
 
         $date = date_create($value);
         return $date ? $date->format('Y-m-d') : null;
+    }
+
+    private function buildSaleDetailSummary(array $details): array
+    {
+        $totalHpp = 0.0;
+        $marginBruto = 0.0;
+        $totalQty = 0.0;
+        $totalDiskonItem = 0.0;
+        $items = [];
+
+        foreach ($details as $row) {
+            $qty = (float) ($row['qty_jual'] ?? 0);
+            $hpp = round($qty * (float) ($row['harga_pokok'] ?? 0), 2);
+            $netto = (float) ($row['netto'] ?? 0);
+
+            $totalHpp += $hpp;
+            $marginBruto += round($netto - $hpp, 2);
+            $totalQty += $qty;
+            $totalDiskonItem += (float) ($row['diskon_item'] ?? 0);
+            $kodeItem = trim((string) ($row['kode_item'] ?? ''));
+            if ($kodeItem !== '') {
+                $items[$kodeItem] = true;
+            }
+        }
+
+        return [
+            'margin_bruto' => round($marginBruto, 2),
+            'total_hpp' => round($totalHpp, 2),
+            'total_qty' => round($totalQty, 4),
+            'total_item' => count($items),
+            'total_diskon_item' => round($totalDiskonItem, 2),
+        ];
     }
 
     private function getSaleAggregate(string $toko_id, string $jual_id): ?array
@@ -1456,33 +1503,26 @@ class JualModel extends Model
                     ELSE CONCAT('C-', j.cust_id)
                 END) AS jumlah_customer,
                 COUNT(DISTINCT j.jual_id) AS jumlah_transaksi,
+                COALESCE(SUM(j.total_qty), 0) AS total_qty,
+                COALESCE(SUM(j.total_hpp), 0) AS total_hpp,
+                COALESCE(SUM(j.total_diskon_item), 0) AS total_diskon_item,
+                COALESCE(SUM(j.margin_bruto), 0) AS margin_bruto,
                 COALESCE(SUM(j.netto), 0) AS omset
             FROM penjualan j
             LEFT JOIN customer c ON c.cust_id=j.cust_id
             $where
             GROUP BY DATE(j.tgl)
         ";
-        $detailSql = "
-            SELECT
-                DATE(j.tgl) AS tanggal,
-                COALESCE(SUM(d.qty_jual), 0) AS total_qty,
-                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
-            FROM penjualan j
-            INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
-            $where
-            GROUP BY DATE(j.tgl)
-        ";
         $baseSql = "
             SELECT
-                h.tanggal,
-                h.daftar_toko,
-                h.jumlah_customer,
-                h.jumlah_transaksi,
-                COALESCE(d.total_qty, 0) AS total_qty,
-                h.omset,
-                COALESCE(d.margin_bruto, 0) AS margin_bruto
+                tanggal,
+                daftar_toko,
+                jumlah_customer,
+                jumlah_transaksi,
+                total_qty,
+                omset,
+                margin_bruto
             FROM ($headerSql) h
-            LEFT JOIN ($detailSql) d ON d.tanggal = h.tanggal
         ";
 
         $countRow = $this->db->query(
@@ -1534,16 +1574,9 @@ class JualModel extends Model
                     ELSE CONCAT('C-', j.cust_id)
                 END) AS total_customer,
                 COUNT(DISTINCT j.jual_id) AS total_transaksi,
-                COALESCE(SUM(j.netto), 0) AS total_omset_raw
+                COALESCE(SUM(j.netto), 0) AS total_omset_raw,
+                COALESCE(SUM(j.margin_bruto), 0) AS total_margin
              FROM penjualan j
-             $where",
-            $binds
-        )->getRowArray() ?: [];
-
-        $marginRow = $this->db->query(
-            "SELECT COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS total_margin
-             FROM penjualan j
-             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
              $where",
             $binds
         )->getRowArray() ?: [];
@@ -1551,30 +1584,14 @@ class JualModel extends Model
         $dailyRows = $this->db->query(
             "SELECT
                 DATE(j.tgl) AS tanggal,
-                COALESCE(SUM(j.netto), 0) AS omset_raw
+                COALESCE(SUM(j.netto), 0) AS omset_raw,
+                COALESCE(SUM(j.margin_bruto), 0) AS margin_bruto
              FROM penjualan j
              $where
              GROUP BY DATE(j.tgl)
              ORDER BY DATE(j.tgl) ASC",
             $binds
         )->getResultArray();
-
-        $marginDailyRows = $this->db->query(
-            "SELECT
-                DATE(j.tgl) AS tanggal,
-                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
-             FROM penjualan j
-             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
-             $where
-             GROUP BY DATE(j.tgl)
-             ORDER BY DATE(j.tgl) ASC",
-            $binds
-        )->getResultArray();
-
-        $marginDailyMap = [];
-        foreach ($marginDailyRows as $row) {
-            $marginDailyMap[(string) ($row['tanggal'] ?? '')] = (float) ($row['margin_bruto'] ?? 0);
-        }
 
         $daily = [];
         foreach ($dailyRows as $row) {
@@ -1583,7 +1600,7 @@ class JualModel extends Model
                 'tanggal' => $tanggal,
                 'label_tanggal' => date('d/m', strtotime($tanggal)),
                 'omset' => (float) ($row['omset_raw'] ?? 0),
-                'margin_bruto' => (float) ($marginDailyMap[$tanggal] ?? 0),
+                'margin_bruto' => (float) ($row['margin_bruto'] ?? 0),
             ];
         }
 
@@ -1603,9 +1620,8 @@ class JualModel extends Model
             "SELECT
                 DATE(j.tgl) AS tanggal,
                 j.toko_id,
-                COALESCE(SUM(d.netto - (d.qty_jual * d.harga_pokok)), 0) AS margin_bruto
+                COALESCE(SUM(j.margin_bruto), 0) AS margin_bruto
              FROM penjualan j
-             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
              $where
              GROUP BY DATE(j.tgl), j.toko_id
              ORDER BY DATE(j.tgl) ASC, j.toko_id ASC",
@@ -1616,7 +1632,7 @@ class JualModel extends Model
             'total_customer' => (int) ($summary['total_customer'] ?? 0),
             'total_transaksi' => (int) ($summary['total_transaksi'] ?? 0),
             'total_omset' => (float) ($summary['total_omset_raw'] ?? 0),
-            'total_margin' => (float) ($marginRow['total_margin'] ?? 0),
+            'total_margin' => (float) ($summary['total_margin'] ?? 0),
             'daily' => $daily,
             'daily_omset_by_store' => $omsetByStoreRows,
             'daily_margin_by_store' => $marginByStoreRows,
