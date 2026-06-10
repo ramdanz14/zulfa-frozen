@@ -989,6 +989,14 @@ class JualModel extends Model
                     'updid' => $username,
                     'updtime' => $timestamp,
                 ]);
+            // update jika ada diskon nota
+            if ($diskonNota != "0") {
+                $this->db->table('penjualan')
+                    ->where('toko_id', $toko_id)
+                    ->where('jual_id', $jualId)
+                    ->set('margin_bruto', 'margin_bruto-diskon_nota', false)
+                    ->update();
+            }
         } else {
             $this->db->table('penjualan')->insert([
                 'jual_id' => $jualId,
