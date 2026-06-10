@@ -122,9 +122,10 @@ class LapcashModel extends Model
                         CASE
                             WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pemasukan Non Tunai'
                             WHEN ak.jenis_akun='MASUK' THEN 'Total Pemasukan Kas'
-                            WHEN km.nama_akun='GAJI' THEN 'Total Pengeluaran Gaji'
-                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pengeluaran Non Tunai'
-                            ELSE 'Total Pengeluaran Kas'
+                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' AND ak.flag_beban='Y' THEN 'Total Pengeluaran Non Tunai Beban'
+                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pengeluaran Non Tunai Non Beban'
+                            WHEN ak.flag_beban='Y' THEN 'Total Pengeluaran Kas Beban'
+                            ELSE 'Total Pengeluaran Kas Non Beban'
                         END AS label,
                         COALESCE(km.nominal,0) AS total
                  FROM kas_mutasi km
@@ -190,6 +191,7 @@ class LapcashModel extends Model
             'out_noncash' => 0.0,
             'saldo_noncash' => $noncashBalance,
             'saldo_all' => $cashBalance + $noncashBalance,
+            'detail' => $this->buildDetailRows([], $cashBalance, $noncashBalance),
             'is_opening' => true,
         ];
 
@@ -214,6 +216,7 @@ class LapcashModel extends Model
                 'out_noncash' => $outNoncash,
                 'saldo_noncash' => $noncashBalance,
                 'saldo_all' => $cashBalance + $noncashBalance,
+                'detail' => $this->buildDetailRows((array) ($move['labels'] ?? []), $cashBalance, $noncashBalance),
                 'is_opening' => false,
             ];
 
@@ -232,7 +235,7 @@ class LapcashModel extends Model
             'pengeluaran_cash' => 0.0,
             'pemasukan_noncash' => 0.0,
             'pengeluaran_noncash' => 0.0,
-            'breakdown' => [],
+            'breakdown' => $this->emptyBreakdown(),
         ];
 
         foreach ($movements as $move) {
@@ -251,6 +254,61 @@ class LapcashModel extends Model
         $summary['saldo_akhir_all'] = (float) ($last['saldo_all'] ?? 0);
 
         return $summary;
+    }
+
+    private function buildDetailRows(array $labels, float $cashBalance, float $noncashBalance): array
+    {
+        $breakdown = $this->emptyBreakdown();
+        foreach ($labels as $label => $total) {
+            $breakdown[$label] = ($breakdown[$label] ?? 0) + (float) $total;
+        }
+
+        $rows = [];
+        foreach ($breakdown as $label => $amount) {
+            $rows[] = [
+                'label' => $label,
+                'amount' => (float) $amount,
+                'type' => $this->labelType($label),
+            ];
+        }
+
+        $rows[] = ['label' => 'Sisa Saldo Cash', 'amount' => $cashBalance, 'type' => 'total'];
+        $rows[] = ['label' => 'Sisa Saldo Non Tunai', 'amount' => $noncashBalance, 'type' => 'total'];
+        $rows[] = ['label' => 'Sisa Saldo Akumulasi', 'amount' => $cashBalance + $noncashBalance, 'type' => 'total'];
+
+        return $rows;
+    }
+
+    private function emptyBreakdown(): array
+    {
+        return array_fill_keys($this->breakdownLabels(), 0.0);
+    }
+
+    private function breakdownLabels(): array
+    {
+        return [
+            'Total Bayar Piutang Cash',
+            'Total Bayar Piutang Transfer',
+            'Total Bayar Piutang QRIS',
+            'Total Penjualan Cash',
+            'Total Penjualan Transfer',
+            'Total Penjualan QRIS',
+            'Total Pembayaran Supplier Tunai',
+            'Total Pembayaran Supplier Transfer',
+            'Total Pengeluaran Kas Beban',
+            'Total Pengeluaran Kas Non Beban',
+            'Total Pemasukan Kas',
+            'Total Pengeluaran Non Tunai Beban',
+            'Total Pengeluaran Non Tunai Non Beban',
+            'Total Pemasukan Non Tunai',
+            'Mutasi Saldo Keluar',
+            'Mutasi Saldo Masuk',
+        ];
+    }
+
+    private function labelType(string $label): string
+    {
+        return (str_contains($label, 'Pengeluaran') || str_contains($label, 'Pembayaran Supplier') || str_contains($label, 'Mutasi Saldo Keluar')) ? 'out' : 'in';
     }
 
     private function getOpeningBalance(array $storeIds, string $period): array

@@ -91,10 +91,31 @@
                             <th>OUT NON TUNAI</th>
                             <th>SALDO NON TUNAI</th>
                             <th>SALDO ALL</th>
+                            <th>DETAIL</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-detail-cashflow" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Cash Flow</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-semibold mb-3" id="detail-title">Periode -</h5>
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <tbody id="detail-body"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -107,6 +128,8 @@
     const canMultiStore = akses_menu?.akses_delete === 'Y';
     const sessionTokoId = '<?= esc((string) session('toko_id')) ?>';
     let table = null;
+    let currentRows = [];
+    const detailModal = new bootstrap.Modal(document.getElementById('modal-detail-cashflow'));
 
     $(function() {
         if (canMultiStore) {
@@ -182,7 +205,18 @@
                 { data: 'in_noncash', className: 'text-end', render: moneyCell },
                 { data: 'out_noncash', className: 'text-end', render: moneyCell },
                 { data: 'saldo_noncash', className: 'text-end', render: moneyCell },
-                { data: 'saldo_all', className: 'text-end text-primary', render: moneyCell }
+                { data: 'saldo_all', className: 'text-end text-primary', render: moneyCell },
+                {
+                    data: null,
+                    className: 'text-center',
+                    orderable: false,
+                    render: function(row) {
+                        if (row.is_opening) {
+                            return '<span class="text-muted">-</span>';
+                        }
+                        return `<button type="button" class="btn btn-sm btn-outline-primary" onclick="showDailyDetail('${escapeAttr(row.tanggal || '')}')"><i class="ti ti-list-details"></i></button>`;
+                    }
+                }
             ],
             createdRow: function(row, data) {
                 if (data.is_opening) {
@@ -235,14 +269,33 @@
             summaryRow('Sisa Saldo Non Tunai', summary.saldo_akhir_noncash, 'total'),
             summaryRow('Sisa Saldo Akumulasi', summary.saldo_akhir_all, 'total')
         ].join(''));
-        $('#summary-body-right').html(Object.keys(breakdown).sort().map(label => summaryRow(label, breakdown[label], label.includes('Pengeluaran') || label.includes('Hutang') ? 'out' : 'in')).join('') || '<tr><td class="text-center text-muted">Belum ada mutasi</td></tr>');
+        $('#summary-body-right').html(Object.keys(breakdown).map(label => summaryRow(label, breakdown[label], labelType(label))).join('') || '<tr><td class="text-center text-muted">Belum ada mutasi</td></tr>');
 
-        table.clear().rows.add(report.rows || []).draw();
+        currentRows = report.rows || [];
+        table.clear().rows.add(currentRows).draw();
     }
 
     function summaryRow(label, amount, type) {
         const cls = type === 'in' ? 'text-success' : (type === 'out' ? 'text-danger' : (type === 'total' ? 'fw-semibold' : ''));
         return `<tr><td>${escapeHtml(label)}</td><td class="text-end ${cls}">${rp(amount || 0)}</td></tr>`;
+    }
+
+    function showDailyDetail(tanggal) {
+        const row = currentRows.find(item => String(item.tanggal || '') === String(tanggal || ''));
+        if (!row) {
+            toastr.error('Detail tanggal tidak ditemukan');
+            return;
+        }
+
+        $('#detail-title').text(`Periode ${row.tanggal || '-'}`);
+        $('#detail-body').html((row.detail || []).map(item => summaryRow(item.label, item.amount, item.type || labelType(item.label))).join(''));
+        detailModal.show();
+    }
+
+    function labelType(label) {
+        return String(label || '').includes('Pengeluaran') ||
+            String(label || '').includes('Pembayaran Supplier') ||
+            String(label || '').includes('Mutasi Saldo Keluar') ? 'out' : 'in';
     }
 
     function moneyCell(data) {
@@ -255,6 +308,10 @@
 
     function escapeHtml(value) {
         return $('<div>').text(value || '').html();
+    }
+
+    function escapeAttr(value) {
+        return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 </script>
 <?= $this->endSection('javascript') ?>
