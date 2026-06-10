@@ -20,7 +20,7 @@ class KasModel extends Model
         $binds = ['toko_id' => $tokoId];
         $where = " WHERE km.toko_id=:toko_id: ";
         if ($search !== '') {
-            $where .= " AND (km.nama_akun LIKE :search: OR km.karyawan_id LIKE :search: OR u.fullname LIKE :search: OR km.keterangan LIKE :search:) ";
+            $where .= " AND (km.nama_akun LIKE :search: OR km.tipe_mutasi LIKE :search: OR km.karyawan_id LIKE :search: OR u.fullname LIKE :search: OR km.keterangan LIKE :search:) ";
             $binds['search'] = '%' . $this->db->escapeLikeString($search) . '%';
         }
 
@@ -64,7 +64,11 @@ class KasModel extends Model
     public function saveMutation(string $tokoId, string $username, array $payload, string $mode): array
     {
         $tanggal = trim((string) ($payload['tanggal'] ?? ''));
+        $tipeMutasi = strtoupper(trim((string) ($payload['tipe_mutasi'] ?? 'OPERASIONAL')));
         $namaAkun = strtoupper(trim((string) ($payload['nama_akun'] ?? '')));
+        $saldoChannel = strtoupper(trim((string) ($payload['saldo_channel'] ?? 'CASH')));
+        $saldoAsal = strtoupper(trim((string) ($payload['saldo_asal'] ?? '')));
+        $saldoTujuan = strtoupper(trim((string) ($payload['saldo_tujuan'] ?? '')));
         $nominal = (int) preg_replace('/[^0-9\-]/', '', (string) ($payload['nominal'] ?? 0));
         $karyawanId = trim((string) ($payload['karyawan_id'] ?? ''));
         $keterangan = trim((string) ($payload['keterangan'] ?? ''));
@@ -73,14 +77,34 @@ class KasModel extends Model
         if ($tanggal === '' || substr($tanggal, 0, 10) !== date('Y-m-d')) {
             return ['tipe' => 'error', 'data' => 'Transaksi kas hanya boleh diinput pada tanggal hari ini'];
         }
-        if ($namaAkun === '' || $nominal <= 0 || $karyawanId === '') {
-            return ['tipe' => 'error', 'data' => 'Tanggal, akun kas, nominal, dan karyawan wajib diisi'];
+        if (!in_array($tipeMutasi, ['OPERASIONAL', 'PINDAH_SALDO'], true)) {
+            return ['tipe' => 'error', 'data' => 'Tipe mutasi tidak valid'];
+        }
+        if (!in_array($saldoChannel, ['CASH', 'NONCASH'], true)) {
+            $saldoChannel = 'CASH';
+        }
+        if ($nominal <= 0 || $karyawanId === '') {
+            return ['tipe' => 'error', 'data' => 'Tanggal, nominal, dan karyawan wajib diisi'];
         }
 
-        $akun = $this->db->query("SELECT * FROM akun_kas WHERE nama_akun=:nama_akun: LIMIT 1", ['nama_akun' => $namaAkun])->getRowArray();
-        if (!$akun) {
-            return ['tipe' => 'error', 'data' => 'Akun kas tidak ditemukan'];
+        if ($tipeMutasi === 'OPERASIONAL') {
+            if ($namaAkun === '') {
+                return ['tipe' => 'error', 'data' => 'Akun kas wajib diisi untuk mutasi operasional'];
+            }
+            $akun = $this->db->query("SELECT * FROM akun_kas WHERE nama_akun=:nama_akun: LIMIT 1", ['nama_akun' => $namaAkun])->getRowArray();
+            if (!$akun) {
+                return ['tipe' => 'error', 'data' => 'Akun kas tidak ditemukan'];
+            }
+            $saldoAsal = '';
+            $saldoTujuan = '';
+        } else {
+            if (!in_array($saldoAsal, ['CASH', 'NONCASH'], true) || !in_array($saldoTujuan, ['CASH', 'NONCASH'], true) || $saldoAsal === $saldoTujuan) {
+                return ['tipe' => 'error', 'data' => 'Arah mutasi saldo wajib valid'];
+            }
+            $namaAkun = '';
+            $saldoChannel = 'CASH';
         }
+
         $karyawan = $this->db->query("SELECT karyawan_id FROM tb_user WHERE karyawan_id=:karyawan_id: LIMIT 1", ['karyawan_id' => $karyawanId])->getRowArray();
         if (!$karyawan) {
             return ['tipe' => 'error', 'data' => 'Karyawan tidak ditemukan'];
@@ -90,7 +114,11 @@ class KasModel extends Model
             $this->insert([
                 'tanggal' => $tanggal,
                 'toko_id' => $tokoId,
-                'nama_akun' => $namaAkun,
+                'nama_akun' => $namaAkun !== '' ? $namaAkun : null,
+                'tipe_mutasi' => $tipeMutasi,
+                'saldo_channel' => $saldoChannel,
+                'saldo_asal' => $saldoAsal !== '' ? $saldoAsal : null,
+                'saldo_tujuan' => $saldoTujuan !== '' ? $saldoTujuan : null,
                 'nominal' => $nominal,
                 'karyawan_id' => $karyawanId,
                 'keterangan' => $keterangan !== '' ? $keterangan : null,
@@ -109,7 +137,11 @@ class KasModel extends Model
 
         $this->update($kasId, [
             'tanggal' => $tanggal,
-            'nama_akun' => $namaAkun,
+            'nama_akun' => $namaAkun !== '' ? $namaAkun : null,
+            'tipe_mutasi' => $tipeMutasi,
+            'saldo_channel' => $saldoChannel,
+            'saldo_asal' => $saldoAsal !== '' ? $saldoAsal : null,
+            'saldo_tujuan' => $saldoTujuan !== '' ? $saldoTujuan : null,
             'nominal' => $nominal,
             'karyawan_id' => $karyawanId,
             'keterangan' => $keterangan !== '' ? $keterangan : null,
@@ -135,7 +167,7 @@ class KasModel extends Model
 
     public function getAkunOptions(): array
     {
-        return $this->db->query("SELECT nama_akun, jenis_akun FROM akun_kas ORDER BY jenis_akun, nama_akun")->getResultArray();
+        return $this->db->query("SELECT nama_akun, jenis_akun, flag_beban FROM akun_kas ORDER BY jenis_akun, nama_akun")->getResultArray();
     }
 
     public function getKaryawanOptions(string $tokoId): array

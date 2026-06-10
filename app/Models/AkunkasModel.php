@@ -31,7 +31,7 @@ class AkunkasModel extends Model
         }
 
         $data = $this->db->query(
-            "SELECT a.nama_akun, a.jenis_akun, a.updid,
+            "SELECT a.nama_akun, a.jenis_akun, a.flag_beban, a.updid,
                     EXISTS(SELECT 1 FROM kas_mutasi km WHERE km.nama_akun=a.nama_akun LIMIT 1) AS is_locked
              FROM akun_kas a
              $where
@@ -51,10 +51,14 @@ class AkunkasModel extends Model
     {
         $namaAkun = strtoupper(trim((string) ($payload['nama_akun'] ?? '')));
         $jenisAkun = strtoupper(trim((string) ($payload['jenis_akun'] ?? '')));
+        $flagBeban = strtoupper(trim((string) ($payload['flag_beban'] ?? 'N'))) === 'Y' ? 'Y' : 'N';
         $oldNamaAkun = strtoupper(trim((string) ($payload['old_nama_akun'] ?? '')));
 
         if ($namaAkun === '' || !in_array($jenisAkun, ['MASUK', 'KELUAR'], true)) {
             return ['tipe' => 'error', 'data' => 'Nama akun dan jenis akun wajib valid'];
+        }
+        if ($jenisAkun !== 'KELUAR') {
+            $flagBeban = 'N';
         }
 
         if ($mode === 'create') {
@@ -65,6 +69,7 @@ class AkunkasModel extends Model
             $this->insert([
                 'nama_akun' => $namaAkun,
                 'jenis_akun' => $jenisAkun,
+                'flag_beban' => $flagBeban,
                 'updid' => $username,
             ]);
             return ['tipe' => 'success', 'data' => 'Akun kas berhasil ditambahkan'];
@@ -85,10 +90,11 @@ class AkunkasModel extends Model
         $this->db->transStart();
         if ($oldNamaAkun !== $namaAkun) {
             $this->db->query(
-                "UPDATE akun_kas SET nama_akun=:nama_akun:, jenis_akun=:jenis_akun:, updid=:updid: WHERE nama_akun=:old_nama_akun:",
+                "UPDATE akun_kas SET nama_akun=:nama_akun:, jenis_akun=:jenis_akun:, flag_beban=:flag_beban:, updid=:updid: WHERE nama_akun=:old_nama_akun:",
                 [
                     'nama_akun' => $namaAkun,
                     'jenis_akun' => $jenisAkun,
+                    'flag_beban' => $flagBeban,
                     'updid' => $username,
                     'old_nama_akun' => $oldNamaAkun,
                 ]
@@ -96,6 +102,7 @@ class AkunkasModel extends Model
         } else {
             $this->update($oldNamaAkun, [
                 'jenis_akun' => $jenisAkun,
+                'flag_beban' => $flagBeban,
                 'updid' => $username,
             ]);
         }

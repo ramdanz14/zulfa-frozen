@@ -278,9 +278,13 @@ class AbsensiModel extends Model
         ];
     }
 
-    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds): array
+    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds, string $saldoChannel = 'CASH'): array
     {
         $selectedIds = array_values(array_unique(array_map('intval', $selectedIds)));
+        $saldoChannel = strtoupper(trim($saldoChannel));
+        if (!in_array($saldoChannel, ['CASH', 'NONCASH'], true)) {
+            $saldoChannel = 'CASH';
+        }
         if ($tanggalBayar === '' || $periodStart === '' || $periodEnd === '') {
             return ['tipe' => 'error', 'data' => 'Tanggal bayar dan periode wajib diisi'];
         }
@@ -339,6 +343,10 @@ class AbsensiModel extends Model
                 'tanggal' => $tanggalBayar . ' 00:00:00',
                 'toko_id' => $group['toko_id'],
                 'nama_akun' => 'GAJI',
+                'tipe_mutasi' => 'OPERASIONAL',
+                'saldo_channel' => $saldoChannel,
+                'saldo_asal' => null,
+                'saldo_tujuan' => null,
                 'nominal' => (int) round($group['nominal'], 0),
                 'karyawan_id' => $group['karyawan_id'],
                 'keterangan' => substr($keterangan, 0, 150),
@@ -507,18 +515,26 @@ class AbsensiModel extends Model
     private function ensureAkunGaji(): void
     {
         $exists = $this->db->query(
-            "SELECT nama_akun
+            "SELECT nama_akun, flag_beban
              FROM akun_kas
              WHERE nama_akun='GAJI'
              LIMIT 1"
         )->getRowArray();
 
-        if (!$exists) {
-            $this->db->table('akun_kas')->insert([
-                'nama_akun' => 'GAJI',
-                'jenis_akun' => 'KELUAR',
-                'updid' => 'SYSTEM',
-            ]);
+        if ($exists) {
+            if (($exists['flag_beban'] ?? 'N') !== 'Y') {
+                $this->db->table('akun_kas')
+                    ->where('nama_akun', 'GAJI')
+                    ->update(['jenis_akun' => 'KELUAR', 'flag_beban' => 'Y', 'updid' => 'SYSTEM']);
+            }
+            return;
         }
+
+        $this->db->table('akun_kas')->insert([
+            'nama_akun' => 'GAJI',
+            'jenis_akun' => 'KELUAR',
+            'flag_beban' => 'Y',
+            'updid' => 'SYSTEM',
+        ]);
     }
 }

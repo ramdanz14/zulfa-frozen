@@ -53,12 +53,33 @@
                         <input type="datetime-local" class="form-control" id="tanggal" required>
                     </div>
                     <div class="mb-2">
+                        <label class="form-label">Jenis Transaksi</label>
+                        <select class="form-select" id="tipe_mutasi" required>
+                            <option value="OPERASIONAL">Operasional</option>
+                            <option value="PINDAH_SALDO">Mutasi Saldo</option>
+                        </select>
+                    </div>
+                    <div class="mb-2 operational-field">
                         <label class="form-label">Akun Kas</label>
                         <select class="form-select" id="nama_akun" required>
                             <option value="">Pilih akun kas</option>
                             <?php foreach ($akunOptions as $row) : ?>
                                 <option value="<?= esc($row['nama_akun']) ?>"><?= esc($row['jenis_akun']) ?> - <?= esc($row['nama_akun']) ?></option>
                             <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-2 operational-field">
+                        <label class="form-label">Saldo</label>
+                        <select class="form-select" id="saldo_channel">
+                            <option value="CASH">Tunai</option>
+                            <option value="NONCASH">Non Tunai</option>
+                        </select>
+                    </div>
+                    <div class="mb-2 transfer-field d-none">
+                        <label class="form-label">Arah Mutasi Saldo</label>
+                        <select class="form-select" id="arah_saldo">
+                            <option value="CASH_TO_NONCASH">Tunai ke Non Tunai</option>
+                            <option value="NONCASH_TO_CASH">Non Tunai ke Tunai</option>
                         </select>
                     </div>
                     <div class="mb-2">
@@ -140,10 +161,16 @@
                 data: 'nama_akun',
                 title: 'Akun',
                 render: function(data, type, row) {
-                    const badge = row.jenis_akun === 'MASUK'
-                        ? '<span class="badge bg-success-subtle text-success">MASUK</span>'
-                        : '<span class="badge bg-danger-subtle text-danger">KELUAR</span>';
-                    return `${badge}<div class="fw-semibold mt-1">${data || '-'}</div>`;
+                    if (row.tipe_mutasi === 'PINDAH_SALDO') {
+                        const from = row.saldo_asal === 'NONCASH' ? 'Non Tunai' : 'Tunai';
+                        const to = row.saldo_tujuan === 'NONCASH' ? 'Non Tunai' : 'Tunai';
+                        return `<span class="badge bg-info-subtle text-info">MUTASI SALDO</span><div class="fw-semibold mt-1">${from} ke ${to}</div>`;
+                    }
+                    const badge = row.jenis_akun === 'MASUK' ?
+                        '<span class="badge bg-success-subtle text-success">MASUK</span>' :
+                        '<span class="badge bg-danger-subtle text-danger">KELUAR</span>';
+                    const channel = row.saldo_channel === 'NONCASH' ? 'Non Tunai' : 'Tunai';
+                    return `${badge}<div class="fw-semibold mt-1">${data || '-'}</div><small class="text-muted">${channel}</small>`;
                 }
             },
             {
@@ -197,24 +224,46 @@
         $('#form-kas')[0].reset();
         $('#kas_id').val('');
         $('#tanggal').val(getCurrentDateTimeLocal());
+        $('#tipe_mutasi').val('OPERASIONAL');
+        $('#saldo_channel').val('CASH');
+        $('#arah_saldo').val('CASH_TO_NONCASH');
         $('#btn-save').text(mode === 'create' ? 'Simpan' : 'Update');
         $('.modal-title').text(mode === 'create' ? 'Tambah Kas Masuk / Keluar' : 'Edit Kas Masuk / Keluar');
 
         if (mode === 'edit' && row) {
             $('#kas_id').val(row.kas_id || '');
             $('#tanggal').val(row.tanggal ? String(row.tanggal).replace(' ', 'T').slice(0, 16) : getCurrentDateTimeLocal());
+            $('#tipe_mutasi').val(row.tipe_mutasi || 'OPERASIONAL');
             $('#nama_akun').val(row.nama_akun || '');
+            $('#saldo_channel').val(row.saldo_channel || 'CASH');
+            $('#arah_saldo').val(row.saldo_asal === 'NONCASH' ? 'NONCASH_TO_CASH' : 'CASH_TO_NONCASH');
             $('#nominal').val(formatMoneyValue(row.nominal || 0));
             $('#karyawan_id').val(row.karyawan_id || '');
             $('#keterangan').val(row.keterangan || '');
         }
 
+        toggleMutationMode();
         applyMoneyMask('#modal-kas');
         kasModal.show();
     }
 
+    function toggleMutationMode() {
+        const isTransfer = $('#tipe_mutasi').val() === 'PINDAH_SALDO';
+        $('.operational-field').toggleClass('d-none', isTransfer);
+        $('.transfer-field').toggleClass('d-none', !isTransfer);
+        $('#nama_akun').prop('required', !isTransfer);
+        if (isTransfer) {
+            $('#nama_akun').val('');
+        }
+    }
+
+    $('#tipe_mutasi').on('change', toggleMutationMode);
+
     $('#form-kas').on('submit', function(e) {
         e.preventDefault();
+        const arahSaldo = $('#arah_saldo').val();
+        const saldoAsal = arahSaldo === 'NONCASH_TO_CASH' ? 'NONCASH' : 'CASH';
+        const saldoTujuan = arahSaldo === 'NONCASH_TO_CASH' ? 'CASH' : 'NONCASH';
         $.ajax({
             type: modalMode === 'create' ? 'PUT' : 'PATCH',
             url: '<?= base_url('/kas') ?>',
@@ -222,7 +271,11 @@
             data: {
                 kas_id: $('#kas_id').val(),
                 tanggal: $('#tanggal').val().replace('T', ' '),
+                tipe_mutasi: $('#tipe_mutasi').val(),
                 nama_akun: $('#nama_akun').val(),
+                saldo_channel: $('#saldo_channel').val(),
+                saldo_asal: saldoAsal,
+                saldo_tujuan: saldoTujuan,
                 nominal: $('#nominal').val(),
                 karyawan_id: $('#karyawan_id').val(),
                 keterangan: $('#keterangan').val()

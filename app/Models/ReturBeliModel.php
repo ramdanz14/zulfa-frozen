@@ -815,6 +815,10 @@ class ReturBeliModel extends Model
             'tanggal' => $tanggal . ' 00:00:00',
             'toko_id' => $toko_id,
             'nama_akun' => 'RETUR PEMBELIAN',
+            'tipe_mutasi' => 'OPERASIONAL',
+            'saldo_channel' => 'CASH',
+            'saldo_asal' => null,
+            'saldo_tujuan' => null,
             'nominal' => (int) round($totalRetur),
             'karyawan_id' => $karyawanId,
             'keterangan' => $retur_id,
@@ -850,6 +854,7 @@ class ReturBeliModel extends Model
         $this->db->table('akun_kas')->insert([
             'nama_akun' => 'RETUR PEMBELIAN',
             'jenis_akun' => 'MASUK',
+            'flag_beban' => 'N',
             'updid' => $username,
         ]);
     }

@@ -60,6 +60,15 @@
                             <option value="KELUAR">KELUAR</option>
                         </select>
                     </div>
+                    <div class="mb-2" id="flag-beban-wrapper">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flag_beban">
+                            <label class="form-check-label" for="flag_beban">Beban Usaha</label>
+                        </div>
+                        <small class="text-muted d-block">
+                            Akun keluar yang ditandai sebagai beban usaha akan dipakai sebagai komponen BEBAN USAHA untuk perhitungan laba bersih.
+                        </small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
@@ -118,6 +127,12 @@
                 render: data => data === 'MASUK' ? '<span class="badge bg-success-subtle text-success">MASUK</span>' : '<span class="badge bg-danger-subtle text-danger">KELUAR</span>'
             },
             {
+                data: 'flag_beban',
+                title: 'Beban Usaha',
+                className: 'text-center',
+                render: data => data === 'Y' ? '<span class="badge bg-warning-subtle text-warning">YA</span>' : '<span class="badge bg-secondary-subtle text-secondary">TIDAK</span>'
+            },
+            {
                 title: 'Action',
                 data: null,
                 className: 'text-center',
@@ -147,12 +162,14 @@
         $('#form-akun')[0].reset();
         $('#nama_akun').prop('readonly', false);
         $('#old_nama_akun').val('');
+        $('#flag_beban').prop('checked', false);
         $('#btn-save').show();
 
         if (mode === 'edit' && row) {
             $('#old_nama_akun').val(row.nama_akun || '');
             $('#nama_akun').val(row.nama_akun || '');
             $('#jenis_akun').val(row.jenis_akun || 'KELUAR');
+            $('#flag_beban').prop('checked', row.flag_beban === 'Y');
             $('.modal-title').text('Edit Akun Kas');
             $('#btn-save').text('Update');
         } else {
@@ -160,8 +177,19 @@
             $('#btn-save').text('Simpan');
         }
 
+        toggleFlagBeban();
         akunModal.show();
     }
+
+    function toggleFlagBeban() {
+        const isKeluar = $('#jenis_akun').val() === 'KELUAR';
+        $('#flag-beban-wrapper').toggle(isKeluar);
+        if (!isKeluar) {
+            $('#flag_beban').prop('checked', false);
+        }
+    }
+
+    $('#jenis_akun').on('change', toggleFlagBeban);
 
     $('#form-akun').on('submit', function(e) {
         e.preventDefault();
@@ -172,7 +200,8 @@
             data: {
                 old_nama_akun: $('#old_nama_akun').val(),
                 nama_akun: $('#nama_akun').val(),
-                jenis_akun: $('#jenis_akun').val()
+                jenis_akun: $('#jenis_akun').val(),
+                flag_beban: $('#flag_beban').is(':checked') ? 'Y' : 'N'
             },
             success: function(res) {
                 if (res.tipe === 'success') {

@@ -114,21 +114,47 @@ class LapcashModel extends Model
     {
         [$storeWhere, $binds] = $this->buildStoreWhere('km.toko_id', $storeIds);
         return $this->db->query(
-            "SELECT DATE(km.tanggal) AS tanggal,
-                    'cash' AS channel,
-                    CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
-                    CASE
-                        WHEN ak.jenis_akun='MASUK' THEN 'Total Pemasukan Kas'
-                        WHEN km.nama_akun='GAJI' THEN 'Total Pengeluaran Gaji'
-                        ELSE 'Total Pengeluaran Kas'
-                    END AS label,
-                    COALESCE(SUM(km.nominal),0) AS total
-             FROM kas_mutasi km
-             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
-             WHERE km.tanggal BETWEEN ? AND ?
-               AND {$storeWhere}
-             GROUP BY DATE(km.tanggal), ak.jenis_akun, CASE WHEN km.nama_akun='GAJI' THEN 'GAJI' ELSE km.nama_akun END",
-            array_merge([$start, $end], $binds)
+            "SELECT tanggal, channel, direction, label, SUM(total) AS total
+             FROM (
+                SELECT DATE(km.tanggal) AS tanggal,
+                        CASE WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
+                        CASE
+                            WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pemasukan Non Tunai'
+                            WHEN ak.jenis_akun='MASUK' THEN 'Total Pemasukan Kas'
+                            WHEN km.nama_akun='GAJI' THEN 'Total Pengeluaran Gaji'
+                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pengeluaran Non Tunai'
+                            ELSE 'Total Pengeluaran Kas'
+                        END AS label,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+                 WHERE km.tanggal BETWEEN ? AND ?
+                   AND COALESCE(km.tipe_mutasi, 'OPERASIONAL')='OPERASIONAL'
+                   AND {$storeWhere}
+                UNION ALL
+                SELECT DATE(km.tanggal) AS tanggal,
+                        CASE WHEN km.saldo_asal='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        'out' AS direction,
+                        'Mutasi Saldo Keluar' AS label,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 WHERE km.tanggal BETWEEN ? AND ?
+                   AND km.tipe_mutasi='PINDAH_SALDO'
+                   AND {$storeWhere}
+                UNION ALL
+                SELECT DATE(km.tanggal) AS tanggal,
+                        CASE WHEN km.saldo_tujuan='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        'in' AS direction,
+                        'Mutasi Saldo Masuk' AS label,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 WHERE km.tanggal BETWEEN ? AND ?
+                   AND km.tipe_mutasi='PINDAH_SALDO'
+                   AND {$storeWhere}
+             ) x
+             GROUP BY tanggal, channel, direction, label",
+            array_merge([$start, $end], $binds, [$start, $end], $binds, [$start, $end], $binds)
         )->getResultArray();
     }
 

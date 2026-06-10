@@ -44,17 +44,10 @@ class LapharianModel extends Model
             "SELECT COUNT(DISTINCT j.jual_id) AS total_transaksi,
                     COALESCE(SUM(j.netto), 0) AS total_netto,
                     COALESCE(SUM(j.gross), 0) AS total_gross,
+                    COALESCE(SUM(j.total_diskon_item), 0) AS total_diskon_item,
                     COALESCE(SUM(j.diskon_nota), 0) AS total_diskon_nota,
                     COALESCE(SUM(j.redeem_nominal), 0) AS total_redeem
              FROM penjualan j
-             WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql",
-            array_merge([$dateStart, $dateEnd], array_values($binds))
-        )->getRowArray() ?: [];
-
-        $discountRow = $this->db->query(
-            "SELECT COALESCE(SUM(d.diskon_item), 0) AS total_diskon_item
-             FROM penjualan j
-             INNER JOIN penjualan_detail d ON d.toko_id=j.toko_id AND d.jual_id=j.jual_id
              WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql",
             array_merge([$dateStart, $dateEnd], array_values($binds))
         )->getRowArray() ?: [];
@@ -148,7 +141,7 @@ class LapharianModel extends Model
                 'total_gross' => (float) ($salesSummary['total_gross'] ?? 0),
             ],
             'discount' => [
-                'item' => (float) ($discountRow['total_diskon_item'] ?? 0),
+                'item' => (float) ($salesSummary['total_diskon_item'] ?? 0),
                 'nota' => (float) ($salesSummary['total_diskon_nota'] ?? 0),
                 'redeem' => (float) ($salesSummary['total_redeem'] ?? 0),
             ],

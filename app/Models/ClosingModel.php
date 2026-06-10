@@ -323,8 +323,8 @@ class ClosingModel extends Model
         $supplier = $this->sumSupplierPayments($tokoId, $start, $end);
         $kas = $this->sumKasMutasi($tokoId, $start, $end);
 
-        $saldoTunai = (float) ($prev['saldo_tunai'] ?? 0) + $pos['TUNAI'] + $piutang['TUNAI'] + $kas['MASUK'] - $supplier['TUNAI'] - $kas['KELUAR'];
-        $saldoTransfer = (float) ($prev['saldo_transfer'] ?? 0) + $pos['TRANSFER'] + $piutang['TRANSFER'] - $supplier['TRANSFER'];
+        $saldoTunai = (float) ($prev['saldo_tunai'] ?? 0) + $pos['TUNAI'] + $piutang['TUNAI'] + $kas['cash_in'] - $supplier['TUNAI'] - $kas['cash_out'];
+        $saldoTransfer = (float) ($prev['saldo_transfer'] ?? 0) + $pos['TRANSFER'] + $piutang['TRANSFER'] + $kas['noncash_in'] - $supplier['TRANSFER'] - $kas['noncash_out'];
         $saldoQris = (float) ($prev['saldo_qris'] ?? 0) + $pos['QRIS'] + $piutang['QRIS'];
 
         return [
@@ -343,8 +343,8 @@ class ClosingModel extends Model
             'bayar_piutang_qris' => $piutang['QRIS'],
             'bayar_hutang_tunai' => $supplier['TUNAI'],
             'bayar_hutang_transfer' => $supplier['TRANSFER'],
-            'kas_masuk' => $kas['MASUK'],
-            'kas_keluar' => $kas['KELUAR'],
+            'kas_masuk' => $kas['cash_in'] + $kas['noncash_in'],
+            'kas_keluar' => $kas['cash_out'] + $kas['noncash_out'],
             'saldo_tunai' => $saldoTunai,
             'saldo_transfer' => $saldoTransfer,
             'saldo_qris' => $saldoQris,
@@ -401,20 +401,42 @@ class ClosingModel extends Model
     private function sumKasMutasi(string $tokoId, string $start, string $end): array
     {
         $rows = $this->db->query(
-            "SELECT ak.jenis_akun, COALESCE(SUM(km.nominal),0) AS total
-             FROM kas_mutasi km
-             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
-             WHERE km.toko_id=:toko_id:
-               AND km.tanggal BETWEEN :start: AND :end:
-             GROUP BY ak.jenis_akun",
-            ['toko_id' => $tokoId, 'start' => $start, 'end' => $end]
+            "SELECT channel, direction, COALESCE(SUM(total),0) AS total
+             FROM (
+                SELECT CASE WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+                 WHERE km.toko_id=?
+                   AND km.tanggal BETWEEN ? AND ?
+                   AND COALESCE(km.tipe_mutasi, 'OPERASIONAL')='OPERASIONAL'
+                UNION ALL
+                SELECT CASE WHEN km.saldo_asal='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        'out' AS direction,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 WHERE km.toko_id=?
+                   AND km.tanggal BETWEEN ? AND ?
+                   AND km.tipe_mutasi='PINDAH_SALDO'
+                UNION ALL
+                SELECT CASE WHEN km.saldo_tujuan='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        'in' AS direction,
+                        COALESCE(km.nominal,0) AS total
+                 FROM kas_mutasi km
+                 WHERE km.toko_id=?
+                   AND km.tanggal BETWEEN ? AND ?
+                   AND km.tipe_mutasi='PINDAH_SALDO'
+             ) x
+             GROUP BY channel, direction",
+            [$tokoId, $start, $end, $tokoId, $start, $end, $tokoId, $start, $end]
         )->getResultArray();
 
-        $map = ['MASUK' => 0.0, 'KELUAR' => 0.0];
+        $map = ['cash_in' => 0.0, 'cash_out' => 0.0, 'noncash_in' => 0.0, 'noncash_out' => 0.0];
         foreach ($rows as $row) {
-            $type = strtoupper((string) ($row['jenis_akun'] ?? ''));
-            if (isset($map[$type])) {
-                $map[$type] = (float) ($row['total'] ?? 0);
+            $key = strtolower((string) ($row['channel'] ?? 'cash')) . '_' . strtolower((string) ($row['direction'] ?? 'in'));
+            if (isset($map[$key])) {
+                $map[$key] = (float) ($row['total'] ?? 0);
             }
         }
 

@@ -364,6 +364,10 @@ class ReturJualModel extends Model
             'tanggal' => $timestamp,
             'toko_id' => $tokoId,
             'nama_akun' => 'RETUR PENJUALAN',
+            'tipe_mutasi' => 'OPERASIONAL',
+            'saldo_channel' => 'CASH',
+            'saldo_asal' => null,
+            'saldo_tujuan' => null,
             'nominal' => (int) round($totalRetur),
             'karyawan_id' => $karyawanId,
             'keterangan' => $rjId,
@@ -473,6 +477,7 @@ class ReturJualModel extends Model
         $this->db->table('akun_kas')->insert([
             'nama_akun' => 'RETUR PENJUALAN',
             'jenis_akun' => 'KELUAR',
+            'flag_beban' => 'N',
             'updid' => $username,
         ]);
     }

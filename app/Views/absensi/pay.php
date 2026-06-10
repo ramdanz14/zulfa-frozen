@@ -149,22 +149,38 @@ $rows = $payData['rows'] ?? [];
         }
 
         Swal.fire({
-            title: 'Tanggal bayar gaji',
-            input: 'date',
-            inputValue: new Date().toISOString().slice(0, 10),
+            title: 'Pembayaran gaji',
+            html: `
+                <div class="text-start">
+                    <label class="form-label">Tanggal Bayar</label>
+                    <input type="date" id="swal-tanggal-bayar" class="form-control" value="${new Date().toISOString().slice(0, 10)}">
+                    <label class="form-label mt-3">Saldo Pembayaran</label>
+                    <select id="swal-saldo-channel" class="form-select">
+                        <option value="CASH">Tunai</option>
+                        <option value="NONCASH">Non Tunai</option>
+                    </select>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Proses bayar',
             cancelButtonText: 'Batal',
-            preConfirm: (value) => {
-                if (!value) {
+            preConfirm: () => {
+                const tanggalBayar = $('#swal-tanggal-bayar').val();
+                const saldoChannel = $('#swal-saldo-channel').val();
+                if (!tanggalBayar) {
                     Swal.showValidationMessage('Tanggal bayar wajib dipilih');
+                    return false;
                 }
-                return value;
+                return {
+                    tanggal_bayar: tanggalBayar,
+                    saldo_channel: saldoChannel
+                };
             }
         }).then((result) => {
             if (!result.isConfirmed) return;
             $.post('<?= base_url('/absensi/process-payment') ?>', {
-                tanggal_bayar: result.value,
+                tanggal_bayar: result.value.tanggal_bayar,
+                saldo_channel: result.value.saldo_channel,
                 period_start: '<?= esc($periodStart) ?>',
                 period_end: '<?= esc($periodEnd) ?>',
                 selected_ids: JSON.stringify(selected.map((row) => row.absensi_id))
