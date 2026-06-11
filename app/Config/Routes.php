@@ -290,6 +290,11 @@ $routes->group('summarykas', static function ($route) {
     $route->post('summary', 'Summarykas::summary');
 });
 
+$routes->group('saldousaha', static function ($route) {
+    $route->get('', 'Saldousaha::index');
+    $route->post('report', 'Saldousaha::report');
+});
+
 $routes->group('pembelian', static function ($route) {
     $route->get('', 'Pembelian::index');
     $route->post('ajax', 'Pembelian::ajax');
