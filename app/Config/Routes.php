@@ -228,6 +228,11 @@ $routes->group('lapharian', static function ($route) {
     $route->get('struk', 'Lapharian::struk');
 });
 
+$routes->group('laphutang', static function ($route) {
+    $route->get('', 'Laphutang::index');
+    $route->post('report', 'Laphutang::report');
+});
+
 $routes->group('closing', static function ($route) {
     $route->get('', 'Closing::index');
     $route->get('dashboard', 'Closing::dashboard');
