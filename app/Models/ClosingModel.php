@@ -75,7 +75,9 @@ class ClosingModel extends Model
         }
 
         $this->rebuildOpeningFromPreviousSnapshot($tokoId, $activePeriod);
-            $this->calculateStockForPeriod($tokoId, date('Ym', strtotime($activePeriod)));
+        $activePeriodYm = date('Ym', strtotime($activePeriod));
+        $this->calculateStockForPeriod($tokoId, $activePeriodYm);
+        HitungSpd($tokoId, $activePeriodYm);
         $this->writeLog($tokoId, $startPeriod, 'RECLOSE', 'SUCCESS', 'Closing ulang selesai sampai periode aktif ' . $activePeriod, $results, $createdBy);
 
         return ['tipe' => 'success', 'data' => 'Closing ulang berhasil dijalankan dari ' . $startPeriod . ' sampai ' . $activePeriod];
@@ -103,6 +105,7 @@ class ClosingModel extends Model
             $this->db->transStart();
             $this->rebuildOpeningFromPreviousSnapshot($tokoId, $periode);
             $this->calculateStockForPeriod($tokoId, $periodYm);
+            HitungSpd($tokoId, $periodYm);
             $snapshotTable = $this->snapshotTable($periodYm, $tokoId);
             $this->replaceStockSnapshot($snapshotTable, $tokoId);
             $cashFlow = $this->replaceSaldoCash($tokoId, $periode, $createdBy);
@@ -110,7 +113,9 @@ class ClosingModel extends Model
 
             if ($advanceConst) {
                 $this->setClosingDate($tokoId, $nextPeriod);
-                $this->calculateStockForPeriod($tokoId, date('Ym', strtotime($nextPeriod)));
+                $nextPeriodYm = date('Ym', strtotime($nextPeriod));
+                $this->calculateStockForPeriod($tokoId, $nextPeriodYm);
+                HitungSpd($tokoId, $nextPeriodYm);
             }
 
             $this->db->transComplete();
@@ -177,6 +182,7 @@ class ClosingModel extends Model
     private function replaceStockSnapshot(string $tableName, string $tokoId): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$tableName}` LIKE stmast");
+        EnsureStmastSpdColumn($tableName);
         $this->db->query("DELETE FROM `{$tableName}` WHERE toko_id=:toko_id:", ['toko_id' => $tokoId]);
         $this->db->query("INSERT INTO `{$tableName}` SELECT * FROM stmast WHERE toko_id=:toko_id:", ['toko_id' => $tokoId]);
     }

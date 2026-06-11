@@ -114,6 +114,115 @@ function HitungStock(string $toko_id)
     return $cek;
 }
 
+function HitungSpd(string $toko_id, ?string $periodYm = null)
+{
+    $db = \Config\Database::connect();
+    $periodYm = preg_replace('/[^0-9]/', '', (string) ($periodYm ?? date('Ym')));
+    if (strlen($periodYm) !== 6) {
+        $periodYm = date('Ym');
+    }
+
+    EnsureStmastSpdColumn('stmast');
+    $months = GetBulanSpd();
+    $periodStart = \DateTime::createFromFormat('Ymd', $periodYm . '01') ?: new \DateTime(date('Ym') . '01');
+    $salesRows = [];
+
+    for ($idx = 0; $idx < $months; $idx++) {
+        $period = (clone $periodStart)->modify("-{$idx} month");
+        $ym = $period->format('Ym');
+        $tableName = $idx === 0 ? 'stmast' : StmastSnapshotTable($ym, $toko_id);
+        if (!StmastTableExists($tableName)) {
+            continue;
+        }
+
+        $days = $idx === 0 && $ym === date('Ym')
+            ? max(1, (int) date('j'))
+            : (int) $period->format('t');
+
+        $salesRows[] = [
+            'table' => $tableName,
+            'days' => $days,
+        ];
+    }
+
+    $db->query("UPDATE stmast SET spd=0 WHERE toko_id=:toko_id:", ['toko_id' => $toko_id]);
+    if (empty($salesRows)) {
+        return true;
+    }
+
+    $selects = [];
+    $binds = [];
+    foreach ($salesRows as $idx => $row) {
+        $tableName = $row['table'];
+        $dayKey = 'days_' . $idx;
+        $tokoKey = 'toko_id_' . $idx;
+        $selects[] = "SELECT toko_id, kode_item, ((COALESCE(jual,0)-COALESCE(retur_jual,0)) / :{$dayKey}:) AS spd_harian FROM `{$tableName}` WHERE toko_id=:{$tokoKey}:";
+        $binds[$dayKey] = max(1, (int) $row['days']);
+        $binds[$tokoKey] = $toko_id;
+    }
+
+    $sql = implode(' UNION ALL ', $selects);
+    return $db->query(
+        "UPDATE stmast a
+         LEFT JOIN (
+            SELECT toko_id, kode_item, AVG(spd_harian) AS spd
+            FROM ({$sql}) x
+            GROUP BY toko_id, kode_item
+         ) b ON b.toko_id=a.toko_id AND b.kode_item=a.kode_item
+         SET a.spd=COALESCE(b.spd,0)
+         WHERE a.toko_id=:target_toko_id:",
+        array_merge($binds, ['target_toko_id' => $toko_id])
+    );
+}
+
+function GetBulanSpd(): int
+{
+    $db = \Config\Database::connect();
+    $row = $db->query("SELECT nilai FROM const WHERE rkey='bulan_spd' AND toko_id='' LIMIT 1")->getRowArray();
+    $value = (int) ($row['nilai'] ?? 3);
+    return max(1, $value);
+}
+
+function StmastSnapshotTable(string $periodYm, string $toko_id): string
+{
+    return 'stmast_' . preg_replace('/[^0-9]/', '', $periodYm) . preg_replace('/[^A-Za-z0-9_]/', '', $toko_id);
+}
+
+function StmastTableExists(string $tableName): bool
+{
+    $db = \Config\Database::connect();
+    $row = $db->query(
+        "SELECT COUNT(*) AS total
+         FROM information_schema.tables
+         WHERE table_schema=DATABASE() AND table_name=:table_name:",
+        ['table_name' => $tableName]
+    )->getRowArray();
+
+    return (int) ($row['total'] ?? 0) > 0;
+}
+
+function EnsureStmastSpdColumn(string $tableName = 'stmast'): void
+{
+    $db = \Config\Database::connect();
+    $tableName = preg_replace('/[^A-Za-z0-9_]/', '', $tableName);
+    if (!StmastTableExists($tableName)) {
+        return;
+    }
+
+    $row = $db->query(
+        "SELECT COUNT(*) AS total
+         FROM information_schema.columns
+         WHERE table_schema=DATABASE()
+           AND table_name=:table_name:
+           AND column_name='spd'",
+        ['table_name' => $tableName]
+    )->getRowArray();
+
+    if ((int) ($row['total'] ?? 0) === 0) {
+        $db->query("ALTER TABLE `{$tableName}` ADD COLUMN `spd` DECIMAL(15,4) NOT NULL DEFAULT 0.0000 AFTER `pkm`");
+    }
+}
+
 function HitungStockBulan(string $toko_id, string $bln)
 {
     $db = \Config\Database::connect();

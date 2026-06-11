@@ -127,7 +127,7 @@ $aksesMenuData = json_decode($akses_menu ?? '{}', true) ?: [];
                     extend: 'excelHtml5',
                     title: 'Laporan-Stock',
                     exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                        columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
                         orthogonal: 'export'
                     }
                 }, 'pageLength']
@@ -204,10 +204,22 @@ $aksesMenuData = json_decode($akses_menu ?? '{}', true) ?: [];
                 render: renderMetric
             },
             {
+                data: 'spd',
+                title: 'SPD',
+                className: 'text-end',
+                render: renderSpd
+            },
+            {
                 data: 'adj',
                 title: 'Adj',
                 className: 'text-end',
                 render: renderMetric
+            },
+            {
+                data: 'dsi',
+                title: 'DSI',
+                className: 'text-end',
+                render: renderSpd
             },
             {
                 data: 'saldo_akhir',
@@ -297,6 +309,16 @@ $aksesMenuData = json_decode($akses_menu ?? '{}', true) ?: [];
         }
         if (currentJenis === 'rupiah') {
             return `Rp ${formatMoneyValue(data || 0)}`;
+        }
+        return formatQty(data || 0);
+    }
+
+    function renderSpd(data, type) {
+        if (type === 'sort' || type === 'type') {
+            return Number(data || 0);
+        }
+        if (type !== 'display' && type !== 'export') {
+            return data;
         }
         return formatQty(data || 0);
     }

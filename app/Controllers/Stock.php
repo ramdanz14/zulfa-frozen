@@ -103,11 +103,12 @@ class Stock extends BaseController
         }
 
         HitungStock((string) session('toko_id'));
+        HitungSpd((string) session('toko_id'));
         tracelog('UPDATE', 'HITUNG ULANG STOCK TOKO ' . (string) session('toko_id'));
 
         return $this->response->setJSON([
             'tipe' => 'success',
-            'data' => 'Hitung ulang stock berhasil dijalankan',
+            'data' => 'Hitung ulang stock dan SPD berhasil dijalankan',
         ]);
     }
 

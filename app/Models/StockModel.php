@@ -280,14 +280,15 @@ class StockModel extends Model
         }
 
         $sql = "SELECT kode_item,
-                       nama_item,
-                       kat_id,
+                       nama_item,kat_id,
                        begbal * {$multiplier} AS begbal,
                        beli * {$multiplier} AS beli,
                        (retur_beli * -1) * {$multiplier} AS retur_beli,
                        (jual * -1) * {$multiplier} AS jual,
                        retur_jual * {$multiplier} AS retur_jual,
                        adj * {$multiplier} AS adj,
+                       spd,
+                       dsi,
                        qty AS qty_raw,
                        acost,
                        rp_saldo_akh,
@@ -305,6 +306,8 @@ class StockModel extends Model
                            COALESCE(st.jual, 0) AS jual,
                            COALESCE(st.retur_jual, 0) AS retur_jual,
                            COALESCE(st.adj, 0) AS adj,
+                           COALESCE(st.spd, 0) AS spd,
+                           COALESCE(ROUND(st.qty/st.spd), 0) AS dsi,
                            COALESCE(st.acost, 0) AS acost,
                            COALESCE(st.rp_saldo_akh, 0) AS rp_saldo_akh,
                            IF(ps.qty_konversi=1, ps.sat_id, '') AS sat_dasar,
@@ -315,7 +318,7 @@ class StockModel extends Model
                     LEFT JOIN prodmast_satuan ps ON ps.kode_item=st.kode_item
                     WHERE st.toko_id=:toko_id:
                 ) stock_base
-                GROUP BY kode_item, nama_item, kat_id, qty, acost, rp_saldo_akh";
+                GROUP BY kode_item, nama_item, kat_id, qty, spd, acost, rp_saldo_akh";
 
         if ($includeOrder) {
             $sql .= $orderBy;
