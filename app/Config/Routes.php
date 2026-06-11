@@ -243,6 +243,11 @@ $routes->group('lappiutang', static function ($route) {
     $route->post('report', 'Lappiutang::report');
 });
 
+$routes->group('lapjualitem', static function ($route) {
+    $route->get('', 'Lapjualitem::index');
+    $route->post('report', 'Lapjualitem::report');
+});
+
 $routes->group('closing', static function ($route) {
     $route->get('', 'Closing::index');
     $route->get('dashboard', 'Closing::dashboard');
