@@ -233,6 +233,11 @@ $routes->group('laphutang', static function ($route) {
     $route->post('report', 'Laphutang::report');
 });
 
+$routes->group('lapbeli', static function ($route) {
+    $route->get('', 'Lapbeli::index');
+    $route->post('report', 'Lapbeli::report');
+});
+
 $routes->group('closing', static function ($route) {
     $route->get('', 'Closing::index');
     $route->get('dashboard', 'Closing::dashboard');
