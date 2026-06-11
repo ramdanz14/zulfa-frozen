@@ -238,6 +238,11 @@ $routes->group('lapbeli', static function ($route) {
     $route->post('report', 'Lapbeli::report');
 });
 
+$routes->group('lappiutang', static function ($route) {
+    $route->get('', 'Lappiutang::index');
+    $route->post('report', 'Lappiutang::report');
+});
+
 $routes->group('closing', static function ($route) {
     $route->get('', 'Closing::index');
     $route->get('dashboard', 'Closing::dashboard');
