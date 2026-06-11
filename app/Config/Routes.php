@@ -248,6 +248,11 @@ $routes->group('lapjualitem', static function ($route) {
     $route->post('report', 'Lapjualitem::report');
 });
 
+$routes->group('slowmoving', static function ($route) {
+    $route->get('', 'Slowmoving::index');
+    $route->post('report', 'Slowmoving::report');
+});
+
 $routes->group('closing', static function ($route) {
     $route->get('', 'Closing::index');
     $route->get('dashboard', 'Closing::dashboard');
