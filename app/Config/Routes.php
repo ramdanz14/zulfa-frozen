@@ -142,6 +142,12 @@ $routes->group('settingharga', static function ($route) {
     $route->patch('', 'Settingharga::save');
 });
 
+$routes->group('setting-data', static function ($route) {
+    $route->get('', 'Settingdata::index');
+    $route->post('save', 'Settingdata::save');
+    $route->post('upload-logo', 'Settingdata::uploadLogo');
+});
+
 $routes->group('stock', static function ($route) {
     $route->get('', 'Stock::index');
     $route->post('ajax', 'Stock::ajax');
