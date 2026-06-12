@@ -28,7 +28,10 @@
                     <div class="col-xl-7 col-xxl-8">
 
                         <div class="d-none d-xl-flex align-items-center justify-content-center h-n80">
-                            <img src="<?= base_url(); ?>/assets/images/backgrounds/login-security.svg" alt="modernize-img" class="img-fluid" width="500">
+                            <video autoplay loop muted playsinline>
+                                <source src="<?= base_url(); ?>/assets/Zulfa.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
                         </div>
                     </div>
                     <div class="col-xl-5 col-xxl-4">
