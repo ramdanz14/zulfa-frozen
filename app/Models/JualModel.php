@@ -1349,6 +1349,7 @@ class JualModel extends Model
     {
         $header = $this->db->query(
             "SELECT j.*, COALESCE(c.nama, 'Pelanggan Umum') AS customer_nama, COALESCE(c.kontak, '') AS customer_kontak,
+                    COALESCE(c.alamat, '') AS customer_alamat,
                     t.toko_nama, t.toko_alamat, t.toko_phone
              FROM penjualan j
              LEFT JOIN customer c ON c.cust_id=j.cust_id

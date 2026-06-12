@@ -193,7 +193,7 @@
                         <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-toggle="dropdown">Actions</button>
                         <div class="dropdown-menu dropdown-menu-end">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="showDetail('${data.jual_id}')"><i class="ti ti-eye text-info"></i> Detail</a>
-                            <a class="dropdown-item" href="<?= base_url('/listjual/reprint') ?>/${data.jual_id}" target="_blank"><i class="ti ti-printer text-success"></i> Reprint Struk</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="chooseReprintFormat('${data.jual_id}')"><i class="ti ti-printer text-success"></i> Reprint</a>
                             ${returBtn}
                             ${editBtn}
                             ${deleteBtn}
@@ -330,6 +330,27 @@
                     toastr.error(extractErrorMessage(xhr, 'Gagal menghapus transaksi'));
                 }
             });
+        });
+    }
+
+    function chooseReprintFormat(jualId) {
+        Swal.fire({
+            title: 'Pilih format reprint',
+            text: `Cetak ulang transaksi ${jualId}`,
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Struk',
+            denyButtonText: 'Faktur',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.open(`<?= base_url('/listjual/reprint') ?>/${jualId}?format=struk`, '_blank', 'noopener');
+                return;
+            }
+            if (result.isDenied) {
+                window.open(`<?= base_url('/listjual/reprint') ?>/${jualId}?format=faktur`, '_blank', 'noopener');
+            }
         });
     }
 

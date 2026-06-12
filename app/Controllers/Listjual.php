@@ -114,13 +114,15 @@ class Listjual extends BaseController
     public function reprint(string $jual_id)
     {
         $jualId = trim($jual_id);
+        $format = strtolower(trim((string) ($this->request->getGet('format') ?? 'struk')));
+        $format = $format === 'faktur' ? 'faktur' : 'struk';
         $ok = $this->jualModel->incrementReprintCount((string) session('toko_id'), $jualId);
         if (! $ok) {
             session()->setFlashdata('error', 'Transaksi penjualan tidak ditemukan');
             return redirect()->to('/listjual');
         }
 
-        tracelog('PRINT', 'REPRINT STRUK POS ' . $jualId);
-        return redirect()->to('/jual/struk/' . $jualId);
+        tracelog('PRINT', 'REPRINT ' . strtoupper($format) . ' POS ' . $jualId);
+        return redirect()->to('/jual/' . $format . '/' . $jualId);
     }
 }

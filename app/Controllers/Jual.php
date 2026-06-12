@@ -129,4 +129,17 @@ class Jual extends BaseController
 
         return view('jual/struk', $data);
     }
+
+    public function faktur(string $jual_id)
+    {
+        $data['title'] = 'Faktur Penjualan';
+        $data['isMobile'] = cekMobile();
+
+        $data['receipt'] = $this->jualModel->getReceiptData((string) session('toko_id'), trim($jual_id));
+        if (! $data['receipt']) {
+            return redirect()->to('/jual');
+        }
+
+        return view('jual/faktur', $data);
+    }
 }

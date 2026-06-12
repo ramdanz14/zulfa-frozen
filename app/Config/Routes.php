@@ -191,6 +191,7 @@ $routes->group('jual', static function ($route) {
     $route->post('register-member', 'Jual::registerMember');
     $route->post('void-cart', 'Jual::voidCart');
     $route->get('struk/(:segment)', 'Jual::struk/$1');
+    $route->get('faktur/(:segment)', 'Jual::faktur/$1');
     $route->post('', 'Jual::save');
 });
 

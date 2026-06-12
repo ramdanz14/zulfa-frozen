@@ -84,11 +84,26 @@
             font-weight: 700;
         }
 
+        .receipt-header {
+            display: grid;
+            grid-template-columns: 14mm minmax(0, 1fr);
+            gap: 3mm;
+            align-items: center;
+            text-align: left;
+        }
+
         .receipt-header strong {
             display: block;
             font-size: var(--font-lg);
             line-height: 1.2;
             margin-bottom: 1px;
+        }
+
+        .receipt-logo {
+            width: 14mm;
+            max-width: 14mm;
+            height: auto;
+            display: block;
         }
 
         .receipt-meta td:first-child,
@@ -157,10 +172,13 @@
         <a href="javascript:window.print()" class="btn-print">Cetak Struk</a>
     </div>
     <div class="receipt">
-        <div class="text-center receipt-header">
-            <div><strong><?= esc($receipt['toko_nama'] ?? 'TOKO') ?></strong></div>
-            <div class="muted"><?= esc($receipt['toko_alamat'] ?? '-') ?></div>
-            <div class="muted"><?= esc($receipt['toko_phone'] ?? '-') ?></div>
+        <div class="receipt-header">
+            <img src="<?= base_url('/assets/images/logos/zulfa-logo-bw.png') ?>" alt="Zulfa" class="receipt-logo">
+            <div>
+                <strong><?= esc($receipt['toko_nama'] ?? 'TOKO') ?></strong>
+                <div class="muted"><?= esc($receipt['toko_alamat'] ?? '-') ?></div>
+                <div class="muted">Telp: <?= esc($receipt['toko_phone'] ?? '-') ?></div>
+            </div>
         </div>
 
         <div class="divider"></div>
