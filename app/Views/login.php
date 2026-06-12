@@ -8,18 +8,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Favicon icon-->
-    <link rel="shortcut icon" type="image/png" href="<?= base_url(); ?>/assets/images/Zulfa.png" />
+    <link rel="shortcut icon" type="image/png" href="<?= base_url(APP_LOGO_PATH); ?>" />
 
     <!-- Core Css -->
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/css/styles.css" />
 
-    <title>Zulfaa Frozen | Login</title>
+    <title><?= esc(APP_NAME); ?> | Login</title>
 </head>
 
 <body>
     <!-- Preloader -->
     <div class="preloader">
-        <img src="<?= base_url(); ?>/assets/images/Zulfa.png" alt="loader" class="lds-ripple img-fluid" />
+        <img src="<?= base_url(APP_LOGO_PATH); ?>" alt="loader" class="lds-ripple img-fluid" />
     </div>
     <div id="main-wrapper" class="auth-customizer-none">
         <div class="position-relative overflow-hidden radial-gradient min-vh-100 w-100">
@@ -39,10 +39,10 @@
                             <div class="auth-max-width col-sm-8 col-md-6 col-xl-7 px-4">
                                 <div class="row d-flex align-items-center ">
                                     <div class="col-3 mb-2 mb-sm-0">
-                                        <img src="<?= base_url(); ?>/assets/images/Zulfa.png" class="dark-logo" style="height: 63px;" alt="Logo-Dark" />
+                                        <img src="<?= base_url(APP_LOGO_PATH); ?>" class="dark-logo" style="height: 63px;" alt="<?= esc(APP_NAME); ?>" />
                                     </div>
                                     <div class="col-9">
-                                        <h2 class="mb-1 fs-7 fw-bolder">ZULFAA FROZEN</h2>
+                                        <h2 class="mb-1 fs-7 fw-bolder"><?= esc(strtoupper(APP_NAME)); ?></h2>
                                     </div>
                                     <?= session()->getFlashdata('warning'); ?>
                                 </div>

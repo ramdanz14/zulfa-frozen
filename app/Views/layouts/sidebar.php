@@ -41,7 +41,7 @@ foreach ($sortedMenu as $item) {
     <div>
         <div class="brand-logo d-flex align-items-center justify-content-between">
             <div class=" d-flex align-items-center justify-content-center">
-                <img src="<?= base_url(); ?>/assets/images/Zulfa.png" style="height: 40px;" alt="Logo-Dark" />
+                <img src="<?= base_url(APP_LOGO_PATH); ?>" style="height: 40px;" alt="<?= esc(APP_NAME); ?>" />
                 <h5 class="m-1 text-primary fw-bolder"><?= session("toko_nama") ?></h5>
             </div>
             <a href="javascript:void(0)" class="sidebartoggler ms-auto text-decoration-none fs-5 d-block d-xl-none">

@@ -8,18 +8,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Favicon icon-->
-    <link rel="shortcut icon" type="image/png" href="<?= base_url(); ?>/assets/images/Zulfa.png" />
+    <link rel="shortcut icon" type="image/png" href="<?= base_url(APP_LOGO_PATH); ?>" />
 
     <!-- Core Css -->
     <link rel="stylesheet" href="<?= base_url(); ?>assets/css/styles.css" />
 
-    <title>ZULFAA FROZEN</title>
+    <title><?= esc(strtoupper(APP_NAME)); ?></title>
 </head>
 
 <body>
     <!-- Preloader -->
     <div class="preloader">
-        <img src="<?= base_url(); ?>assets/images/Zulfa.png" alt="loader" class="lds-ripple img-fluid" />
+        <img src="<?= base_url(APP_LOGO_PATH); ?>" alt="loader" class="lds-ripple img-fluid" />
     </div>
     <div id="main-wrapper">
         <div class="position-relative overflow-hidden min-vh-100 w-100 d-flex align-items-center justify-content-center">

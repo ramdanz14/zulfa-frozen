@@ -89,9 +89,9 @@
                         <div class="card-overlay"></div>
                         <div class="card-header clearfix">
                             <div class="logo-container">
-                                <img src="<?= base_url(); ?>/assets/images/zulfa.png" alt="Zulfa Frozen Logo">
+                                <img src="<?= base_url(APP_LOGO_PATH); ?>" alt="<?= esc(APP_NAME); ?> Logo">
                             </div>
-                            <div class="card-title-text">ZULFAA FROZEN MEMBER CARD</div>
+                            <div class="card-title-text"><?= esc(strtoupper(APP_NAME)); ?> MEMBER CARD</div>
                         </div>
 
                         <div class="card-body-member">
@@ -123,7 +123,7 @@
 
                         <div class="card-footer-member clearfix">
                             <div class="footer-left">
-                                * Kartu ini merupakan hak milik Zulfa Frozen Food.<br>
+                                * Kartu ini merupakan hak milik <?= esc(APP_NAME); ?>.<br>
                                 * Tunjukkan kartu ini saat transaksi untuk pencatatan poin.
                             </div>
                             <div class="footer-right">PREMIUM MEMBER</div>

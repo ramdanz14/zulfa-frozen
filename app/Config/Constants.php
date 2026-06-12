@@ -16,6 +16,16 @@
 defined('APP_NAMESPACE') || define('APP_NAMESPACE', 'App');
 
 /*
+ | --------------------------------------------------------------------
+ | App Branding
+ | --------------------------------------------------------------------
+ |
+ | Centralized application name and default logo path for views.
+ */
+defined('APP_NAME') || define('APP_NAME', 'Zulfaa Frozen');
+defined('APP_LOGO_PATH') || define('APP_LOGO_PATH', 'assets/images/logos/zulfa-logo-color.png');
+
+/*
  | --------------------------------------------------------------------------
  | Composer Path
  | --------------------------------------------------------------------------

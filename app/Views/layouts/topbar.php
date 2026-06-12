@@ -15,7 +15,7 @@
                 </li>
             </ul>
             <div class="d-block d-lg-none py-4 d-flex align-items-center justify-content-center">
-                <img src="<?= base_url(); ?>/assets/images/Zulfa.png" style="height: 40px;" alt="Logo-Dark" />
+                <img src="<?= base_url(APP_LOGO_PATH); ?>" style="height: 40px;" alt="<?= esc(APP_NAME); ?>" />
                 <h2 class="m-1 text-primary fw-bolder"><?= session("toko_nama") ?></h2>
             </div>
             <a class="navbar-toggler nav-icon-hover-bg rounded-circle p-0 mx-0 border-0" href="javascript:void(0)" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

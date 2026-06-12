@@ -5,18 +5,18 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" type="image/png" href="<?= base_url(); ?>/assets/images/zulfa.png" />
+    <link rel="shortcut icon" type="image/png" href="<?= base_url(APP_LOGO_PATH); ?>" />
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/css/styles.css" />
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.css">
     <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.8/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/r-3.0.8/sp-2.3.5/datatables.min.css" rel="stylesheet" integrity="sha384-Ardp6FCkpCmEUMnE5/KjGBWG2nRUVIRu9FC/rX34QDRbJ+ebmGFWYRrv2DGEtRtc" crossorigin="anonymous">
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
-    <title>Zulfaa Frozen | <?= esc($title ?? 'Dashboard'); ?></title>
+    <title><?= esc(APP_NAME); ?> | <?= esc($title ?? 'Dashboard'); ?></title>
 </head>
 
 <body class="link-sidebar">
     <div class="preloader">
-        <img src="<?= base_url(); ?>/assets/images/zulfa.png" alt="loader" class="lds-ripple img-fluid" />
+        <img src="<?= base_url(APP_LOGO_PATH); ?>" alt="loader" class="lds-ripple img-fluid" />
     </div>
     <div id="main-wrapper">
         <?= $this->include('layouts/sidebar'); ?>
