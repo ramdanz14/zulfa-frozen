@@ -124,12 +124,16 @@ class LapharianModel extends Model
         unset($row);
 
         $uangHarusDisetor = $pos['TUNAI'] + $kasMasuk - $kasKeluar - $supplierCash + $customerCash;
+        $storeSummaries = $this->buildStoreSummaries($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
+        $cashierGroups = $this->buildCashierGroups($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
 
         return [
             'tanggal' => $tanggal,
             'printed_at' => date('Y-m-d H:i:s'),
             'stores' => $stores,
             'is_multi_store' => count($storeIds) > 1,
+            'store_summaries' => $storeSummaries,
+            'cashier_groups' => $cashierGroups,
             'pos' => [
                 'tunai' => $pos['TUNAI'],
                 'transfer' => $pos['TRANSFER'],
@@ -206,5 +210,236 @@ class LapharianModel extends Model
         }
 
         return [$column . ' IN (' . implode(',', $placeholders) . ')', $binds];
+    }
+
+    private function buildStoreSummaries(string $dateStart, string $dateEnd, string $tanggal, string $storeSql, array $binds): array
+    {
+        $summaries = [];
+        $this->mergeStoreTotals($summaries, $this->db->query(
+            "SELECT j.toko_id, COALESCE(t.toko_nama, j.toko_id) AS toko_nama,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TUNAI' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_tunai,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TRANSFER' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_transfer,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='QRIS' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_qris
+             FROM penjualan j
+             INNER JOIN penjualan_pembayaran pp ON pp.toko_id=j.toko_id AND pp.jual_id=j.jual_id
+             LEFT JOIN toko t ON t.toko_id=j.toko_id
+             WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql
+             GROUP BY j.toko_id, COALESCE(t.toko_nama, j.toko_id)
+             ORDER BY j.toko_id",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeStoreTotals($summaries, $this->db->query(
+            "SELECT j.toko_id, COALESCE(t.toko_nama, j.toko_id) AS toko_nama,
+                    COUNT(DISTINCT j.jual_id) AS total_transaksi,
+                    COALESCE(SUM(j.total_diskon_item), 0) AS diskon_item,
+                    COALESCE(SUM(j.diskon_nota), 0) AS diskon_nota,
+                    COALESCE(SUM(j.redeem_nominal), 0) AS redeem
+             FROM penjualan j
+             LEFT JOIN toko t ON t.toko_id=j.toko_id
+             WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql
+             GROUP BY j.toko_id, COALESCE(t.toko_nama, j.toko_id)
+             ORDER BY j.toko_id",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeStoreTotals($summaries, $this->db->query(
+            "SELECT km.toko_id, COALESCE(t.toko_nama, km.toko_id) AS toko_nama,
+                    COALESCE(SUM(CASE WHEN ak.jenis_akun='MASUK' THEN km.nominal ELSE 0 END), 0) AS kas_masuk,
+                    COALESCE(SUM(CASE WHEN ak.jenis_akun='KELUAR' THEN km.nominal ELSE 0 END), 0) AS kas_keluar
+             FROM kas_mutasi km
+             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+             LEFT JOIN toko t ON t.toko_id=km.toko_id
+             WHERE km.tanggal BETWEEN ? AND ? AND km.$storeSql
+             GROUP BY km.toko_id, COALESCE(t.toko_nama, km.toko_id)
+             ORDER BY km.toko_id",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeStoreTotals($summaries, $this->db->query(
+            "SELECT pb.toko_id, COALESCE(t.toko_nama, pb.toko_id) AS toko_nama,
+                    COALESCE(SUM(pb.jumlah_bayar), 0) AS supplier_total,
+                    COALESCE(SUM(CASE WHEN pb.cara_bayar='TUNAI' THEN pb.jumlah_bayar ELSE 0 END), 0) AS supplier_tunai
+             FROM pembelian_pembayaran pb
+             LEFT JOIN toko t ON t.toko_id=pb.toko_id
+             WHERE pb.tanggal_bayar BETWEEN ? AND ? AND pb.$storeSql
+             GROUP BY pb.toko_id, COALESCE(t.toko_nama, pb.toko_id)
+             ORDER BY pb.toko_id",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeStoreTotals($summaries, $this->db->query(
+            "SELECT pp.toko_id, COALESCE(t.toko_nama, pp.toko_id) AS toko_nama,
+                    COALESCE(SUM(pp.nominal_bayar), 0) AS customer_total,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TUNAI' THEN pp.nominal_bayar ELSE 0 END), 0) AS customer_tunai
+             FROM penjualan_pembayaran pp
+             INNER JOIN penjualan j ON j.toko_id=pp.toko_id AND j.jual_id=pp.jual_id
+             LEFT JOIN toko t ON t.toko_id=pp.toko_id
+             WHERE pp.tgl_bayar BETWEEN ? AND ?
+                AND DATE(j.tgl) <> ?
+                AND j.is_kredit='1'
+                AND pp.$storeSql
+             GROUP BY pp.toko_id, COALESCE(t.toko_nama, pp.toko_id)
+             ORDER BY pp.toko_id",
+            array_merge([$dateStart, $dateEnd, $tanggal], $binds)
+        )->getResultArray());
+
+        return array_values(array_map([$this, 'finalizeAccountabilitySummary'], $summaries));
+    }
+
+    private function buildCashierGroups(string $dateStart, string $dateEnd, string $tanggal, string $storeSql, array $binds): array
+    {
+        $groups = [];
+        $this->mergeCashierTotals($groups, $this->db->query(
+            "SELECT j.toko_id, COALESCE(t.toko_nama, j.toko_id) AS toko_nama,
+                    COALESCE(NULLIF(j.updid, ''), '-') AS kasir,
+                    COALESCE(u.fullname, NULLIF(j.updid, ''), '-') AS nama_kasir,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TUNAI' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_tunai,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TRANSFER' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_transfer,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='QRIS' THEN pp.nominal_bayar ELSE 0 END), 0) AS pos_qris
+             FROM penjualan j
+             INNER JOIN penjualan_pembayaran pp ON pp.toko_id=j.toko_id AND pp.jual_id=j.jual_id
+             LEFT JOIN toko t ON t.toko_id=j.toko_id
+             LEFT JOIN tb_user u ON u.username=j.updid
+             WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql
+             GROUP BY j.toko_id, COALESCE(t.toko_nama, j.toko_id), COALESCE(NULLIF(j.updid, ''), '-'), COALESCE(u.fullname, NULLIF(j.updid, ''), '-')
+             ORDER BY j.toko_id, kasir",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeCashierTotals($groups, $this->db->query(
+            "SELECT j.toko_id, COALESCE(t.toko_nama, j.toko_id) AS toko_nama,
+                    COALESCE(NULLIF(j.updid, ''), '-') AS kasir,
+                    COALESCE(u.fullname, NULLIF(j.updid, ''), '-') AS nama_kasir,
+                    COUNT(DISTINCT j.jual_id) AS total_transaksi,
+                    COALESCE(SUM(j.total_diskon_item), 0) AS diskon_item,
+                    COALESCE(SUM(j.diskon_nota), 0) AS diskon_nota,
+                    COALESCE(SUM(j.redeem_nominal), 0) AS redeem
+             FROM penjualan j
+             LEFT JOIN toko t ON t.toko_id=j.toko_id
+             LEFT JOIN tb_user u ON u.username=j.updid
+             WHERE j.tgl BETWEEN ? AND ? AND j.$storeSql
+             GROUP BY j.toko_id, COALESCE(t.toko_nama, j.toko_id), COALESCE(NULLIF(j.updid, ''), '-'), COALESCE(u.fullname, NULLIF(j.updid, ''), '-')
+             ORDER BY j.toko_id, kasir",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeCashierTotals($groups, $this->db->query(
+            "SELECT km.toko_id, COALESCE(t.toko_nama, km.toko_id) AS toko_nama,
+                    COALESCE(NULLIF(km.updid, ''), '-') AS kasir,
+                    COALESCE(u.fullname, NULLIF(km.updid, ''), '-') AS nama_kasir,
+                    COALESCE(SUM(CASE WHEN ak.jenis_akun='MASUK' THEN km.nominal ELSE 0 END), 0) AS kas_masuk,
+                    COALESCE(SUM(CASE WHEN ak.jenis_akun='KELUAR' THEN km.nominal ELSE 0 END), 0) AS kas_keluar
+             FROM kas_mutasi km
+             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+             LEFT JOIN toko t ON t.toko_id=km.toko_id
+             LEFT JOIN tb_user u ON u.username=km.updid
+             WHERE km.tanggal BETWEEN ? AND ? AND km.$storeSql
+             GROUP BY km.toko_id, COALESCE(t.toko_nama, km.toko_id), COALESCE(NULLIF(km.updid, ''), '-'), COALESCE(u.fullname, NULLIF(km.updid, ''), '-')
+             ORDER BY km.toko_id, kasir",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeCashierTotals($groups, $this->db->query(
+            "SELECT pb.toko_id, COALESCE(t.toko_nama, pb.toko_id) AS toko_nama,
+                    COALESCE(NULLIF(pb.username, ''), '-') AS kasir,
+                    COALESCE(u.fullname, NULLIF(pb.username, ''), '-') AS nama_kasir,
+                    COALESCE(SUM(pb.jumlah_bayar), 0) AS supplier_total,
+                    COALESCE(SUM(CASE WHEN pb.cara_bayar='TUNAI' THEN pb.jumlah_bayar ELSE 0 END), 0) AS supplier_tunai
+             FROM pembelian_pembayaran pb
+             LEFT JOIN toko t ON t.toko_id=pb.toko_id
+             LEFT JOIN tb_user u ON u.username=pb.username
+             WHERE pb.tanggal_bayar BETWEEN ? AND ? AND pb.$storeSql
+             GROUP BY pb.toko_id, COALESCE(t.toko_nama, pb.toko_id), COALESCE(NULLIF(pb.username, ''), '-'), COALESCE(u.fullname, NULLIF(pb.username, ''), '-')
+             ORDER BY pb.toko_id, kasir",
+            array_merge([$dateStart, $dateEnd], $binds)
+        )->getResultArray());
+
+        $this->mergeCashierTotals($groups, $this->db->query(
+            "SELECT pp.toko_id, COALESCE(t.toko_nama, pp.toko_id) AS toko_nama,
+                    COALESCE(NULLIF(pp.updid, ''), '-') AS kasir,
+                    COALESCE(u.fullname, NULLIF(pp.updid, ''), '-') AS nama_kasir,
+                    COALESCE(SUM(pp.nominal_bayar), 0) AS customer_total,
+                    COALESCE(SUM(CASE WHEN pp.cara_bayar='TUNAI' THEN pp.nominal_bayar ELSE 0 END), 0) AS customer_tunai
+             FROM penjualan_pembayaran pp
+             INNER JOIN penjualan j ON j.toko_id=pp.toko_id AND j.jual_id=pp.jual_id
+             LEFT JOIN toko t ON t.toko_id=pp.toko_id
+             LEFT JOIN tb_user u ON u.username=pp.updid
+             WHERE pp.tgl_bayar BETWEEN ? AND ?
+                AND DATE(j.tgl) <> ?
+                AND j.is_kredit='1'
+                AND pp.$storeSql
+             GROUP BY pp.toko_id, COALESCE(t.toko_nama, pp.toko_id), COALESCE(NULLIF(pp.updid, ''), '-'), COALESCE(u.fullname, NULLIF(pp.updid, ''), '-')
+             ORDER BY pp.toko_id, kasir",
+            array_merge([$dateStart, $dateEnd, $tanggal], $binds)
+        )->getResultArray());
+
+        return array_values(array_map([$this, 'finalizeAccountabilitySummary'], $groups));
+    }
+
+    private function mergeStoreTotals(array &$target, array $rows): void
+    {
+        foreach ($rows as $row) {
+            $key = (string) ($row['toko_id'] ?? '-');
+            if (!isset($target[$key])) {
+                $target[$key] = $this->emptyAccountabilitySummary($row);
+            }
+            $this->addAccountabilityValues($target[$key], $row);
+        }
+    }
+
+    private function mergeCashierTotals(array &$target, array $rows): void
+    {
+        foreach ($rows as $row) {
+            $key = (string) ($row['toko_id'] ?? '-') . '|' . (string) ($row['kasir'] ?? '-');
+            if (!isset($target[$key])) {
+                $target[$key] = $this->emptyAccountabilitySummary($row);
+            }
+            $target[$key]['kasir'] = (string) ($row['kasir'] ?? '-');
+            $target[$key]['nama_kasir'] = (string) ($row['nama_kasir'] ?? $row['kasir'] ?? '-');
+            $this->addAccountabilityValues($target[$key], $row);
+        }
+    }
+
+    private function emptyAccountabilitySummary(array $row): array
+    {
+        return [
+            'toko_id' => (string) ($row['toko_id'] ?? '-'),
+            'toko_nama' => (string) ($row['toko_nama'] ?? $row['toko_id'] ?? '-'),
+            'kasir' => (string) ($row['kasir'] ?? ''),
+            'nama_kasir' => (string) ($row['nama_kasir'] ?? $row['kasir'] ?? ''),
+            'total_transaksi' => 0,
+            'pos_tunai' => 0.0,
+            'pos_transfer' => 0.0,
+            'pos_qris' => 0.0,
+            'pos_total' => 0.0,
+            'diskon_item' => 0.0,
+            'diskon_nota' => 0.0,
+            'redeem' => 0.0,
+            'kas_masuk' => 0.0,
+            'kas_keluar' => 0.0,
+            'kas_bersih' => 0.0,
+            'supplier_total' => 0.0,
+            'supplier_tunai' => 0.0,
+            'customer_total' => 0.0,
+            'customer_tunai' => 0.0,
+            'uang_harus_disetor' => 0.0,
+        ];
+    }
+
+    private function addAccountabilityValues(array &$target, array $row): void
+    {
+        foreach (['pos_tunai', 'pos_transfer', 'pos_qris', 'diskon_item', 'diskon_nota', 'redeem', 'kas_masuk', 'kas_keluar', 'supplier_total', 'supplier_tunai', 'customer_total', 'customer_tunai'] as $field) {
+            $target[$field] += (float) ($row[$field] ?? 0);
+        }
+        $target['total_transaksi'] += (int) ($row['total_transaksi'] ?? 0);
+    }
+
+    private function finalizeAccountabilitySummary(array $row): array
+    {
+        $row['pos_total'] = (float) $row['pos_tunai'] + (float) $row['pos_transfer'] + (float) $row['pos_qris'];
+        $row['kas_bersih'] = (float) $row['kas_masuk'] - (float) $row['kas_keluar'];
+        $row['uang_harus_disetor'] = (float) $row['pos_tunai'] + (float) $row['kas_masuk'] - (float) $row['kas_keluar'] - (float) $row['supplier_tunai'] + (float) $row['customer_tunai'];
+        return $row;
     }
 }

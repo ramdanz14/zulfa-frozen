@@ -63,6 +63,54 @@
         </div>
 
         <div class="row g-3">
+            <div class="col-12">
+                <div class="card h-100 mb-0">
+                    <div class="card-body">
+                        <div class="fw-semibold mb-3">Summary Per Toko</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Toko</th>
+                                        <th class="text-end">POS Tunai</th>
+                                        <th class="text-end">POS Non Tunai</th>
+                                        <th class="text-end">Kas Bersih</th>
+                                        <th class="text-end">Supplier Tunai</th>
+                                        <th class="text-end">Piutang Tunai</th>
+                                        <th class="text-end">Uang Harus Disetor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-store-summary"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card h-100 mb-0">
+                    <div class="card-body">
+                        <div class="fw-semibold mb-3">Pertanggungjawaban Per Kasir</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Toko</th>
+                                        <th>Kasir</th>
+                                        <th class="text-end">Trx POS</th>
+                                        <th class="text-end">POS Tunai</th>
+                                        <th class="text-end">POS Non Tunai</th>
+                                        <th class="text-end">Kas Bersih</th>
+                                        <th class="text-end">Supplier Tunai</th>
+                                        <th class="text-end">Piutang Tunai</th>
+                                        <th class="text-end">Uang Harus Disetor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-cashier-summary"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-lg-6">
                 <div class="card h-100 mb-0">
                     <div class="card-body">
@@ -198,6 +246,8 @@
         $('#sum-kas').text(rp(kas.bersih || 0));
         $('#sum-kas-detail').text(`Masuk ${rp(kas.masuk || 0)} - Keluar ${rp(kas.keluar || 0)}`);
         $('#sum-setor').text(rp(report.uang_harus_disetor || 0));
+        $('#table-store-summary').html(summaryRows(report.store_summaries || [], false));
+        $('#table-cashier-summary').html(summaryRows(report.cashier_groups || [], true));
 
         $('#table-pos').html([
             rowHtml('Tunai', pos.tunai || 0),
@@ -223,6 +273,37 @@
         return rows.map(renderer).join('');
     }
 
+    function summaryRows(rows, withCashier) {
+        if (!rows.length) {
+            return `<tr><td colspan="${withCashier ? 9 : 7}" class="text-center text-muted">Tidak ada data</td></tr>`;
+        }
+        return rows.map(row => {
+            const nonCash = Number(row.pos_transfer || 0) + Number(row.pos_qris || 0);
+            if (withCashier) {
+                return `<tr>
+                    <td>${esc(row.toko_nama || row.toko_id)}</td>
+                    <td>${esc(row.nama_kasir || row.kasir)}<br><small class="text-muted">${esc(row.kasir || '-')}</small></td>
+                    <td class="text-end">${Number(row.total_transaksi || 0).toLocaleString('id-ID')}</td>
+                    <td class="text-end">${rp(row.pos_tunai || 0)}</td>
+                    <td class="text-end">${rp(nonCash)}</td>
+                    <td class="text-end">${rp(row.kas_bersih || 0)}</td>
+                    <td class="text-end">${rp(row.supplier_tunai || 0)}</td>
+                    <td class="text-end">${rp(row.customer_tunai || 0)}</td>
+                    <td class="text-end fw-semibold">${rp(row.uang_harus_disetor || 0)}</td>
+                </tr>`;
+            }
+            return `<tr>
+                <td>${esc(row.toko_nama || row.toko_id)}</td>
+                <td class="text-end">${rp(row.pos_tunai || 0)}</td>
+                <td class="text-end">${rp(nonCash)}</td>
+                <td class="text-end">${rp(row.kas_bersih || 0)}</td>
+                <td class="text-end">${rp(row.supplier_tunai || 0)}</td>
+                <td class="text-end">${rp(row.customer_tunai || 0)}</td>
+                <td class="text-end fw-semibold">${rp(row.uang_harus_disetor || 0)}</td>
+            </tr>`;
+        }).join('');
+    }
+
     function buildPrintUrl() {
         const params = new URLSearchParams();
         params.set('tanggal', $('#filter-tanggal').val());
@@ -240,6 +321,12 @@
             `Tanggal: ${formatDate(report.tanggal)}`,
             `Dicetak: ${report.printed_at || '-'}`,
             `Toko: ${(report.stores || []).map(row => row.toko_nama || row.toko_id).join(', ') || '-'}`,
+            '',
+            'SUMMARY PER TOKO',
+            ...(report.store_summaries || []).map(row => `${row.toko_nama || row.toko_id}: ${rp(row.uang_harus_disetor || 0)} (Tunai POS ${rp(row.pos_tunai || 0)}, Kas ${rp(row.kas_bersih || 0)})`),
+            '',
+            'PERTANGGUNGJAWABAN PER KASIR',
+            ...(report.cashier_groups || []).map(row => `${row.toko_nama || row.toko_id} - ${row.nama_kasir || row.kasir}: ${rp(row.uang_harus_disetor || 0)} (Trx ${Number(row.total_transaksi || 0).toLocaleString('id-ID')}, POS Tunai ${rp(row.pos_tunai || 0)})`),
             '',
             `POS Tunai: ${rp(pos.tunai || 0)}`,
             `POS Transfer: ${rp(pos.transfer || 0)}`,

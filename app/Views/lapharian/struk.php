@@ -35,6 +35,49 @@ $stores = array_map(static fn($row): string => (string) ($row['toko_nama'] ?? $r
         </div>
 
         <div class="divider"></div>
+        <div class="section">SUMMARY PER TOKO</div>
+        <table>
+            <?php foreach (($report['store_summaries'] ?? []) as $row) : ?>
+                <tr>
+                    <td><?= esc($row['toko_nama'] ?? $row['toko_id'] ?? '-') ?></td>
+                    <td class="text-end"><strong><?= $money($row['uang_harus_disetor'] ?? 0) ?></strong></td>
+                </tr>
+                <tr class="muted">
+                    <td colspan="2">
+                        POS T: <?= $money($row['pos_tunai'] ?? 0) ?> |
+                        Non T: <?= $money(($row['pos_transfer'] ?? 0) + ($row['pos_qris'] ?? 0)) ?> |
+                        Kas: <?= $money($row['kas_bersih'] ?? 0) ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+
+        <div class="divider"></div>
+        <div class="section">PER KASIR</div>
+        <table>
+            <?php foreach (($report['cashier_groups'] ?? []) as $row) : ?>
+                <tr>
+                    <td><?= esc(($row['toko_id'] ?? '-') . ' - ' . ($row['nama_kasir'] ?? $row['kasir'] ?? '-')) ?></td>
+                    <td class="text-end"><strong><?= $money($row['uang_harus_disetor'] ?? 0) ?></strong></td>
+                </tr>
+                <tr class="muted">
+                    <td colspan="2">
+                        Trx: <?= number_format((int) ($row['total_transaksi'] ?? 0), 0, ',', '.') ?> |
+                        POS T: <?= $money($row['pos_tunai'] ?? 0) ?> |
+                        Non T: <?= $money(($row['pos_transfer'] ?? 0) + ($row['pos_qris'] ?? 0)) ?>
+                    </td>
+                </tr>
+                <tr class="muted">
+                    <td colspan="2">
+                        Kas: <?= $money($row['kas_bersih'] ?? 0) ?> |
+                        Sup T: <?= $money($row['supplier_tunai'] ?? 0) ?> |
+                        Piut T: <?= $money($row['customer_tunai'] ?? 0) ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+
+        <div class="divider"></div>
         <div class="section">PENDAPATAN POS</div>
         <table>
             <tr><td>Tunai</td><td class="text-end"><?= $money($report['pos']['tunai'] ?? 0) ?></td></tr>
