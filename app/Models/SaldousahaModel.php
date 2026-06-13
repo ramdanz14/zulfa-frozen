@@ -24,13 +24,15 @@ class SaldousahaModel extends Model
         $sales = $this->getSalesSummary($storeIds, $start, $end);
         $returPenjualan = $this->getReturPenjualan($storeIds, $start, $end);
         $beban = $this->getBebanSummary($storeIds, $start, $end);
+        $adjustmentBeban = $this->getAdjustmentBebanSummary($storeIds, $start, $end);
         $balanceAsOfDate = date('Y-m-d');
         $kas = $this->getCashPosition($storeIds, $balanceAsOfDate);
         $hutang = $this->getTotalHutang($storeIds);
         $piutang = $this->getTotalPiutang($storeIds);
         $stok = $this->getTotalStokRupiah($storeIds);
 
-        $labaBersih = $sales['laba_kotor'] - $returPenjualan - $beban['total_beban'];
+        $totalBeban = $beban['total_beban'] + $adjustmentBeban['beban_hilang'] + $adjustmentBeban['beban_rusak'];
+        $labaBersih = $sales['laba_kotor'] - $returPenjualan - $totalBeban;
         $saldoKas = $kas['saldo_tunai'] + $kas['saldo_nontunai'];
         $saldoAkhir = $saldoKas - $hutang + $piutang - $stok;
         $cashRatio = $hutang > 0 ? $saldoKas / $hutang : null;
@@ -52,7 +54,9 @@ class SaldousahaModel extends Model
                 'retur_penjualan' => $returPenjualan,
                 'beban_tunai' => $beban['beban_tunai'],
                 'beban_nontunai' => $beban['beban_nontunai'],
-                'total_beban' => $beban['total_beban'],
+                'beban_hilang' => $adjustmentBeban['beban_hilang'],
+                'beban_rusak' => $adjustmentBeban['beban_rusak'],
+                'total_beban' => $totalBeban,
                 'laba_bersih' => $labaBersih,
                 'saldo_kas_tunai' => $kas['saldo_tunai'],
                 'saldo_kas_nontunai' => $kas['saldo_nontunai'],
@@ -73,6 +77,8 @@ class SaldousahaModel extends Model
                 ['label' => 'Retur Penjualan', 'amount' => $returPenjualan, 'type' => 'out'],
                 ['label' => 'Kas Pengeluaran Beban Tunai', 'amount' => $beban['beban_tunai'], 'type' => 'out'],
                 ['label' => 'Kas Pengeluaran Beban Non Tunai', 'amount' => $beban['beban_nontunai'], 'type' => 'out'],
+                ['label' => 'Beban Hilang', 'amount' => $adjustmentBeban['beban_hilang'], 'type' => 'out'],
+                ['label' => 'Beban Rusak', 'amount' => $adjustmentBeban['beban_rusak'], 'type' => 'out'],
                 ['label' => 'Laba Bersih', 'amount' => $labaBersih, 'type' => 'total'],
             ],
             'balance_rows' => [
@@ -83,6 +89,26 @@ class SaldousahaModel extends Model
                 ['label' => 'Total Stok Rupiah', 'amount' => $stok, 'type' => 'asset'],
                 ['label' => 'Saldo Akhir', 'amount' => $saldoAkhir, 'type' => 'total'],
             ],
+        ];
+    }
+
+    private function getAdjustmentBebanSummary(array $storeIds, string $start, string $end): array
+    {
+        [$storeWhere, $binds] = $this->buildStoreWhere('a.toko_id', $storeIds);
+        $row = $this->db->query(
+            "SELECT
+                COALESCE(SUM(CASE WHEN a.istype='SO' THEN COALESCE(a.gross,0) ELSE 0 END),0) AS beban_hilang,
+                COALESCE(SUM(CASE WHEN a.istype='BAP' THEN COALESCE(a.gross,0) ELSE 0 END),0) AS beban_rusak
+             FROM `adjust` a
+             WHERE a.tanggal BETWEEN ? AND ?
+               AND a.istype IN ('SO','BAP')
+               AND {$storeWhere}",
+            array_merge([$start, $end], $binds)
+        )->getRowArray() ?: [];
+
+        return [
+            'beban_hilang' => (float) ($row['beban_hilang'] ?? 0),
+            'beban_rusak' => (float) ($row['beban_rusak'] ?? 0),
         ];
     }
 
