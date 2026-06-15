@@ -13,71 +13,178 @@ $shift = $staff['shift'] ?? [];
 $cash = $staff['cash'] ?? [];
 $tasks = $staff['tasks'] ?? [];
 $shiftCashUsers = $staff['shift_cash_users'] ?? [];
+$moneyClass = static fn($value): string => ((float) ($value ?? 0)) < 0 ? 'text-danger' : 'text-dark';
 ?>
+<style>
+    .staff-dashboard {
+        background-color: #f8f9fa;
+    }
+
+    .staff-dashboard .icon-shape {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 42px;
+    }
+
+    .staff-dashboard .icon-action {
+        width: 32px;
+        height: 32px;
+    }
+
+    .staff-dashboard .btn-pos {
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .staff-dashboard .btn-pos:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    }
+
+    .staff-dashboard .metric-value {
+        font-size: 1.45rem;
+        line-height: 1.2;
+    }
+
+    .staff-dashboard .border-dashed {
+        border-style: dashed !important;
+    }
+
+    .staff-dashboard .list-main {
+        max-width: 72%;
+        min-width: 0;
+    }
+
+    .staff-dashboard .list-side {
+        max-width: 40%;
+        overflow-wrap: anywhere;
+    }
+
+    .staff-dashboard .qris-icon {
+        background-color: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    @media (max-width: 575.98px) {
+        .staff-dashboard .metric-value {
+            font-size: 1.25rem;
+        }
+
+        .staff-dashboard .list-main {
+            max-width: 62%;
+        }
+    }
+</style>
 <div class="body-wrapper">
-    <div class="container-fluid">
-        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
+    <div class="container-fluid staff-dashboard py-4">
+        <div class="card border-0 shadow-sm bg-info text-dark mb-4" style="--bs-bg-opacity: 0.15;">
             <div class="card-body px-4 py-3">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Dashboard Karyawan</h4>
-                        <p class="mb-0"><?= esc($store['toko_nama'] ?? session('toko_id')) ?> | Shift <?= esc(date('d/m/Y', strtotime($dashboard['today'] ?? date('Y-m-d')))) ?></p>
+                        <h4 class="fw-bold mb-1 text-info-emphasis">Dashboard Karyawan</h4>
+                        <p class="mb-0 text-secondary">
+                            <?= esc($store['toko_nama'] ?? session('toko_id')) ?>
+                            <span class="mx-2">|</span>
+                            Shift Berjalan: <strong><?= esc(date('d/m/Y', strtotime($dashboard['today'] ?? date('Y-m-d')))) ?></strong>
+                        </p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/jual') ?>" class="btn btn-primary"><i class="ti ti-cash-register"></i> Buka POS</a>
+                        <a href="<?= base_url('/jual') ?>" class="btn btn-primary btn-pos shadow-sm">
+                            <i class="ti ti-cash-register me-2 fs-5"></i> Buka Aplikasi POS
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-4">
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">Transaksi Hari Ini</div>
-                        <div class="fs-5 fw-semibold mt-2"><?= $num($shift['transaksi'] ?? 0) ?></div>
-                        <small>Omzet <?= $money($shift['omzet'] ?? 0) ?></small>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <span class="text-secondary small fw-medium">Transaksi Hari Ini</span>
+                                <div class="metric-value fw-bold mt-1 mb-0"><?= $num($shift['transaksi'] ?? 0) ?></div>
+                            </div>
+                            <div class="badge bg-primary-subtle text-primary p-2 rounded icon-shape">
+                                <i class="ti ti-receipt fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-3">
+                            Omzet: <span class="text-dark fw-semibold"><?= $money($shift['omzet'] ?? 0) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">Tunai</div>
-                        <div class="fs-5 fw-semibold mt-2"><?= $money($shift['tunai'] ?? 0) ?></div>
-                        <small>Transfer <?= $money($shift['transfer'] ?? 0) ?></small>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <span class="text-secondary small fw-medium">Tunai</span>
+                                <div class="metric-value fw-bold mt-1 mb-0"><?= $money($shift['tunai'] ?? 0) ?></div>
+                            </div>
+                            <div class="badge bg-success-subtle text-success p-2 rounded icon-shape">
+                                <i class="ti ti-wallet fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-3">
+                            Transfer: <span class="text-dark fw-semibold"><?= $money($shift['transfer'] ?? 0) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">QRIS</div>
-                        <div class="fs-5 fw-semibold mt-2"><?= $money($shift['qris'] ?? 0) ?></div>
-                        <small>Non tunai hari ini</small>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <span class="text-secondary small fw-medium">QRIS</span>
+                                <div class="metric-value fw-bold mt-1 mb-0"><?= $money($shift['qris'] ?? 0) ?></div>
+                            </div>
+                            <div class="badge p-2 rounded icon-shape qris-icon">
+                                <i class="ti ti-qrcode fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-3">
+                            Total non-tunai hari ini
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <div class="text-muted small">Piutang Baru</div>
-                        <div class="fs-5 fw-semibold mt-2"><?= $money($shift['piutang'] ?? 0) ?></div>
-                        <small>Transaksi kredit hari ini</small>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <span class="text-secondary small fw-medium">Piutang Baru</span>
+                                <div class="metric-value fw-bold mt-1 mb-0"><?= $money($shift['piutang'] ?? 0) ?></div>
+                            </div>
+                            <div class="badge bg-warning-subtle text-warning p-2 rounded icon-shape">
+                                <i class="ti ti-file-invoice fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-3">
+                            Transaksi kredit hari ini
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-4">
             <div class="col-xl-8">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <h5 class="fw-semibold mb-3">Kas Shift Per User</h5>
+                        <h5 class="fw-bold mb-3"><i class="ti ti-users text-secondary me-2"></i>Kas Shift Per User</h5>
                         <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
+                            <table class="table table-hover align-middle mb-0 card-table">
+                                <thead class="table-light">
+                                    <tr class="small text-uppercase text-secondary">
                                         <th>User</th>
                                         <th class="text-end">Kas Penjualan</th>
                                         <th class="text-end">Kas Masuk</th>
@@ -92,20 +199,23 @@ $shiftCashUsers = $staff['shift_cash_users'] ?? [];
                                             <td class="text-end"><?= $money($row['pos_tunai'] ?? 0) ?></td>
                                             <td class="text-end"><?= $money($row['kas_masuk'] ?? 0) ?></td>
                                             <td class="text-end"><?= $money($row['pengeluaran_kas'] ?? 0) ?></td>
-                                            <td class="text-end fw-semibold"><?= $money($row['saldo_sistem'] ?? 0) ?></td>
+                                            <td class="text-end fw-semibold <?= $moneyClass($row['saldo_sistem'] ?? 0) ?>"><?= $money($row['saldo_sistem'] ?? 0) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                     <?php if (empty($shiftCashUsers)) : ?><tr>
-                                            <td colspan="5" class="text-center text-muted">Belum ada kas tunai hari ini</td>
+                                            <td colspan="5" class="text-center py-4 text-secondary">
+                                                <i class="ti ti-database-off fs-2 d-block mb-2 opacity-50"></i>
+                                                <span class="small">Belum ada rekaman kas tunai pada shift ini</span>
+                                            </td>
                                         </tr><?php endif; ?>
                                 </tbody>
-                                <tfoot>
-                                    <tr class="fw-semibold">
+                                <tfoot class="table-light border-top-2">
+                                    <tr class="fw-bold text-dark">
                                         <td>Total</td>
                                         <td class="text-end"><?= $money($shift['tunai'] ?? 0) ?></td>
                                         <td class="text-end"><?= $money(max(0, ($cash['kas_masuk_tunai'] ?? 0) - ($shift['tunai'] ?? 0))) ?></td>
                                         <td class="text-end"><?= $money($cash['kas_keluar_tunai'] ?? 0) ?></td>
-                                        <td class="text-end"><?= $money($cash['saldo_sistem'] ?? 0) ?></td>
+                                        <td class="text-end text-primary"><?= $money($cash['saldo_sistem'] ?? 0) ?></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -114,19 +224,24 @@ $shiftCashUsers = $staff['shift_cash_users'] ?? [];
                 </div>
             </div>
             <div class="col-xl-4">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
-                        <h5 class="fw-semibold mb-3">Tugas Belum Selesai</h5>
-                        <div class="row g-3">
-                            <div class="col-sm-6"><a href="<?= base_url('/transfer') ?>" class="text-decoration-none">
-                                    <div class="p-3 border rounded-2 h-100"><small class="text-muted">Transfer Terima</small>
-                                        <div class="fw-semibold fs-5 text-dark"><?= $num($tasks['transfer_pending_approve'] ?? 0) ?></div>
-                                        <small class="text-muted">Belum approve</small>
+                        <h5 class="fw-bold mb-3"><i class="ti ti-clipboard-list text-danger me-2"></i>Tugas Belum Selesai</h5>
+                        <div class="row g-2">
+                            <div class="col-sm-6"><a href="<?= base_url('/transfer') ?>" class="text-decoration-none d-block h-100">
+                                    <div class="p-3 border rounded-3 h-100 bg-light text-center border-dashed">
+                                        <span class="text-secondary small d-block mb-1">Transfer Terima</span>
+                                        <div class="fw-bold fs-4 text-dark mb-1"><?= $num($tasks['transfer_pending_approve'] ?? 0) ?></div>
+                                        <span class="badge bg-secondary-subtle text-secondary small">Belum Approve</span>
                                     </div>
                                 </a></div>
-                            <div class="col-sm-6"><a href="<?= base_url('/pembelian') ?>" class="text-decoration-none">
-                                    <div class="p-3 border rounded-2 h-100"><small class="text-muted">PO Belum Terima</small>
-                                        <div class="fw-semibold fs-5 text-dark"><?= $num($tasks['po_belum_terima'] ?? 0) ?></div>
+                            <div class="col-sm-6"><a href="<?= base_url('/pembelian') ?>" class="text-decoration-none d-block h-100">
+                                    <div class="p-3 border rounded-3 h-100 bg-light text-center border-dashed">
+                                        <span class="text-secondary small d-block mb-1">PO Belum Terima</span>
+                                        <div class="fw-bold fs-4 text-dark mb-1"><?= $num($tasks['po_belum_terima'] ?? 0) ?></div>
+                                        <span class="badge <?= ((float) ($tasks['po_belum_terima'] ?? 0)) > 0 ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success' ?> small">
+                                            <?= ((float) ($tasks['po_belum_terima'] ?? 0)) > 0 ? 'Perlu Cek' : 'Semua Beres' ?>
+                                        </span>
                                     </div>
                                 </a></div>
                         </div>
@@ -137,100 +252,90 @@ $shiftCashUsers = $staff['shift_cash_users'] ?? [];
 
         <div class="row g-3">
             <div class="col-lg-4">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-semibold mb-0">Piutang Ditagih</h5>
-                            <a href="<?= base_url('/piutang') ?>" class="btn btn-sm btn-light"><i class="ti ti-arrow-right"></i></a>
+                            <h5 class="fw-bold mb-0 text-dark"><i class="ti ti-clock-bolt me-2 text-warning"></i>Piutang Ditagih</h5>
+                            <a href="<?= base_url('/piutang') ?>" class="btn btn-sm btn-light text-primary rounded-circle p-2 icon-shape icon-action"><i class="ti ti-arrow-right"></i></a>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Customer</th>
-                                        <th>JT</th>
-                                        <th class="text-end">Sisa</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach (($staff['receivable_due_rows'] ?? []) as $row) : ?>
-                                        <tr>
-                                            <td><?= esc($row['nama_customer'] ?? '-') ?></td>
-                                            <td><?= esc(date('d/m', strtotime($row['jatuh_tempo'] ?? date('Y-m-d')))) ?></td>
-                                            <td class="text-end"><?= $money($row['sisa_piutang'] ?? 0) ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                    <?php if (empty($staff['receivable_due_rows'])) : ?><tr>
-                                            <td colspan="3" class="text-center text-muted">Tidak ada tagihan jatuh tempo</td>
-                                        </tr><?php endif; ?>
-                                </tbody>
-                            </table>
+                        <?php if (empty($staff['receivable_due_rows'])) : ?>
+                            <div class="py-4 text-center text-secondary border rounded-3 bg-light bg-opacity-50">
+                                <i class="ti ti-circle-check text-success fs-2 d-block mb-2"></i>
+                                <span class="small">Tidak ada tagihan jatuh tempo</span>
+                            </div>
+                        <?php else : ?>
+                            <div class="list-group list-group-flush">
+                                <?php foreach (($staff['receivable_due_rows'] ?? []) as $row) : ?>
+                                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center gap-2">
+                                        <div class="list-main text-truncate">
+                                            <h6 class="mb-0 text-truncate fw-semibold small"><?= esc($row['nama_customer'] ?? '-') ?></h6>
+                                            <small class="text-secondary"><i class="ti ti-calendar-due me-1"></i>JT <?= esc(date('d/m', strtotime($row['jatuh_tempo'] ?? date('Y-m-d')))) ?></small>
+                                        </div>
+                                        <span class="list-side fw-bold text-end text-danger small"><?= $money($row['sisa_piutang'] ?? 0) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 shadow-sm mb-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="ti ti-alert-circle me-2 text-danger"></i>Stok Perlu Dicek</h5>
+                            <a href="<?= base_url('/slowmoving') ?>" class="btn btn-sm btn-light text-primary rounded-circle p-2 icon-shape icon-action"><i class="ti ti-arrow-right"></i></a>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <?php foreach (($staff['stock_check_rows'] ?? []) as $row) : ?>
+                                <?php $qty = (float) ($row['qty'] ?? 0); ?>
+                                <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center gap-2">
+                                    <div class="list-main text-truncate">
+                                        <h6 class="mb-0 text-truncate fw-semibold small"><?= esc($row['nama_item'] ?? '-') ?></h6>
+                                        <small class="text-secondary">Laju Jual (SPD): <span class="text-dark fw-medium"><?= $num($row['spd'] ?? 0, 2) ?></span></small>
+                                    </div>
+                                    <span class="badge <?= $qty <= 0 ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning-emphasis' ?> fw-bold px-2 py-1">
+                                        <?= $qty <= 0 ? 'Kosong' : $num($qty, 2) ?>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($staff['stock_check_rows'])) : ?>
+                                <div class="py-4 text-center text-secondary border rounded-3 bg-light bg-opacity-50">
+                                    <i class="ti ti-circle-check text-success fs-2 d-block mb-2"></i>
+                                    <span class="small">Tidak ada stok kritis</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="card h-100 mb-0">
+                <div class="card h-100 border-0 shadow-sm mb-0">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-semibold mb-0">Stok Perlu Dicek</h5>
-                            <a href="<?= base_url('/slowmoving') ?>" class="btn btn-sm btn-light"><i class="ti ti-arrow-right"></i></a>
+                            <h5 class="fw-bold mb-0 text-dark"><i class="ti ti-history me-2 text-primary"></i>Transaksi Terakhir</h5>
+                            <a href="<?= base_url('/listjual') ?>" class="btn btn-sm btn-light text-primary rounded-circle p-2 icon-shape icon-action"><i class="ti ti-arrow-right"></i></a>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Produk</th>
-                                        <th class="text-end">Qty</th>
-                                        <th class="text-end">SPD</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach (($staff['stock_check_rows'] ?? []) as $row) : ?>
-                                        <tr>
-                                            <td><?= esc($row['nama_item'] ?? '-') ?></td>
-                                            <td class="text-end"><?= $num($row['qty'] ?? 0, 2) ?></td>
-                                            <td class="text-end"><?= $num($row['spd'] ?? 0, 2) ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                    <?php if (empty($staff['stock_check_rows'])) : ?><tr>
-                                            <td colspan="3" class="text-center text-muted">Tidak ada stok kritis</td>
-                                        </tr><?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-semibold mb-0">Transaksi Terakhir</h5>
-                            <a href="<?= base_url('/listjual') ?>" class="btn btn-sm btn-light"><i class="ti ti-arrow-right"></i></a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Nota</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Netto</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach (($staff['last_transactions'] ?? []) as $row) : ?>
-                                        <tr>
-                                            <td><?= esc($row['jual_id'] ?? '-') ?><br><small class="text-muted"><?= esc(date('H:i', strtotime($row['tgl'] ?? date('Y-m-d H:i:s')))) ?></small></td>
-                                            <td><span class="badge bg-<?= ($row['status_bayar'] ?? '') === 'LUNAS' ? 'success' : 'warning' ?>-subtle text-<?= ($row['status_bayar'] ?? '') === 'LUNAS' ? 'success' : 'warning' ?>"><?= esc($row['status_bayar'] ?? '-') ?></span></td>
-                                            <td class="text-end"><?= $money($row['netto'] ?? 0) ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                    <?php if (empty($staff['last_transactions'])) : ?><tr>
-                                            <td colspan="3" class="text-center text-muted">Belum ada transaksi</td>
-                                        </tr><?php endif; ?>
-                                </tbody>
-                            </table>
+                        <div class="list-group list-group-flush">
+                            <?php foreach (($staff['last_transactions'] ?? []) as $row) : ?>
+                                <?php $isPaid = ($row['status_bayar'] ?? '') === 'LUNAS'; ?>
+                                <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center gap-2">
+                                    <div class="list-main text-truncate">
+                                        <h6 class="mb-0 text-truncate fw-bold small font-monospace text-dark"><?= esc($row['jual_id'] ?? '-') ?></h6>
+                                        <small class="text-secondary"><i class="ti ti-clock me-1"></i><?= esc(date('H:i', strtotime($row['tgl'] ?? date('Y-m-d H:i:s')))) ?></small>
+                                    </div>
+                                    <div class="list-side text-end">
+                                        <span class="d-block fw-bold text-dark small"><?= $money($row['netto'] ?? 0) ?></span>
+                                        <span class="badge bg-<?= $isPaid ? 'success' : 'warning' ?>-subtle text-<?= $isPaid ? 'success' : 'warning-emphasis' ?> fw-<?= $isPaid ? 'bold' : 'medium' ?> px-2 py-0"><?= esc(ucfirst(strtolower($row['status_bayar'] ?? '-'))) ?></span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($staff['last_transactions'])) : ?>
+                                <div class="py-4 text-center text-secondary border rounded-3 bg-light bg-opacity-50">
+                                    <i class="ti ti-database-off fs-2 d-block mb-2 opacity-50"></i>
+                                    <span class="small">Belum ada transaksi</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
