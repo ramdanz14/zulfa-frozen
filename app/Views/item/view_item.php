@@ -81,11 +81,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td class="ps-3 fw-medium text-secondary">BR00001</td>
-                                        <td><span class="badge bg-primary-subtle text-primary fw-bold">PCS</span></td>
-                                        <td class="text-center fw-bold text-dark pe-3">1</td>
-                                    </tr>
+                                    <?php if (!empty($detail['satuan'])) : foreach ($detail['satuan'] as $row) : ?>
+                                            <tr>
+                                                <td class="ps-3 fw-medium text-secondary"><?= esc($row['kode_item']) ?></td>
+                                                <td><span class="badge bg-primary-subtle text-primary fw-bold"><?= esc($row['sat_id']) ?></span></td>
+                                                <td class="text-center fw-bold text-dark pe-3"><?= esc(number_format((int) $row['qty_konversi'])) ?></td>
+                                            </tr>
+                                        <?php endforeach;
+                                    else : ?>
+                                        <tr>
+                                            <td colspan="6" class="text-center">Tidak ada data</td>
+                                        </tr>
+                                    <?php endif; ?>
+
                                 </tbody>
                             </table>
                         </div>
