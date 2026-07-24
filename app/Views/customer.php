@@ -147,9 +147,7 @@
         align-items: center;
         padding: 16px;
         border-radius: 12px;
-        background:
-            radial-gradient(circle at top right, rgba(13, 110, 253, 0.15), transparent 35%),
-            linear-gradient(135deg, #eef7ff 0%, #f8fbff 100%);
+        background: radial-gradient(circle at top right, rgba(13, 110, 253, 0.15), transparent 35%), linear-gradient(135deg, #eef7ff 0%, #f8fbff 100%);
         overflow-x: auto;
     }
 
@@ -359,7 +357,7 @@
                     extend: 'excelHtml5',
                     title: 'Laporan-Customer',
                     exportOptions: {
-                        columns: [0, 1, 2, 3, 4, 5, 6],
+                        columns: [0, 1, 2, 3, 4, 5, 6, 7, 8],
                         orthogonal: 'export'
                     },
                 }, "pageLength"]
@@ -419,14 +417,33 @@
                 }
             },
             {
+                data: "harga_grosir",
+                title: "Grosir",
+                className: "text-center",
+                render: function(data) {
+                    return data === 'Y' ? '<span class="badge bg-success">Y</span>' : '<span class="badge bg-secondary">N</span>';
+                }
+            },
+            {
+                data: "margin_grosir",
+                title: "Margin %",
+                className: "text-end",
+                render: function(data, type) {
+                    if (type === 'display') {
+                        return Number(data || 0).toLocaleString('en-US');
+                    }
+                    return data || 0;
+                }
+            },
+            {
                 title: 'Action',
                 class: 'dt-center',
                 responsivePriority: 1,
                 data: null,
                 render: function(data) {
                     const encoded = encodeRowData(data);
-                    const editMenu = akses_menu?.akses_update === 'Y' ? `<a class='dropdown-item btn-action-edit' data-row="${encoded}"><i class='ti ti-pencil text-warning'></i> Edit</a>` : '';
-                    const deleteMenu = akses_menu?.akses_delete === 'Y' ? `<a class='dropdown-item btn-action-delete' data-row="${encoded}"><i class='ti ti-trash-x text-danger'></i> Hapus</a>` : '';
+                    const editMenu = akses_menu?.akses_update === 'Y' && data.cust_id.substring(0, 2) == "KS" ? `<a class='dropdown-item btn-action-edit' data-row="${encoded}"><i class='ti ti-pencil text-warning'></i> Edit</a>` : '';
+                    const deleteMenu = akses_menu?.akses_delete === 'Y' && data.cust_id.substring(0, 2) == "KS" ? `<a class='dropdown-item btn-action-delete' data-row="${encoded}"><i class='ti ti-trash-x text-danger'></i> Hapus</a>` : '';
                     const cardMenu = `<a class='dropdown-item btn-action-card' data-row="${encoded}"><i class='ti ti-id-badge-2 text-primary'></i> Kartu Member</a>`;
                     return `<span class="dropdown">
                           <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
@@ -464,14 +481,12 @@
             showMemberCard(data);
         }
     });
-
     $('#table-data').on('click', '.btn-action-edit', function() {
         const data = decodeRowData($(this).attr('data-row'));
         if (data) {
             showModal('edit', data);
         }
     });
-
     $('#table-data').on('click', '.btn-action-delete', function() {
         const data = decodeRowData($(this).attr('data-row'));
         if (data) {
@@ -501,6 +516,10 @@
                 digits: true,
                 min: 0,
                 max: 999999
+            },
+            margin_grosir: {
+                min: 5,
+                max: 100
             }
         },
         errorElement: 'span',
@@ -521,56 +540,127 @@
 
     function buildCustomerForm() {
         return `
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <div class="form-group mb-1">
-                        <label for="cust_id" class="form-label">CUSTOMER ID</label>
-                        <input type="text" class="form-control" name="cust_id" id="cust_id" />
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="form-group mb-1">
-                        <label for="nama" class="form-label">NAMA</label>
-                        <input type="text" class="form-control" name="nama" id="nama" />
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="form-group mb-1">
-                        <label for="alamat" class="form-label">ALAMAT</label>
-                        <textarea class="form-control" name="alamat" id="alamat" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group mb-1">
-                        <label for="kontak" class="form-label">HP</label>
-                        <input type="text" class="form-control" name="kontak" id="kontak" maxlength="13" />
-                    </div>
-                    <div class="form-group mb-1">
-                        <label for="max_faktur" class="form-label">MAX FAKTUR</label>
-                        <input type="number" class="form-control" name="max_faktur" id="max_faktur" min="1" max="999" />
-                    </div>
-                    <div class="form-group mb-1">
-                        <label for="poin" class="form-label">POIN</label>
-                        <input type="number" class="form-control" name="poin" id="poin" min="0" max="999999" />
-                    </div>
-                    <div class="form-group mb-1">
-                        <label for="tgl_daftar" class="form-label">TGL DAFTAR</label>
-                        <input type="date" class="form-control" name="tgl_daftar" id="tgl_daftar" readonly />
-                    </div>
+        <div class="row g-2">
+
+            <!-- Baris 1 -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="cust_id" class="form-label">CUSTOMER ID</label>
+                    <input type="text" class="form-control" id="cust_id" name="cust_id">
                 </div>
             </div>
-            <input type="hidden" id="_method" name="_method">
-            <input type="hidden" id="primarykey" name="primarykey">
-        `;
+
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label for="nama" class="form-label">NAMA</label>
+                    <input type="text" class="form-control" id="nama" name="nama">
+                </div>
+            </div>
+
+            <!-- Baris 2 -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="kontak" class="form-label">HP</label>
+                    <input type="text"
+                           class="form-control"
+                           id="kontak"
+                           name="kontak"
+                           maxlength="13">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="tgl_daftar" class="form-label">TGL DAFTAR</label>
+                    <input type="date"
+                           class="form-control"
+                           id="tgl_daftar"
+                           name="tgl_daftar"
+                           readonly>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="max_faktur" class="form-label">MAX FAKTUR</label>
+                    <input type="number"
+                           class="form-control"
+                           id="max_faktur"
+                           name="max_faktur"
+                           min="1"
+                           max="999">
+                </div>
+            </div>
+
+            <!-- Baris 3 -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="harga_grosir" class="form-label">HARGA GROSIR</label>
+                    <select class="form-control" id="harga_grosir" name="harga_grosir">
+                        <option value="N">Tidak</option>
+                        <option value="Y">Ya</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="margin_grosir" class="form-label">
+                        MARGIN GROSIR (%)
+                    </label>
+                    <input type="number"
+                           class="form-control"
+                           id="margin_grosir"
+                           name="margin_grosir"
+                           min="5"
+                           max="100"
+                           step="0.01">
+                    <small class="text-muted">
+                        Berlaku jika Harga Grosir = Ya
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="poin" class="form-label">POIN</label>
+                    <input type="number"
+                           class="form-control"
+                           id="poin"
+                           name="poin"
+                           min="0"
+                           max="999999">
+                </div>
+            </div>
+
+            <!-- Baris 4 -->
+            <div class="col-12">
+                <div class="form-group">
+                    <label for="alamat" class="form-label">ALAMAT</label>
+                    <textarea
+                        class="form-control"
+                        id="alamat"
+                        name="alamat"
+                        rows="3"></textarea>
+                </div>
+            </div>
+
+        </div>
+
+        <input type="hidden" id="_method" name="_method">
+        <input type="hidden" id="primarykey" name="primarykey">
+    `;
     }
 
     function showModal(action, data = null) {
         $("#modal-form > .modal-body").html(buildCustomerForm());
         $("#btn-aksi").removeAttr('class');
-        $("#modal-web input, #modal-web textarea").attr('readonly', false);
+        $("#modal-web input, #modal-web select, #modal-web textarea").attr('readonly', false);
         $("#btn-aksi").prop('disabled', false);
         $('#max_faktur').val(3);
         $('#poin').val(0);
+        $('#harga_grosir').val('N');
+        $('#margin_grosir').val(0);
         $('#tgl_daftar').val(new Date().toISOString().slice(0, 10));
 
         switch (action) {
@@ -604,7 +694,7 @@
                 $("#_method").val('DELETE');
                 $("#primarykey").val(data.cust_id);
                 $("#modal-title").html('Delete Customer');
-                $("#modal-web input, #modal-web textarea").attr('readonly', true);
+                $("#modal-web input, #modal-web select, #modal-web textarea").attr('readonly', true);
                 $("#btn-aksi").html('Delete');
                 $("#btn-aksi").addClass('btn btn-danger');
                 break;
@@ -617,6 +707,8 @@
             $('#kontak').val(data.kontak || '');
             $('#max_faktur').val(data.max_faktur ?? 3);
             $('#poin').val(data.poin ?? 0);
+            $('#harga_grosir').val(data.harga_grosir || 'N');
+            $('#margin_grosir').val(data.margin_grosir ?? 0);
             $('#tgl_daftar').val(data.tgl_daftar || '');
         }
 

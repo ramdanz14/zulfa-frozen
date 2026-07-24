@@ -9,7 +9,7 @@ class CustomerModel extends Model
     protected $table = 'customer';
     protected $primaryKey = 'cust_id';
     protected $returnType = 'object';
-    protected $allowedFields = ['cust_id', 'nama', 'alamat', 'kontak', 'tgl_daftar', 'max_faktur', 'poin', 'updid'];
+    protected $allowedFields = ['cust_id', 'nama', 'alamat', 'kontak', 'tgl_daftar', 'max_faktur', 'poin', 'harga_grosir', 'margin_grosir', 'updid'];
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
     protected $createdField = 'updtime';
@@ -30,6 +30,12 @@ class CustomerModel extends Model
             }
             if ($data['data']['poin'] === '' || ! isset($data['data']['poin'])) {
                 $data['data']['poin'] = 0;
+            }
+            if ($data['data']['harga_grosir'] === '' || ! isset($data['data']['harga_grosir'])) {
+                $data['data']['harga_grosir'] = 'N';
+            }
+            if ($data['data']['margin_grosir'] === '' || ! isset($data['data']['margin_grosir'])) {
+                $data['data']['margin_grosir'] = 0;
             }
         }
 

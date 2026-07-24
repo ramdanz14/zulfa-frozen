@@ -27,8 +27,11 @@ class JualModel extends Model
             'customer_general' => [
                 'cust_id' => 'CUST-GENERAL',
                 'nama' => 'Pelanggan Umum',
+                'kontak' => '',
                 'poin' => 0,
                 'outstanding_piutang' => 0,
+                'harga_grosir' => 'N',
+                'margin_grosir' => 0,
             ],
         ];
     }
@@ -205,7 +208,8 @@ class JualModel extends Model
 
         return $this->db->query(
             "SELECT c.cust_id, c.nama, c.kontak, c.poin,
-                    COALESCE(pi.total_piutang, 0) AS outstanding_piutang
+                    COALESCE(pi.total_piutang, 0) AS outstanding_piutang,
+                    c.harga_grosir, c.margin_grosir
              FROM customer c
              LEFT JOIN (
                 SELECT cust_id, SUM(sisa_piutang) AS total_piutang
@@ -231,12 +235,15 @@ class JualModel extends Model
                 'kontak' => '',
                 'poin' => 0,
                 'outstanding_piutang' => 0,
+                'harga_grosir' => 'N',
+                'margin_grosir' => 0,
             ];
         }
 
         return $this->db->query(
             "SELECT c.cust_id, c.nama, c.kontak, c.poin,
-                    COALESCE(pi.total_piutang, 0) AS outstanding_piutang
+                    COALESCE(pi.total_piutang, 0) AS outstanding_piutang,
+                    c.harga_grosir, c.margin_grosir
              FROM customer c
              LEFT JOIN (
                 SELECT cust_id, SUM(sisa_piutang) AS total_piutang
