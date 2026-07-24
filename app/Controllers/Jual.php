@@ -96,7 +96,12 @@ class Jual extends BaseController
         );
 
         if (($result['tipe'] ?? '') === 'success') {
-            tracelog('CREATE', 'TRANSAKSI POS ' . ($result['jual_id'] ?? '') . ' payload=' . json_encode($this->request->getVar(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $customer = $this->jualModel->getCustomerPayload(trim((string) ($this->request->getVar('cust_id') ?? 'CUST-GENERAL')));
+            $tracePayload = $this->request->getVar();
+            if (is_array($tracePayload)) {
+                $tracePayload['customer'] = $customer;
+            }
+            tracelog('CREATE', 'TRANSAKSI POS ' . ($result['jual_id'] ?? '') . ' payload=' . json_encode($tracePayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
 
         return $this->response->setJSON($result);

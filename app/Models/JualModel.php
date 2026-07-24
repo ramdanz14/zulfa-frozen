@@ -24,6 +24,7 @@ class JualModel extends Model
             'toko' => $toko,
             'nominal_per_poin' => $this->getNominalPerPoin(),
             'running_text' => $this->getActiveRunningText(),
+            'satuan_gramasi' => $this->getSatuanGramasiList(),
             'customer_general' => [
                 'cust_id' => 'CUST-GENERAL',
                 'nama' => 'Pelanggan Umum',
@@ -71,50 +72,63 @@ class JualModel extends Model
         )->getResultArray();
     }
 
+    public function getSatuanGramasiList(): array
+    {
+        $row = $this->db->query(
+            "SELECT nilai FROM const WHERE rkey='satuan_gramasi' LIMIT 1"
+        )->getRowArray();
+
+        $raw = (string) ($row['nilai'] ?? 'GR;GRAM;ML');
+        $parts = array_filter(array_map('trim', explode(';', strtoupper($raw))));
+
+        return array_values($parts);
+    }
+
     public function searchItems(string $toko_id, string $term): array
     {
         $search = '%' . $this->db->escapeLikeString($term) . '%';
 
         return $this->db->query(
             "SELECT p.kode_item, p.barcode, p.nama_item, store.supco,
-                    COALESCE(base.sat_id, '-') AS sat_dasar,
-                    COALESCE(base.qty_konversi, 1) AS qty_dasar,
-                    COALESCE(store.harga_pokok, 0) AS harga_default,
-                    COALESCE(store.harga_jual, 0) AS harga_jual,
-                    CASE
-                        WHEN COALESCE(base.qty_konversi, 0) <= 0 THEN 0
-                        ELSE COALESCE(st.qty, 0) / base.qty_konversi
-                    END AS stok
-             FROM prodmast p
-             LEFT JOIN (
-                SELECT ps1.kode_item, ps1.sat_id, ps1.qty_konversi
-                FROM prodmast_satuan ps1
-                INNER JOIN (
-                    SELECT kode_item, MIN(qty_konversi) AS min_qty
-                    FROM prodmast_satuan
-                    GROUP BY kode_item
-                ) x ON x.kode_item=ps1.kode_item AND x.min_qty=ps1.qty_konversi
-             ) base ON base.kode_item=p.kode_item
-             LEFT JOIN prodmast_store store
-                ON store.kode_item=p.kode_item
-                AND store.toko_id=:toko_id:
-                AND store.sat_id=base.sat_id
-             LEFT JOIN stmast st
-                ON st.toko_id=store.toko_id
-                AND st.kode_item=p.kode_item
-             WHERE store.status_item='Y' AND (
-                    p.kode_item LIKE :search:
-                    OR p.barcode LIKE :search:
-                    OR p.nama_item LIKE :search:
-                )
-             ORDER BY
-                CASE
-                    WHEN p.barcode = :exact_term: THEN 0
-                    WHEN p.kode_item = :exact_term: THEN 1
-                    ELSE 2
-                END,
-                p.nama_item
-             LIMIT 30",
+                     COALESCE(base.sat_id, '-') AS sat_dasar,
+                     COALESCE(base.qty_konversi, 1) AS qty_dasar,
+                     COALESCE(store.harga_pokok, 0) AS harga_default,
+                     COALESCE(store.harga_jual, 0) AS harga_jual,
+                     COALESCE(store.target_psn_margin, 0) AS target_psn_margin,
+                     CASE
+                         WHEN COALESCE(base.qty_konversi, 0) <= 0 THEN 0
+                         ELSE COALESCE(st.qty, 0) / base.qty_konversi
+                     END AS stok
+              FROM prodmast p
+              LEFT JOIN (
+                 SELECT ps1.kode_item, ps1.sat_id, ps1.qty_konversi
+                 FROM prodmast_satuan ps1
+                 INNER JOIN (
+                     SELECT kode_item, MIN(qty_konversi) AS min_qty
+                     FROM prodmast_satuan
+                     GROUP BY kode_item
+                 ) x ON x.kode_item=ps1.kode_item AND x.min_qty=ps1.qty_konversi
+              ) base ON base.kode_item=p.kode_item
+              LEFT JOIN prodmast_store store
+                 ON store.kode_item=p.kode_item
+                 AND store.toko_id=:toko_id:
+                 AND store.sat_id=base.sat_id
+              LEFT JOIN stmast st
+                 ON st.toko_id=store.toko_id
+                 AND st.kode_item=p.kode_item
+              WHERE store.status_item='Y' AND (
+                     p.kode_item LIKE :search:
+                     OR p.barcode LIKE :search:
+                     OR p.nama_item LIKE :search:
+                 )
+              ORDER BY
+                 CASE
+                     WHEN p.barcode = :exact_term: THEN 0
+                     WHEN p.kode_item = :exact_term: THEN 1
+                     ELSE 2
+                 END,
+                 p.nama_item
+              LIMIT 30",
             [
                 'toko_id' => $toko_id,
                 'search' => $search,
@@ -127,7 +141,8 @@ class JualModel extends Model
     {
         $item = $this->db->query(
             "SELECT p.kode_item, p.barcode, p.nama_item, base_store.supco,
-                    COALESCE(st.qty, 0) AS stok_base
+                    COALESCE(st.qty, 0) AS stok_base,
+                    COALESCE(cfg.satuan_gramasi, 'GR;GRAM;ML') AS satuan_gramasi
              FROM prodmast p
              LEFT JOIN (
                 SELECT kode_item, MAX(COALESCE(supco, '')) AS supco
@@ -136,6 +151,12 @@ class JualModel extends Model
                 GROUP BY kode_item
              ) base_store ON base_store.kode_item=p.kode_item
              LEFT JOIN stmast st ON st.toko_id=:toko_id: AND st.kode_item=p.kode_item
+             LEFT JOIN (
+                SELECT rkey, nilai AS satuan_gramasi
+                FROM const
+                WHERE rkey='satuan_gramasi'
+                LIMIT 1
+             ) cfg ON 1=1
              WHERE p.kode_item=:kode_item:
              LIMIT 1",
             [
@@ -152,6 +173,7 @@ class JualModel extends Model
             "SELECT ps.sat_id, ps.qty_konversi,
                     COALESCE(store.harga_pokok, 0) AS harga_pokok,
                     COALESCE(store.harga_jual, 0) AS harga_jual,
+                    COALESCE(store.target_psn_margin, 0) AS target_psn_margin,
                     CASE
                         WHEN COALESCE(ps.qty_konversi, 0) <= 0 THEN 0
                         ELSE COALESCE(st.qty, 0) / ps.qty_konversi
