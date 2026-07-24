@@ -133,6 +133,7 @@ class Absensi extends BaseController
         $periodStart = $this->normalizeDate((string) $this->request->getVar('period_start'));
         $periodEnd = $this->normalizeDate((string) $this->request->getVar('period_end'));
         $saldoChannel = strtoupper(trim((string) ($this->request->getVar('saldo_channel') ?? 'CASH')));
+        $saldoTarget = strtoupper(trim((string) ($this->request->getVar('saldo_target') ?? 'TOKO')));
         $selectedIds = json_decode((string) ($this->request->getVar('selected_ids') ?? '[]'), true) ?: [];
 
         $result = $this->absensiModel->createPaymentBatch(
@@ -141,7 +142,8 @@ class Absensi extends BaseController
             $periodStart ?: '',
             $periodEnd ?: '',
             $selectedIds,
-            $saldoChannel
+            $saldoChannel,
+            $saldoTarget
         );
         if (($result['tipe'] ?? '') === 'success') {
             tracelog('CREATE', 'BAYAR GAJI ' . ($result['batch_id'] ?? '') . ' payload=' . json_encode([
@@ -149,6 +151,7 @@ class Absensi extends BaseController
                 'period_start' => $periodStart,
                 'period_end' => $periodEnd,
                 'saldo_channel' => $saldoChannel,
+                'saldo_target' => $saldoTarget,
                 'selected_ids' => $selectedIds,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }

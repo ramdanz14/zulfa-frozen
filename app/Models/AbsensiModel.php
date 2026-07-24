@@ -278,12 +278,20 @@ class AbsensiModel extends Model
         ];
     }
 
-    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds, string $saldoChannel = 'CASH'): array
+    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds, string $saldoChannel = 'CASH', string $saldoTarget = 'TOKO'): array
     {
         $selectedIds = array_values(array_unique(array_map('intval', $selectedIds)));
         $saldoChannel = strtoupper(trim($saldoChannel));
         if (!in_array($saldoChannel, ['CASH', 'NONCASH'], true)) {
             $saldoChannel = 'CASH';
+        }
+        $saldoTarget = strtoupper(trim($saldoTarget));
+        if (!in_array($saldoTarget, ['TOKO', 'PEMILIK'], true)) {
+            $saldoTarget = 'TOKO';
+        }
+        // Only apply saldo_target for CASH
+        if ($saldoChannel !== 'CASH') {
+            $saldoTarget = 'TOKO';
         }
         if ($tanggalBayar === '' || $periodStart === '' || $periodEnd === '') {
             return ['tipe' => 'error', 'data' => 'Tanggal bayar dan periode wajib diisi'];
@@ -344,6 +352,7 @@ class AbsensiModel extends Model
                 'toko_id' => $group['toko_id'],
                 'nama_akun' => 'GAJI',
                 'tipe_mutasi' => 'OPERASIONAL',
+                'saldo_target' => $saldoTarget,
                 'saldo_channel' => $saldoChannel,
                 'saldo_asal' => null,
                 'saldo_tujuan' => null,
