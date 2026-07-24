@@ -172,6 +172,11 @@ if ($marqueeText === '') {
             min-height: 86px;
         }
 
+        .member-summary.is-grosir {
+            background: linear-gradient(145deg, #fff8e1 0%, #fffde7 100%);
+            border-color: rgba(255, 193, 7, 0.4);
+        }
+
         .pos-search-panel {
             padding: 12px;
             position: relative;
@@ -1044,6 +1049,51 @@ if ($marqueeText === '') {
             }
             return fallback;
         }
+
+        // SweetAlert helpers
+        function showAlert(title, text, icon, timer = 3000) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                timer: timer,
+                timerProgressBar: true,
+                showCloseButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#198754'
+            });
+        }
+
+        function showToast(title, text, icon) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'center',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+            Toast.fire({
+                title: title,
+                text: text,
+                icon: icon
+            });
+        }
+
+        function showAlertError(title, text) {
+            showAlert(title, text, 'error', 4000);
+        }
+
+        function showAlertSuccess(title, text) {
+            showAlert(title, text, 'success', 2500);
+        }
+
+        function showAlertWarning(title, text) {
+            showAlert(title, text, 'warning', 3500);
+        }
     </script>
     <script>
         const akses_menu = <?= $akses_menu ?>;
@@ -1057,6 +1107,7 @@ if ($marqueeText === '') {
         const editSale = initialData?.edit_sale || null;
         const saleSaveUrl = initialData?.save_url || '<?= base_url('/jual') ?>';
         const exitUrl = initialData?.exit_url || '<?= base_url('/main') ?>';
+        const satuanGramasi = Array.isArray(initialData?.satuan_gramasi) ? initialData.satuan_gramasi.map((v) => String(v || '').toUpperCase()) : [];
 
         let cartRows = [];
         let paymentRows = [];
@@ -1169,7 +1220,7 @@ if ($marqueeText === '') {
                 const max = Number(row.max_qty || 0);
                 if (qty > max) {
                     qty = max;
-                    toastr.error('Stok tidak mencukupi');
+                    showAlertError('Stok tidak mencukupi');
                 }
                 if (qty <= 0) {
                     qty = max > 0 ? Math.min(1, max) : 0;
@@ -1190,7 +1241,7 @@ if ($marqueeText === '') {
                 const maxDiskon = Number(cartRows[idx].max_diskon || 0);
                 if (diskon > maxDiskon) {
                     diskon = maxDiskon;
-                    toastr.error('Nilai diskon melebihi margin keuntungan produk');
+                    showAlertError('Nilai diskon melebihi margin keuntungan produk');
                 }
                 if (diskon < 0) {
                     diskon = 0;
@@ -1278,7 +1329,7 @@ if ($marqueeText === '') {
                 term
             }, function(res) {
                 if (res.tipe !== 'success') {
-                    toastr.error(res.data || 'Gagal mencari item');
+                    showAlertError(res.data || 'Gagal mencari item');
                     return;
                 }
 
@@ -1290,7 +1341,7 @@ if ($marqueeText === '') {
 
                 renderSearchResults(rows);
             }).fail(function(xhr) {
-                toastr.error(extractErrorMessage(xhr, 'Gagal mencari item'));
+                showAlertError(extractErrorMessage(xhr, 'Gagal mencari item'));
             });
         }
 
@@ -1323,12 +1374,12 @@ if ($marqueeText === '') {
 
             $.getJSON(`<?= base_url('/jual/item-detail') ?>/${encodeURIComponent(kodeItem)}`, function(res) {
                 if (res.tipe !== 'success') {
-                    toastr.error(res.data || 'Gagal mengambil detail item');
+                    showAlertError(res.data || 'Gagal mengambil detail item');
                     return;
                 }
                 addItemToCart(res.data);
             }).fail(function(xhr) {
-                toastr.error(extractErrorMessage(xhr, 'Gagal mengambil detail item'));
+                showAlertError(extractErrorMessage(xhr, 'Gagal mengambil detail item'));
             });
         }
 
@@ -1338,18 +1389,19 @@ if ($marqueeText === '') {
                 qty_konversi: Number(option.qty_konversi || 1),
                 harga_pokok: Number(option.harga_pokok || 0),
                 harga_jual: Number(option.harga_jual || 0),
+                target_psn_margin: Number(option.target_psn_margin || 0),
                 stok_maksimal: Number(option.stok_maksimal || 0),
                 price_error: option.price_error || ''
             }));
 
             const defaultOption = options.find((option) => option.sat_id === item.default_sat_id) || options[0];
             if (!defaultOption) {
-                toastr.error('Item belum memiliki satuan aktif');
+                showAlertError('Item belum memiliki satuan aktif');
                 return;
             }
 
             if (defaultOption.price_error) {
-                toastr.error(`Item ${item.kode_item} tidak bisa dijual: ${defaultOption.price_error}`);
+                showAlertError(`Item ${item.kode_item} tidak bisa dijual: ${defaultOption.price_error}`);
                 return;
             }
 
@@ -1358,7 +1410,7 @@ if ($marqueeText === '') {
                 const nextQty = Number(cartRows[existingIdx].qty_jual || 0) + 1;
                 cartRows[existingIdx].qty_jual = Math.min(nextQty, Number(cartRows[existingIdx].max_qty || 0));
                 if (nextQty > Number(cartRows[existingIdx].max_qty || 0)) {
-                    toastr.error('Stok tidak mencukupi');
+                    showAlertError('Stok tidak mencukupi');
                 }
                 recalcCartRow(existingIdx);
                 renderCart();
@@ -1366,7 +1418,7 @@ if ($marqueeText === '') {
             }
 
             if (defaultOption.stok_maksimal <= 0) {
-                toastr.error('Stok tidak mencukupi');
+                showAlertError('Stok tidak mencukupi');
                 return;
             }
 
@@ -1378,7 +1430,7 @@ if ($marqueeText === '') {
                 qty_jual: 1,
                 qty_konversi: defaultOption.qty_konversi,
                 harga_pokok: defaultOption.harga_pokok,
-                price: defaultOption.harga_jual,
+                price: computeWholesalePrice(defaultOption),
                 diskon_item: 0,
                 max_qty: defaultOption.stok_maksimal,
                 satuan_options: options
@@ -1396,7 +1448,7 @@ if ($marqueeText === '') {
             if (!selected) return;
 
             if (selected.price_error) {
-                toastr.error(`Item ${row.kode_item} tidak bisa dijual: ${selected.price_error}`);
+                showAlertError(`Item ${row.kode_item} tidak bisa dijual: ${selected.price_error}`);
                 renderCart();
                 return;
             }
@@ -1404,11 +1456,11 @@ if ($marqueeText === '') {
             row.sat_id = selected.sat_id;
             row.qty_konversi = selected.qty_konversi;
             row.harga_pokok = selected.harga_pokok;
-            row.price = selected.harga_jual;
+            row.price = computeWholesalePrice(selected);
             row.max_qty = selected.stok_maksimal;
             if (Number(row.qty_jual || 0) > row.max_qty) {
                 row.qty_jual = row.max_qty;
-                toastr.error('Qty otomatis disesuaikan ke stok maksimal satuan ini');
+                showAlertError('Qty otomatis disesuaikan ke stok maksimal satuan ini');
             }
             recalcCartRow(idx);
             renderCart();
@@ -1530,11 +1582,27 @@ if ($marqueeText === '') {
         function refreshMemberSummary() {
             const poin = Number(selectedCustomer.poin || 0);
             const piutang = Number(selectedCustomer.outstanding_piutang || 0);
+            const isGrosir = String(selectedCustomer.harga_grosir || 'N') === 'Y';
+            const marginGrosir = Number(selectedCustomer.margin_grosir || 0);
+
+            const $summary = $('#member-summary');
+            if (isGrosir && marginGrosir > 0) {
+                $summary.addClass('is-grosir');
+            } else {
+                $summary.removeClass('is-grosir');
+            }
+
+            let grosirNote = '';
+            if (isGrosir && marginGrosir > 0) {
+                grosirNote = `<div class="small text-warning fw-bold mt-1">HARGA GROSIR (Margin: ${marginGrosir}%)</div>`;
+            }
+
             const html = `
                 <div class="fw-semibold">${escapeHtml(selectedCustomer.nama || 'Pelanggan Umum')}</div>
                 <div class="small text-muted">${escapeHtml(selectedCustomer.cust_id || 'CUST-GENERAL')}${selectedCustomer.kontak ? ' | ' + escapeHtml(selectedCustomer.kontak) : ''}</div>
                 <div class="small mt">Saldo Poin: <strong>${Number(poin).toLocaleString('id-ID')}</strong></div>
                 <div class="small">Piutang : <strong>Rp ${formatMoneyValue(piutang)}</strong></div>
+                ${grosirNote}
             `;
             $('#member-summary').html(html);
         }
@@ -1553,13 +1621,13 @@ if ($marqueeText === '') {
 
         function openPaymentModal() {
             if (!cartRows.length) {
-                toastr.error('Keranjang masih kosong');
+                showAlertError('Keranjang masih kosong');
                 return;
             }
 
             const summary = recalcSummary();
             if (summary.netto <= 0) {
-                toastr.error('Total tagihan tidak valid');
+                showAlertError('Total tagihan tidak valid');
                 return;
             }
 
@@ -1743,11 +1811,11 @@ if ($marqueeText === '') {
                 data: payload,
                 success: function(res) {
                     if (res.tipe !== 'success') {
-                        toastr.error(res.data || (isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
+                        showAlertError(res.data || (isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
                         return;
                     }
 
-                    toastr.success(res.data || (isEditMode ? 'Transaksi penjualan berhasil diupdate' : 'Transaksi penjualan berhasil disimpan'));
+                    showAlertSuccess(res.data || (isEditMode ? 'Transaksi penjualan berhasil diupdate' : 'Transaksi penjualan berhasil disimpan'));
                     paymentModal.hide();
                     if (res.receipt_url) {
                         window.open(res.receipt_url, '_blank', 'noopener');
@@ -1760,14 +1828,14 @@ if ($marqueeText === '') {
                     localStorage.removeItem(holdStorageKey);
                 },
                 error: function(xhr) {
-                    toastr.error(extractErrorMessage(xhr, isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
+                    showAlertError(extractErrorMessage(xhr, isEditMode ? 'Gagal mengupdate transaksi penjualan' : 'Gagal menyimpan transaksi penjualan'));
                 }
             });
         }
 
         function resetCartWithConfirm() {
             if (!cartRows.length) {
-                toastr.error('Keranjang sudah kosong');
+                showAlertError('Keranjang sudah kosong');
                 return;
             }
 
@@ -1790,7 +1858,7 @@ if ($marqueeText === '') {
                     },
                     complete: function() {
                         resetCartState(true);
-                        toastr.success('Keranjang berhasil dikosongkan');
+                        showAlertSuccess('Keranjang berhasil dikosongkan');
                     }
                 });
             });
@@ -1798,17 +1866,17 @@ if ($marqueeText === '') {
 
         function holdCart(exitAfter = false) {
             if (isEditMode) {
-                toastr.error('Hold cart tidak tersedia saat edit transaksi');
+                showAlertError('Hold cart tidak tersedia saat edit transaksi');
                 return;
             }
             if (!cartRows.length) {
-                toastr.error('Tidak ada transaksi untuk di-hold');
+                showAlertError('Tidak ada transaksi untuk di-hold');
                 return;
             }
 
             localStorage.setItem(holdStorageKey, JSON.stringify(buildSnapshot()));
             resetCartState(true);
-            toastr.success('Keranjang disimpan sementara');
+            showAlertSuccess('Keranjang disimpan sementara');
 
             if (exitAfter) {
                 window.location.href = exitUrl;
@@ -1817,12 +1885,12 @@ if ($marqueeText === '') {
 
         function recallCart() {
             if (isEditMode) {
-                toastr.error('Recall cart tidak tersedia saat edit transaksi');
+                showAlertError('Recall cart tidak tersedia saat edit transaksi');
                 return;
             }
             const raw = localStorage.getItem(holdStorageKey);
             if (!raw) {
-                toastr.error('Belum ada hold cart yang tersimpan');
+                showAlertError('Belum ada hold cart yang tersimpan');
                 return;
             }
 
@@ -1834,9 +1902,9 @@ if ($marqueeText === '') {
                 $('#redeem-points').val(snapshot.redeemPoints || 0);
                 setCustomerSelection(selectedCustomer);
                 renderCart();
-                toastr.success('Hold cart berhasil dimuat');
+                showAlertSuccess('Hold cart berhasil dimuat');
             } catch (error) {
-                toastr.error('Data hold cart rusak');
+                showAlertError('Data hold cart rusak');
             }
         }
 
@@ -1938,17 +2006,17 @@ if ($marqueeText === '') {
                 data: $('#form-quick-member').serialize(),
                 success: function(res) {
                     if (res.tipe !== 'success') {
-                        toastr.error(res.data || 'Gagal mendaftarkan member baru');
+                        showAlertError(res.data || 'Gagal mendaftarkan member baru');
                         return;
                     }
 
                     selectedCustomer = res.data;
                     setCustomerSelection(selectedCustomer);
                     quickMemberModal.hide();
-                    toastr.success('Member baru berhasil didaftarkan dan langsung dipilih');
+                    showAlertSuccess('Member baru berhasil didaftarkan dan langsung dipilih');
                 },
                 error: function(xhr) {
-                    toastr.error(extractErrorMessage(xhr, 'Gagal mendaftarkan member baru'));
+                    showAlertError(extractErrorMessage(xhr, 'Gagal mendaftarkan member baru'));
                 }
             });
         }
@@ -1962,13 +2030,42 @@ if ($marqueeText === '') {
             return '';
         }
 
+        function isGramasiUnit(satId) {
+            const code = String(satId || '').toUpperCase();
+            return satuanGramasi.includes(code);
+        }
+
+        function computeWholesalePrice(option) {
+            const pokok = Number(option.harga_pokok || 0);
+            const jualAsli = Number(option.harga_jual || 0);
+            const targetItemMargin = Number(option.target_psn_margin || 0);
+            const flagGrosir = String(selectedCustomer?.harga_grosir || 'N');
+            const marginGrosir = Number(selectedCustomer?.margin_grosir || 0);
+
+            if (pokok <= 0) return jualAsli;
+            if (flagGrosir !== 'Y' || marginGrosir <= 0) return jualAsli;
+
+            if (targetItemMargin < marginGrosir) {
+                return jualAsli;
+            }
+
+            const base = pokok + (pokok * marginGrosir / 100);
+
+            if (isGramasiUnit(option.sat_id)) {
+                return Math.round(base);
+            }
+
+            const rounded = Math.ceil(base / 50) * 50;
+            return rounded;
+        }
+
         function adjustQty(idx, delta) {
             const row = cartRows[idx];
             if (!row) return;
             let nextQty = round4(Number(row.qty_jual || 0) + delta);
             if (nextQty > Number(row.max_qty || 0)) {
                 nextQty = Number(row.max_qty || 0);
-                toastr.error('Stok tidak mencukupi');
+                showAlertError('Stok tidak mencukupi');
             }
             if (nextQty <= 0) {
                 nextQty = 0;
