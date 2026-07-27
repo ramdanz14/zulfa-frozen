@@ -127,18 +127,6 @@ class LapharianModel extends Model
         $storeSummaries = $this->buildStoreSummaries($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
         $cashierGroups = $this->buildCashierGroups($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
 
-        // Get real-time cash balances from KasModel
-        $kasModel = new KasModel();
-        $cashBalances = [];
-        $dailyCashSummaries = [];
-        foreach ($storeIds as $storeId) {
-            $cashBalances[$storeId] = $kasModel->getCashBalances($storeId, $tanggal);
-            $dailyCashSummaries[$storeId] = $kasModel->getDailyCashSummary($storeId, $tanggal);
-        }
-
-        // Build deposit history for today
-        $depositHistory = $this->getDepositHistory($storeIds, $tanggal);
-
         return [
             'tanggal' => $tanggal,
             'printed_at' => date('Y-m-d H:i:s'),
@@ -178,10 +166,6 @@ class LapharianModel extends Model
                 'tunai' => $customerCash,
             ],
             'uang_harus_disetor' => $uangHarusDisetor,
-            // New dual balance fields
-            'cash_balances' => $cashBalances,
-            'daily_cash_summary' => $dailyCashSummaries,
-            'deposit_history' => $depositHistory,
         ];
     }
 
@@ -457,43 +441,5 @@ class LapharianModel extends Model
         $row['kas_bersih'] = (float) $row['kas_masuk'] - (float) $row['kas_keluar'];
         $row['uang_harus_disetor'] = (float) $row['pos_tunai'] + (float) $row['kas_masuk'] - (float) $row['kas_keluar'] - (float) $row['supplier_tunai'] + (float) $row['customer_tunai'];
         return $row;
-    }
-
-    /**
-     * Get deposit history (PINDAH_SALDO TOKO->PEMILIK) for given stores and date
-     */
-    private function getDepositHistory(array $storeIds, string $tanggal): array
-    {
-        $start = $tanggal . ' 00:00:00';
-        $end = $tanggal . ' 23:59:59';
-        $placeholders = implode(',', array_fill(0, count($storeIds), '?'));
-
-        $rows = $this->db->query(
-            "SELECT km.toko_id, t.toko_nama, km.karyawan_id, u.fullname AS karyawan_nama,
-                    km.nominal, km.keterangan, DATE(km.tanggal) AS tanggal_deposit, TIME(km.tanggal) AS jam_deposit
-             FROM kas_mutasi km
-             LEFT JOIN toko t ON t.toko_id=km.toko_id
-             LEFT JOIN tb_user u ON u.karyawan_id=km.karyawan_id
-             WHERE km.toko_id IN ($placeholders)
-               AND km.tanggal BETWEEN ? AND ?
-               AND km.tipe_mutasi='PINDAH_SALDO'
-               AND km.saldo_asal='CASH'
-               AND km.saldo_target='TOKO'
-             ORDER BY km.tanggal DESC",
-            array_merge($storeIds, [$start, $end])
-        )->getResultArray();
-
-        return array_map(function ($row) {
-            return [
-                'toko_id' => $row['toko_id'],
-                'toko_nama' => $row['toko_nama'],
-                'karyawan_id' => $row['karyawan_id'],
-                'karyawan_nama' => $row['karyawan_nama'],
-                'nominal' => (float) ($row['nominal'] ?? 0),
-                'keterangan' => $row['keterangan'],
-                'tanggal' => $row['tanggal_deposit'],
-                'jam' => $row['jam_deposit'],
-            ];
-        }, $rows);
     }
 }

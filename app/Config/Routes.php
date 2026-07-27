@@ -233,9 +233,6 @@ $routes->group('lapharian', static function ($route) {
     $route->get('', 'Lapharian::index');
     $route->post('report', 'Lapharian::report');
     $route->get('struk', 'Lapharian::struk');
-    $route->post('deposit', 'Lapharian::deposit');
-    $route->post('withdraw-profit', 'Lapharian::withdrawProfit');
-    $route->get('balances', 'Lapharian::balances');
 });
 
 $routes->group('laphutang', static function ($route) {
@@ -317,11 +314,6 @@ $routes->group('kas', static function ($route) {
     $route->put('', 'Kas::store');
     $route->patch('', 'Kas::update');
     $route->delete('', 'Kas::delete');
-    $route->get('balances', 'Kas::balances');
-    $route->get('daily-summary', 'Kas::dailySummary');
-    $route->get('summary', 'Kas::summary');
-    $route->post('deposit', 'Kas::deposit');
-    $route->post('withdraw-profit', 'Kas::withdrawProfit');
 });
 
 $routes->group('summarykas', static function ($route) {

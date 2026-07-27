@@ -15,19 +15,14 @@ class ClosingModel extends Model
         $closingDate = $this->ensureClosingDate($tokoId);
         $periode = $this->monthStart($closingDate);
         $periodEnd = date('Y-m-t', strtotime($periode));
-        $cashFlow = $this->buildCashFlow($tokoId, $periode, (string) session('username'));
-        $saldoCash = $this->getSaldoCash($tokoId, $periode);
 
         return [
             'closing_date' => $periode,
             'period_label' => date('F Y', strtotime($periode)),
             'period_end' => $periodEnd,
             'stock_summary' => $this->getStockSummary($tokoId),
-            'cash_flow' => $cashFlow,
-            'last_cash' => $saldoCash,
-            'saldo_toko' => $cashFlow['saldo_toko'] ?? 0,
-            'saldo_pemilik' => $cashFlow['saldo_pemilik'] ?? 0,
-            'saldo_total_cash' => ($cashFlow['saldo_toko'] ?? 0) + ($cashFlow['saldo_pemilik'] ?? 0),
+            'cash_flow' => $this->buildCashFlow($tokoId, $periode, (string) session('username')),
+            'last_cash' => $this->getSaldoCash($tokoId, $periode),
             'logs' => $this->getLogs($tokoId),
         ];
     }
@@ -334,49 +329,9 @@ class ClosingModel extends Model
         $supplier = $this->sumSupplierPayments($tokoId, $start, $end);
         $kas = $this->sumKasMutasi($tokoId, $start, $end);
 
-        // Calculate cash balances with dual balance (TOKO + PEMILIK)
         $saldoTunai = (float) ($prev['saldo_tunai'] ?? 0) + $pos['TUNAI'] + $piutang['TUNAI'] + $kas['cash_in'] - $supplier['TUNAI'] - $kas['cash_out'];
         $saldoTransfer = (float) ($prev['saldo_transfer'] ?? 0) + $pos['TRANSFER'] + $piutang['TRANSFER'] + $kas['noncash_in'] - $supplier['TRANSFER'] - $kas['noncash_out'];
         $saldoQris = (float) ($prev['saldo_qris'] ?? 0) + $pos['QRIS'] + $piutang['QRIS'];
-
-        // Split saldo_tunai into saldo_toko and saldo_pemilik
-        // Previous saldo_cash already has saldo_toko and saldo_pemilik
-        $prevSaldoToko = (float) ($prev['saldo_toko'] ?? $prev['saldo_tunai'] ?? 0);
-        $prevSaldoPemilik = (float) ($prev['saldo_pemilik'] ?? 0);
-
-        // Calculate daily movements for TOKO and PEMILIK
-        $kasModel = new KasModel();
-        $dailyMovements = [];
-        $periodStart = $periode;
-        $periodEnd = date('Y-m-t', strtotime($periode));
-        for ($d = $periodStart; $d <= $periodEnd; $d = date('Y-m-d', strtotime($d . ' +1 day'))) {
-            $daily = $kasModel->getDailyCashSummary($tokoId, $d);
-            $dailyMovements[] = array_merge(['tanggal' => $d], $daily);
-        }
-
-        // Sum up daily movements for TOKO and PEMILIK
-        $tokoTunaiMasuk = 0;
-        $tokoTunaiKeluar = 0;
-        $pemilikTunaiMasuk = 0;
-        $pemilikTunaiKeluar = 0;
-        $depositTokoKePemilik = 0;
-        $tarikPemilikKeToko = 0;
-        $tarikKeuntunganToko = 0;
-        $tarikKeuntunganPemilik = 0;
-
-        foreach ($dailyMovements as $dm) {
-            $tokoTunaiMasuk += $dm['toko_tunai_masuk'];
-            $tokoTunaiKeluar += $dm['toko_tunai_keluar'];
-            $pemilikTunaiMasuk += $dm['pemilik_tunai_masuk'];
-            $pemilikTunaiKeluar += $dm['pemilik_tunai_keluar'];
-            $depositTokoKePemilik += $dm['deposit_toko_ke_pemilik'];
-            $tarikPemilikKeToko += $dm['tarik_pemilik_ke_toko'];
-            $tarikKeuntunganToko += $dm['tarik_keuntungan_toko'];
-            $tarikKeuntunganPemilik += $dm['tarik_keuntungan_pemilik'];
-        }
-
-        $saldoToko = $prevSaldoToko + $tokoTunaiMasuk - $tokoTunaiKeluar - $depositTokoKePemilik + $tarikPemilikKeToko - $tarikKeuntunganToko;
-        $saldoPemilik = $prevSaldoPemilik + $pemilikTunaiMasuk - $pemilikTunaiKeluar + $depositTokoKePemilik - $tarikPemilikKeToko - $tarikKeuntunganPemilik;
 
         return [
             'toko_id' => $tokoId,
@@ -386,8 +341,6 @@ class ClosingModel extends Model
             'saldo_awal_tunai' => (float) ($prev['saldo_tunai'] ?? 0),
             'saldo_awal_transfer' => (float) ($prev['saldo_transfer'] ?? 0),
             'saldo_awal_qris' => (float) ($prev['saldo_qris'] ?? 0),
-            'saldo_awal_toko' => round($prevSaldoToko, 2),
-            'saldo_awal_pemilik' => round($prevSaldoPemilik, 2),
             'pos_tunai' => $pos['TUNAI'],
             'pos_transfer' => $pos['TRANSFER'],
             'pos_qris' => $pos['QRIS'],
@@ -398,12 +351,10 @@ class ClosingModel extends Model
             'bayar_hutang_transfer' => $supplier['TRANSFER'],
             'kas_masuk' => $kas['cash_in'] + $kas['noncash_in'],
             'kas_keluar' => $kas['cash_out'] + $kas['noncash_out'],
-            'saldo_tunai' => round($saldoTunai, 2),
-            'saldo_transfer' => round($saldoTransfer, 2),
-            'saldo_qris' => round($saldoQris, 2),
-            'saldo_toko' => round($saldoToko, 2),
-            'saldo_pemilik' => round($saldoPemilik, 2),
-            'saldo_all' => round($saldoToko + $saldoPemilik + $saldoTransfer + $saldoQris, 2),
+            'saldo_tunai' => $saldoTunai,
+            'saldo_transfer' => $saldoTransfer,
+            'saldo_qris' => $saldoQris,
+            'saldo_all' => $saldoTunai + $saldoTransfer + $saldoQris,
             'closed_at' => date('Y-m-d H:i:s'),
             'closed_by' => $createdBy,
         ];
