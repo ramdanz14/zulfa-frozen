@@ -5,6 +5,8 @@
 $periodStart = $payData['period_start'] ?? date('Y-m-01');
 $periodEnd = $payData['period_end'] ?? date('Y-m-d');
 $rows = $payData['rows'] ?? [];
+$aksesMenuData = json_decode((string) ($akses_menu ?? '{}'), true) ?: [];
+$canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 ?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
@@ -159,21 +161,37 @@ $rows = $payData['rows'] ?? [];
                         <option value="CASH">Tunai</option>
                         <option value="NONCASH">Non Tunai</option>
                     </select>
+                    <div id="swal-saldo-target-wrapper" class="mt-2" style="display:none;">
+                        <label class="form-label">Sumber Saldo Tunai</label>
+                        <select id="swal-saldo-target" class="form-select">
+                            <option value="TOKO">Saldo Toko</option>
+                            <option value="PEMILIK" <?= ($canDeleteAkses ? '' : 'disabled') ?>>Saldo Pemilik</option>
+                        </select>
+                    </div>
                 </div>
             `,
+            didOpen: () => {
+                const toggleTarget = () => {
+                    $('#swal-saldo-target-wrapper').toggle($('#swal-saldo-channel').val() === 'CASH');
+                };
+                $('#swal-saldo-channel').on('change', toggleTarget);
+                toggleTarget();
+            },
             showCancelButton: true,
             confirmButtonText: 'Proses bayar',
             cancelButtonText: 'Batal',
             preConfirm: () => {
                 const tanggalBayar = $('#swal-tanggal-bayar').val();
                 const saldoChannel = $('#swal-saldo-channel').val();
+                const saldoTarget = $('#swal-saldo-target').val() || 'TOKO';
                 if (!tanggalBayar) {
                     Swal.showValidationMessage('Tanggal bayar wajib dipilih');
                     return false;
                 }
                 return {
                     tanggal_bayar: tanggalBayar,
-                    saldo_channel: saldoChannel
+                    saldo_channel: saldoChannel,
+                    saldo_target: saldoTarget
                 };
             }
         }).then((result) => {
@@ -181,6 +199,7 @@ $rows = $payData['rows'] ?? [];
             $.post('<?= base_url('/absensi/process-payment') ?>', {
                 tanggal_bayar: result.value.tanggal_bayar,
                 saldo_channel: result.value.saldo_channel,
+                saldo_target: result.value.saldo_target,
                 period_start: '<?= esc($periodStart) ?>',
                 period_end: '<?= esc($periodEnd) ?>',
                 selected_ids: JSON.stringify(selected.map((row) => row.absensi_id))

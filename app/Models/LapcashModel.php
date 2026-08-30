@@ -39,6 +39,26 @@ class LapcashModel extends Model
         $this->mergeMovementRows($movements, $this->querySupplierPayments($storeIds, $start, $end));
         $this->mergeMovementRows($movements, $this->queryKasMutasi($storeIds, $start, $end));
 
+        foreach ($this->queryOperasionalLabels($storeIds, $start, $end) as $row) {
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            $label = (string) ($row['label'] ?? '');
+            $total = (float) ($row['total'] ?? 0);
+            if ($tanggal === '' || $label === '' || $total == 0.0) {
+                continue;
+            }
+            $movements[$tanggal]['labels'][$label] = ($movements[$tanggal]['labels'][$label] ?? 0) + $total;
+        }
+
+        foreach ($this->queryTransferLabels($storeIds, $start, $end) as $row) {
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            $label = (string) ($row['label'] ?? '');
+            $total = (float) ($row['total'] ?? 0);
+            if ($tanggal === '' || $label === '' || $total == 0.0) {
+                continue;
+            }
+            $movements[$tanggal]['labels'][$label] = ($movements[$tanggal]['labels'][$label] ?? 0) + $total;
+        }
+
         ksort($movements);
         return $movements;
     }
@@ -48,7 +68,7 @@ class LapcashModel extends Model
         [$storeWhere, $binds] = $this->buildStoreWhere('pp.toko_id', $storeIds);
         return $this->db->query(
             "SELECT DATE(pp.tgl_bayar) AS tanggal,
-                    CASE WHEN pp.cara_bayar='TUNAI' THEN 'cash' ELSE 'noncash' END AS channel,
+                    CASE WHEN pp.cara_bayar='TUNAI' THEN 'cash_toko' ELSE 'noncash' END AS channel,
                     'in' AS direction,
                     CASE
                         WHEN pp.cara_bayar='TUNAI' THEN 'Total Penjualan Cash'
@@ -72,7 +92,7 @@ class LapcashModel extends Model
         [$storeWhere, $binds] = $this->buildStoreWhere('pp.toko_id', $storeIds);
         return $this->db->query(
             "SELECT DATE(pp.tgl_bayar) AS tanggal,
-                    CASE WHEN pp.cara_bayar='TUNAI' THEN 'cash' ELSE 'noncash' END AS channel,
+                    CASE WHEN pp.cara_bayar='TUNAI' THEN 'cash_toko' ELSE 'noncash' END AS channel,
                     'in' AS direction,
                     CASE
                         WHEN pp.cara_bayar='TUNAI' THEN 'Total Bayar Piutang Cash'
@@ -97,7 +117,7 @@ class LapcashModel extends Model
         [$storeWhere, $binds] = $this->buildStoreWhere('toko_id', $storeIds);
         return $this->db->query(
             "SELECT DATE(tanggal_bayar) AS tanggal,
-                    CASE WHEN cara_bayar='TUNAI' THEN 'cash' ELSE 'noncash' END AS channel,
+                    CASE WHEN cara_bayar='TUNAI' THEN 'cash_toko' ELSE 'noncash' END AS channel,
                     'out' AS direction,
                     CASE WHEN cara_bayar='TUNAI' THEN 'Total Pembayaran Supplier Tunai' ELSE 'Total Pembayaran Supplier Transfer' END AS label,
                     COALESCE(SUM(jumlah_bayar),0) AS total
@@ -114,19 +134,15 @@ class LapcashModel extends Model
     {
         [$storeWhere, $binds] = $this->buildStoreWhere('km.toko_id', $storeIds);
         return $this->db->query(
-            "SELECT tanggal, channel, direction, label, SUM(total) AS total
+            "SELECT tanggal, bucket, direction, SUM(total) AS total
              FROM (
                 SELECT DATE(km.tanggal) AS tanggal,
-                        CASE WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
-                        CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
                         CASE
-                            WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pemasukan Non Tunai'
-                            WHEN ak.jenis_akun='MASUK' THEN 'Total Pemasukan Kas'
-                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' AND ak.flag_beban='Y' THEN 'Total Pengeluaran Non Tunai Beban'
-                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pengeluaran Non Tunai Non Beban'
-                            WHEN ak.flag_beban='Y' THEN 'Total Pengeluaran Kas Beban'
-                            ELSE 'Total Pengeluaran Kas Non Beban'
-                        END AS label,
+                            WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'noncash'
+                            WHEN COALESCE(km.saldo_target, 'TOKO')='PEMILIK' THEN 'cash_pemilik'
+                            ELSE 'cash_toko'
+                        END AS bucket,
+                        CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
                         COALESCE(km.nominal,0) AS total
                  FROM kas_mutasi km
                  INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
@@ -135,9 +151,12 @@ class LapcashModel extends Model
                    AND {$storeWhere}
                 UNION ALL
                 SELECT DATE(km.tanggal) AS tanggal,
-                        CASE WHEN km.saldo_asal='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        CASE
+                            WHEN km.saldo_asal='NONCASH' THEN 'noncash'
+                            WHEN COALESCE(km.saldo_asal_target, 'TOKO')='PEMILIK' THEN 'cash_pemilik'
+                            ELSE 'cash_toko'
+                        END AS bucket,
                         'out' AS direction,
-                        'Mutasi Saldo Keluar' AS label,
                         COALESCE(km.nominal,0) AS total
                  FROM kas_mutasi km
                  WHERE km.tanggal BETWEEN ? AND ?
@@ -145,17 +164,71 @@ class LapcashModel extends Model
                    AND {$storeWhere}
                 UNION ALL
                 SELECT DATE(km.tanggal) AS tanggal,
-                        CASE WHEN km.saldo_tujuan='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
+                        CASE
+                            WHEN km.saldo_tujuan='NONCASH' THEN 'noncash'
+                            WHEN COALESCE(km.saldo_tujuan_target, 'TOKO')='PEMILIK' THEN 'cash_pemilik'
+                            ELSE 'cash_toko'
+                        END AS bucket,
                         'in' AS direction,
-                        'Mutasi Saldo Masuk' AS label,
                         COALESCE(km.nominal,0) AS total
                  FROM kas_mutasi km
                  WHERE km.tanggal BETWEEN ? AND ?
                    AND km.tipe_mutasi='PINDAH_SALDO'
                    AND {$storeWhere}
              ) x
-             GROUP BY tanggal, channel, direction, label",
+             GROUP BY tanggal, bucket, direction",
             array_merge([$start, $end], $binds, [$start, $end], $binds, [$start, $end], $binds)
+        )->getResultArray();
+    }
+
+    private function queryOperasionalLabels(array $storeIds, string $start, string $end): array
+    {
+        [$storeWhere, $binds] = $this->buildStoreWhere('km.toko_id', $storeIds);
+        return $this->db->query(
+            "SELECT DATE(km.tanggal) AS tanggal,
+                    CASE
+                        WHEN ak.jenis_akun='MASUK' AND COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pemasukan Non Tunai'
+                        WHEN ak.jenis_akun='MASUK' THEN 'Total Pemasukan Kas'
+                        WHEN km.nama_akun='TARIK_KEUNTUNGAN' AND COALESCE(km.saldo_channel, 'CASH')='CASH'
+                            THEN CONCAT('Tarik Keuntungan Saldo ', LOWER(COALESCE(km.saldo_target, 'TOKO')))
+                        WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' AND ak.flag_beban='Y' THEN 'Total Pengeluaran Non Tunai Beban'
+                        WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'Total Pengeluaran Non Tunai Non Beban'
+                        WHEN ak.flag_beban='Y' THEN 'Total Pengeluaran Kas Beban'
+                        ELSE 'Total Pengeluaran Kas Non Beban'
+                    END AS label,
+                    SUM(COALESCE(km.nominal,0)) AS total
+             FROM kas_mutasi km
+             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+             WHERE km.tanggal BETWEEN ? AND ?
+               AND COALESCE(km.tipe_mutasi, 'OPERASIONAL')='OPERASIONAL'
+               AND {$storeWhere}
+             GROUP BY tanggal, label",
+            array_merge([$start, $end], $binds)
+        )->getResultArray();
+    }
+
+    private function queryTransferLabels(array $storeIds, string $start, string $end): array
+    {
+        [$storeWhere, $binds] = $this->buildStoreWhere('km.toko_id', $storeIds);
+        return $this->db->query(
+            "SELECT DATE(km.tanggal) AS tanggal,
+                    CASE
+                        WHEN km.saldo_asal='CASH' AND km.saldo_tujuan='CASH'
+                             AND COALESCE(km.saldo_asal_target, 'TOKO')='TOKO'
+                             AND COALESCE(km.saldo_tujuan_target, 'PEMILIK')='PEMILIK' THEN 'Setoran Toko ke Pemilik'
+                        WHEN km.saldo_asal='CASH' AND km.saldo_tujuan='CASH'
+                             AND COALESCE(km.saldo_asal_target, 'TOKO')='PEMILIK'
+                             AND COALESCE(km.saldo_tujuan_target, 'TOKO')='TOKO' THEN 'Tarik Saldo Pemilik ke Toko'
+                        WHEN km.saldo_asal='CASH' THEN 'Mutasi Keluar ke Non Tunai'
+                        ELSE 'Mutasi Masuk dari Non Tunai'
+                    END AS label,
+                    SUM(COALESCE(km.nominal,0)) AS total
+             FROM kas_mutasi km
+             WHERE km.tanggal BETWEEN ? AND ?
+               AND km.tipe_mutasi='PINDAH_SALDO'
+               AND {$storeWhere}
+             GROUP BY tanggal, label",
+            array_merge([$start, $end], $binds)
         )->getResultArray();
     }
 
@@ -179,19 +252,23 @@ class LapcashModel extends Model
     private function buildDailyRows(string $period, array $opening, array $movements): array
     {
         $rows = [];
-        $cashBalance = (float) ($opening['cash'] ?? 0);
+        $tokoBalance = (float) ($opening['toko'] ?? 0);
+        $pemilikBalance = (float) ($opening['pemilik'] ?? 0);
         $noncashBalance = (float) ($opening['noncash'] ?? 0);
+        $cashBalance = $tokoBalance + $pemilikBalance;
         $openingDate = date('Y-m-d', strtotime($period . ' -1 day'));
         $rows[] = [
             'tanggal' => $openingDate,
             'in_cash' => $cashBalance,
             'out_cash' => 0.0,
             'saldo_cash' => $cashBalance,
+            'saldo_toko' => $tokoBalance,
+            'saldo_pemilik' => $pemilikBalance,
             'in_noncash' => $noncashBalance,
             'out_noncash' => 0.0,
             'saldo_noncash' => $noncashBalance,
             'saldo_all' => $cashBalance + $noncashBalance,
-            'detail' => $this->buildDetailRows([], $cashBalance, $noncashBalance),
+            'detail' => $this->buildDetailRows([], $tokoBalance, $pemilikBalance, $noncashBalance),
             'is_opening' => true,
         ];
 
@@ -200,23 +277,29 @@ class LapcashModel extends Model
         while ($cursor <= $end) {
             $date = date('Y-m-d', $cursor);
             $move = $movements[$date] ?? [];
-            $inCash = (float) ($move['cash']['in'] ?? 0);
-            $outCash = (float) ($move['cash']['out'] ?? 0);
+            $inToko = (float) ($move['cash_toko']['in'] ?? 0);
+            $outToko = (float) ($move['cash_toko']['out'] ?? 0);
+            $inPemilik = (float) ($move['cash_pemilik']['in'] ?? 0);
+            $outPemilik = (float) ($move['cash_pemilik']['out'] ?? 0);
             $inNoncash = (float) ($move['noncash']['in'] ?? 0);
             $outNoncash = (float) ($move['noncash']['out'] ?? 0);
 
-            $cashBalance += $inCash - $outCash;
+            $tokoBalance += $inToko - $outToko;
+            $pemilikBalance += $inPemilik - $outPemilik;
             $noncashBalance += $inNoncash - $outNoncash;
+            $cashBalance = $tokoBalance + $pemilikBalance;
             $rows[] = [
                 'tanggal' => $date,
-                'in_cash' => $inCash,
-                'out_cash' => $outCash,
+                'in_cash' => $inToko + $inPemilik,
+                'out_cash' => $outToko + $outPemilik,
                 'saldo_cash' => $cashBalance,
+                'saldo_toko' => $tokoBalance,
+                'saldo_pemilik' => $pemilikBalance,
                 'in_noncash' => $inNoncash,
                 'out_noncash' => $outNoncash,
                 'saldo_noncash' => $noncashBalance,
                 'saldo_all' => $cashBalance + $noncashBalance,
-                'detail' => $this->buildDetailRows((array) ($move['labels'] ?? []), $cashBalance, $noncashBalance),
+                'detail' => $this->buildDetailRows((array) ($move['labels'] ?? []), $tokoBalance, $pemilikBalance, $noncashBalance),
                 'is_opening' => false,
             ];
 
@@ -229,6 +312,8 @@ class LapcashModel extends Model
     private function buildSummary(array $opening, array $movements, array $dailyRows): array
     {
         $summary = [
+            'saldo_awal_toko' => (float) ($opening['toko'] ?? 0),
+            'saldo_awal_pemilik' => (float) ($opening['pemilik'] ?? 0),
             'saldo_awal_cash' => (float) ($opening['cash'] ?? 0),
             'saldo_awal_noncash' => (float) ($opening['noncash'] ?? 0),
             'pemasukan_cash' => 0.0,
@@ -239,8 +324,8 @@ class LapcashModel extends Model
         ];
 
         foreach ($movements as $move) {
-            $summary['pemasukan_cash'] += (float) ($move['cash']['in'] ?? 0);
-            $summary['pengeluaran_cash'] += (float) ($move['cash']['out'] ?? 0);
+            $summary['pemasukan_cash'] += (float) ($move['cash_toko']['in'] ?? 0) + (float) ($move['cash_pemilik']['in'] ?? 0);
+            $summary['pengeluaran_cash'] += (float) ($move['cash_toko']['out'] ?? 0) + (float) ($move['cash_pemilik']['out'] ?? 0);
             $summary['pemasukan_noncash'] += (float) ($move['noncash']['in'] ?? 0);
             $summary['pengeluaran_noncash'] += (float) ($move['noncash']['out'] ?? 0);
             foreach (($move['labels'] ?? []) as $label => $total) {
@@ -249,6 +334,8 @@ class LapcashModel extends Model
         }
 
         $last = end($dailyRows) ?: [];
+        $summary['saldo_akhir_toko'] = (float) ($last['saldo_toko'] ?? 0);
+        $summary['saldo_akhir_pemilik'] = (float) ($last['saldo_pemilik'] ?? 0);
         $summary['saldo_akhir_cash'] = (float) ($last['saldo_cash'] ?? 0);
         $summary['saldo_akhir_noncash'] = (float) ($last['saldo_noncash'] ?? 0);
         $summary['saldo_akhir_all'] = (float) ($last['saldo_all'] ?? 0);
@@ -256,7 +343,7 @@ class LapcashModel extends Model
         return $summary;
     }
 
-    private function buildDetailRows(array $labels, float $cashBalance, float $noncashBalance): array
+    private function buildDetailRows(array $labels, float $tokoBalance, float $pemilikBalance, float $noncashBalance): array
     {
         $breakdown = $this->emptyBreakdown();
         foreach ($labels as $label => $total) {
@@ -265,6 +352,9 @@ class LapcashModel extends Model
 
         $rows = [];
         foreach ($breakdown as $label => $amount) {
+            if ((float) $amount == 0.0) {
+                continue;
+            }
             $rows[] = [
                 'label' => $label,
                 'amount' => (float) $amount,
@@ -272,9 +362,10 @@ class LapcashModel extends Model
             ];
         }
 
-        $rows[] = ['label' => 'Sisa Saldo Cash', 'amount' => $cashBalance, 'type' => 'total'];
+        $rows[] = ['label' => 'Sisa Saldo Cash Toko', 'amount' => $tokoBalance, 'type' => 'total'];
+        $rows[] = ['label' => 'Sisa Saldo Cash Pemilik', 'amount' => $pemilikBalance, 'type' => 'total'];
         $rows[] = ['label' => 'Sisa Saldo Non Tunai', 'amount' => $noncashBalance, 'type' => 'total'];
-        $rows[] = ['label' => 'Sisa Saldo Akumulasi', 'amount' => $cashBalance + $noncashBalance, 'type' => 'total'];
+        $rows[] = ['label' => 'Sisa Saldo Akumulasi', 'amount' => $tokoBalance + $pemilikBalance + $noncashBalance, 'type' => 'total'];
 
         return $rows;
     }
@@ -301,14 +392,25 @@ class LapcashModel extends Model
             'Total Pengeluaran Non Tunai Beban',
             'Total Pengeluaran Non Tunai Non Beban',
             'Total Pemasukan Non Tunai',
-            'Mutasi Saldo Keluar',
-            'Mutasi Saldo Masuk',
+            'Setoran Toko ke Pemilik',
+            'Tarik Saldo Pemilik ke Toko',
+            'Mutasi Keluar ke Non Tunai',
+            'Mutasi Masuk dari Non Tunai',
+            'Tarik Keuntungan Saldo toko',
+            'Tarik Keuntungan Saldo pemilik',
         ];
     }
 
     private function labelType(string $label): string
     {
-        return (str_contains($label, 'Pengeluaran') || str_contains($label, 'Pembayaran Supplier') || str_contains($label, 'Mutasi Saldo Keluar')) ? 'out' : 'in';
+        if (str_contains($label, 'Pengeluaran') || str_contains($label, 'Pembayaran Supplier') || str_contains($label, 'Keluar')) {
+            return 'out';
+        }
+        if (str_contains($label, 'Tarik Keuntungan')) {
+            return 'out';
+        }
+
+        return 'in';
     }
 
     private function getOpeningBalance(array $storeIds, string $period): array
@@ -316,15 +418,21 @@ class LapcashModel extends Model
         [$storeWhere, $binds] = $this->buildStoreWhere('toko_id', $storeIds);
         $previous = date('Y-m-01', strtotime($period . ' -1 month'));
         $row = $this->db->query(
-            "SELECT COALESCE(SUM(saldo_tunai),0) AS cash,
+            "SELECT COALESCE(SUM(COALESCE(saldo_toko, saldo_tunai, 0)),0) AS toko,
+                    COALESCE(SUM(COALESCE(saldo_pemilik, 0)),0) AS pemilik,
                     COALESCE(SUM(saldo_transfer + saldo_qris),0) AS noncash
              FROM saldo_cash
              WHERE tahun=? AND bulan=? AND {$storeWhere}",
             array_merge([(int) date('Y', strtotime($previous)), (int) date('m', strtotime($previous))], $binds)
         )->getRowArray() ?: [];
 
+        $toko = (float) ($row['toko'] ?? 0);
+        $pemilik = (float) ($row['pemilik'] ?? 0);
+
         return [
-            'cash' => (float) ($row['cash'] ?? 0),
+            'toko' => $toko,
+            'pemilik' => $pemilik,
+            'cash' => $toko + $pemilik,
             'noncash' => (float) ($row['noncash'] ?? 0),
         ];
     }

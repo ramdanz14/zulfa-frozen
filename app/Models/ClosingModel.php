@@ -128,9 +128,9 @@ class ClosingModel extends Model
             $this->writeLog($tokoId, $periode, $mode, 'SUCCESS', $message, ['cash_flow' => $cashFlow], $createdBy);
             return ['tipe' => 'success', 'data' => $message, 'next_period' => $nextPeriod];
         } catch (Throwable $e) {
-            if ($this->db->transDepth() > 0) {
-                $this->db->transRollback();
-            }
+
+            $this->db->transRollback();
+
             $this->writeLog($tokoId, $periode, $mode, 'ERROR', $e->getMessage(), [], $createdBy);
             return ['tipe' => 'error', 'data' => $e->getMessage()];
         }
@@ -311,139 +311,350 @@ class ClosingModel extends Model
 
     private function replaceSaldoCash(string $tokoId, string $periode, string $createdBy): array
     {
-        $flow = $this->buildCashFlow($tokoId, $periode, $createdBy);
+        ['flow' => $flow, 'daily' => $daily] = $this->buildDailyFlow($tokoId, $periode);
+        $flow['closed_by'] = $createdBy;
 
         $this->db->table('saldo_cash')->replace($flow);
+        $this->replaceSaldoCashHarian($tokoId, $daily, $createdBy);
+
         return $flow;
     }
 
     private function buildCashFlow(string $tokoId, string $periode, string $createdBy): array
+    {
+        return $this->buildDailyFlow($tokoId, $periode)['flow'];
+    }
+
+    private function buildDailyFlow(string $tokoId, string $periode): array
     {
         $periode = $this->monthStart($periode);
         $start = $periode . ' 00:00:00';
         $end = date('Y-m-t 23:59:59', strtotime($periode));
         $prev = $this->getPreviousSaldoCash($tokoId, $periode);
 
-        $pos = $this->sumSalePayments($tokoId, $start, $end, true);
-        $piutang = $this->sumSalePayments($tokoId, $start, $end, false);
-        $supplier = $this->sumSupplierPayments($tokoId, $start, $end);
-        $kas = $this->sumKasMutasi($tokoId, $start, $end);
+        $cursorToko = (float) ($prev['saldo_toko'] ?? $prev['saldo_tunai'] ?? 0);
+        $cursorPemilik = (float) ($prev['saldo_pemilik'] ?? 0);
+        $cursorTransfer = (float) ($prev['saldo_transfer'] ?? 0);
+        $cursorQris = (float) ($prev['saldo_qris'] ?? 0);
+        $awalToko = $cursorToko;
+        $awalPemilik = $cursorPemilik;
+        $awalTransfer = $cursorTransfer;
+        $awalQris = $cursorQris;
 
-        $saldoTunai = (float) ($prev['saldo_tunai'] ?? 0) + $pos['TUNAI'] + $piutang['TUNAI'] + $kas['cash_in'] - $supplier['TUNAI'] - $kas['cash_out'];
-        $saldoTransfer = (float) ($prev['saldo_transfer'] ?? 0) + $pos['TRANSFER'] + $piutang['TRANSFER'] + $kas['noncash_in'] - $supplier['TRANSFER'] - $kas['noncash_out'];
-        $saldoQris = (float) ($prev['saldo_qris'] ?? 0) + $pos['QRIS'] + $piutang['QRIS'];
+        $posDaily = $this->getPosPaymentsByDate($tokoId, $start, $end);
+        $supplierDaily = $this->getSupplierPaymentsByDate($tokoId, $start, $end);
+        $kasDaily = $this->getKasMutasiByDate($tokoId, $start, $end);
 
-        return [
+        $days = [];
+        $cursor = strtotime($periode);
+        $lastDay = strtotime(date('Y-m-t', strtotime($periode)));
+        while ($cursor <= $lastDay) {
+            $days[date('Y-m-d', $cursor)] = [
+                'pos_tunai' => 0.0,
+                'pos_transfer' => 0.0,
+                'pos_qris' => 0.0,
+                'bayar_piutang_tunai' => 0.0,
+                'bayar_piutang_transfer' => 0.0,
+                'bayar_piutang_qris' => 0.0,
+                'bayar_hutang_tunai' => 0.0,
+                'bayar_hutang_transfer' => 0.0,
+                'kas_masuk_toko' => 0.0,
+                'kas_keluar_toko' => 0.0,
+                'kas_masuk_pemilik' => 0.0,
+                'kas_keluar_pemilik' => 0.0,
+                'kas_masuk_noncash' => 0.0,
+                'kas_keluar_noncash' => 0.0,
+                'deposit_toko_ke_pemilik' => 0.0,
+                'tarik_pemilik_ke_toko' => 0.0,
+                'tarik_keuntungan_toko' => 0.0,
+                'tarik_keuntungan_pemilik' => 0.0,
+            ];
+            $cursor = strtotime('+1 day', $cursor);
+        }
+
+        foreach ($posDaily as $tanggal => $row) {
+            if (!isset($days[$tanggal])) {
+                continue;
+            }
+            $days[$tanggal]['pos_tunai'] += $row['TUNAI'];
+            $days[$tanggal]['pos_transfer'] += $row['TRANSFER'];
+            $days[$tanggal]['pos_qris'] += $row['QRIS'];
+            $days[$tanggal]['bayar_piutang_tunai'] += $row['PIUTANG_TUNAI'];
+            $days[$tanggal]['bayar_piutang_transfer'] += $row['PIUTANG_TRANSFER'];
+            $days[$tanggal]['bayar_piutang_qris'] += $row['PIUTANG_QRIS'];
+        }
+        foreach ($supplierDaily as $tanggal => $row) {
+            if (!isset($days[$tanggal])) {
+                continue;
+            }
+            $days[$tanggal]['bayar_hutang_tunai'] += $row['TUNAI'];
+            $days[$tanggal]['bayar_hutang_transfer'] += $row['TRANSFER'];
+        }
+        foreach ($kasDaily as $tanggal => $row) {
+            if (!isset($days[$tanggal])) {
+                continue;
+            }
+            foreach ($row as $key => $value) {
+                $days[$tanggal][$key] += $value;
+            }
+        }
+
+        $dailyRows = [];
+        foreach ($days as $tanggal => $move) {
+            $awalHariToko = $cursorToko;
+            $awalHariPemilik = $cursorPemilik;
+
+            $cursorToko += $move['pos_tunai'] + $move['bayar_piutang_tunai']
+                + $move['kas_masuk_toko'] - $move['kas_keluar_toko']
+                - $move['bayar_hutang_tunai']
+                - $move['deposit_toko_ke_pemilik'] + $move['tarik_pemilik_ke_toko'];
+            $cursorPemilik += $move['kas_masuk_pemilik'] - $move['kas_keluar_pemilik']
+                + $move['deposit_toko_ke_pemilik'] - $move['tarik_pemilik_ke_toko'];
+            $cursorTransfer += $move['pos_transfer'] + $move['bayar_piutang_transfer'] - $move['bayar_hutang_transfer'];
+            $cursorQris += $move['pos_qris'] + $move['bayar_piutang_qris'];
+
+            $dailyRows[] = [
+                'toko_id' => $tokoId,
+                'tanggal' => $tanggal,
+                'saldo_toko_awal' => round($awalHariToko, 2),
+                'saldo_pemilik_awal' => round($awalHariPemilik, 2),
+                'pos_tunai' => round($move['pos_tunai'], 2),
+                'pos_transfer' => round($move['pos_transfer'], 2),
+                'pos_qris' => round($move['pos_qris'], 2),
+                'bayar_piutang_tunai' => round($move['bayar_piutang_tunai'], 2),
+                'bayar_piutang_transfer' => round($move['bayar_piutang_transfer'], 2),
+                'bayar_piutang_qris' => round($move['bayar_piutang_qris'], 2),
+                'kas_masuk_tunai' => round($move['kas_masuk_toko'] + $move['kas_masuk_pemilik'], 2),
+                'kas_masuk_noncash' => round($move['kas_masuk_noncash'], 2),
+                'tarik_pemilik_ke_toko' => round($move['tarik_pemilik_ke_toko'], 2),
+                'bayar_hutang_tunai' => round($move['bayar_hutang_tunai'], 2),
+                'bayar_hutang_transfer' => round($move['bayar_hutang_transfer'], 2),
+                'kas_keluar_tunai' => round($move['kas_keluar_toko'] + $move['kas_keluar_pemilik'], 2),
+                'kas_keluar_noncash' => round($move['kas_keluar_noncash'], 2),
+                'deposit_toko_ke_pemilik' => round($move['deposit_toko_ke_pemilik'], 2),
+                'tarik_keuntungan_toko' => round($move['tarik_keuntungan_toko'], 2),
+                'tarik_keuntungan_pemilik' => round($move['tarik_keuntungan_pemilik'], 2),
+                'saldo_toko_akhir' => round($cursorToko, 2),
+                'saldo_pemilik_akhir' => round($cursorPemilik, 2),
+            ];
+        }
+
+        $totals = [
+            'pos_tunai' => 0.0,
+            'pos_transfer' => 0.0,
+            'pos_qris' => 0.0,
+            'kas_masuk_toko' => 0.0,
+            'kas_keluar_toko' => 0.0,
+            'kas_masuk_pemilik' => 0.0,
+            'kas_keluar_pemilik' => 0.0,
+            'kas_masuk_noncash' => 0.0,
+            'kas_keluar_noncash' => 0.0,
+            'deposit_toko_ke_pemilik' => 0.0,
+            'tarik_pemilik_ke_toko' => 0.0,
+            'tarik_keuntungan_toko' => 0.0,
+            'tarik_keuntungan_pemilik' => 0.0,
+        ];
+        foreach ($days as $move) {
+            foreach (array_keys($totals) as $key) {
+                $totals[$key] += $move[$key];
+            }
+        }
+
+        $flow = [
             'toko_id' => $tokoId,
             'tahun' => (int) date('Y', strtotime($periode)),
             'bulan' => (int) date('m', strtotime($periode)),
             'periode' => $periode,
-            'saldo_awal_tunai' => (float) ($prev['saldo_tunai'] ?? 0),
-            'saldo_awal_transfer' => (float) ($prev['saldo_transfer'] ?? 0),
-            'saldo_awal_qris' => (float) ($prev['saldo_qris'] ?? 0),
-            'pos_tunai' => $pos['TUNAI'],
-            'pos_transfer' => $pos['TRANSFER'],
-            'pos_qris' => $pos['QRIS'],
-            'bayar_piutang_tunai' => $piutang['TUNAI'],
-            'bayar_piutang_transfer' => $piutang['TRANSFER'],
-            'bayar_piutang_qris' => $piutang['QRIS'],
-            'bayar_hutang_tunai' => $supplier['TUNAI'],
-            'bayar_hutang_transfer' => $supplier['TRANSFER'],
-            'kas_masuk' => $kas['cash_in'] + $kas['noncash_in'],
-            'kas_keluar' => $kas['cash_out'] + $kas['noncash_out'],
-            'saldo_tunai' => $saldoTunai,
-            'saldo_transfer' => $saldoTransfer,
-            'saldo_qris' => $saldoQris,
-            'saldo_all' => $saldoTunai + $saldoTransfer + $saldoQris,
+            'saldo_awal_tunai' => $awalToko + $awalPemilik,
+            'saldo_awal_transfer' => $awalTransfer,
+            'saldo_awal_qris' => $awalQris,
+            'saldo_awal_toko' => $awalToko,
+            'saldo_awal_pemilik' => $awalPemilik,
+            'pos_tunai' => $totals['pos_tunai'],
+            'pos_transfer' => $totals['pos_transfer'],
+            'pos_qris' => $totals['pos_qris'],
+            'bayar_piutang_tunai' => array_sum(array_column($days, 'bayar_piutang_tunai')),
+            'bayar_piutang_transfer' => array_sum(array_column($days, 'bayar_piutang_transfer')),
+            'bayar_piutang_qris' => array_sum(array_column($days, 'bayar_piutang_qris')),
+            'bayar_hutang_tunai' => array_sum(array_column($days, 'bayar_hutang_tunai')),
+            'bayar_hutang_transfer' => array_sum(array_column($days, 'bayar_hutang_transfer')),
+            'kas_masuk' => $totals['kas_masuk_toko'] + $totals['kas_masuk_pemilik'] + $totals['kas_masuk_noncash'],
+            'kas_keluar' => $totals['kas_keluar_toko'] + $totals['kas_keluar_pemilik'] + $totals['kas_keluar_noncash'],
+            'deposit_toko_ke_pemilik' => $totals['deposit_toko_ke_pemilik'],
+            'tarik_pemilik_ke_toko' => $totals['tarik_pemilik_ke_toko'],
+            'tarik_keuntungan_toko' => $totals['tarik_keuntungan_toko'],
+            'tarik_keuntungan_pemilik' => $totals['tarik_keuntungan_pemilik'],
+            'saldo_toko' => round($cursorToko, 2),
+            'saldo_pemilik' => round($cursorPemilik, 2),
+            'saldo_transfer' => round($cursorTransfer, 2),
+            'saldo_qris' => round($cursorQris, 2),
+            'saldo_tunai' => round($cursorToko + $cursorPemilik, 2),
+            'saldo_all' => round($cursorToko + $cursorPemilik + $cursorTransfer + $cursorQris, 2),
             'closed_at' => date('Y-m-d H:i:s'),
-            'closed_by' => $createdBy,
+            'closed_by' => '',
         ];
+
+        return ['flow' => $flow, 'daily' => $dailyRows];
     }
 
-    private function sumSalePayments(string $tokoId, string $start, string $end, bool $samePeriodSale): array
+    private function replaceSaldoCashHarian(string $tokoId, array $dailyRows, string $createdBy): void
     {
-        $periodStart = substr($start, 0, 10);
-        $operator = $samePeriodSale ? '>=' : '<';
+        if (!$this->db->tableExists('saldo_cash_harian')) {
+            return;
+        }
+
+        $this->db->table('saldo_cash_harian')
+            ->where('toko_id', $tokoId)
+            ->where('tanggal >=', substr($dailyRows[0]['tanggal'] ?? '', 0, 10))
+            ->where('tanggal <=', substr($dailyRows[count($dailyRows) - 1]['tanggal'] ?? '', 0, 10))
+            ->delete();
+
+        foreach ($dailyRows as $row) {
+            $row['closed_at'] = date('Y-m-d H:i:s');
+            $row['closed_by'] = $createdBy;
+            $this->db->table('saldo_cash_harian')->insert($row);
+        }
+    }
+
+    private function getPosPaymentsByDate(string $tokoId, string $start, string $end): array
+    {
         $rows = $this->db->query(
-            "SELECT pp.cara_bayar, COALESCE(SUM(pp.nominal_bayar),0) AS total
+            "SELECT DATE(pp.tgl_bayar) AS tanggal,
+                    CASE WHEN DATE(j.tgl) = DATE(pp.tgl_bayar) THEN pp.cara_bayar
+                         ELSE CONCAT('PIUTANG_', pp.cara_bayar) END AS kategori,
+                    COALESCE(SUM(pp.nominal_bayar),0) AS total
              FROM penjualan_pembayaran pp
              INNER JOIN penjualan j ON j.toko_id=pp.toko_id AND j.jual_id=pp.jual_id
-             WHERE pp.toko_id=:toko_id:
-               AND pp.tgl_bayar BETWEEN :start: AND :end:
-               AND DATE(j.tgl) {$operator} :period_start:
-             GROUP BY pp.cara_bayar",
-            ['toko_id' => $tokoId, 'start' => $start, 'end' => $end, 'period_start' => $periodStart]
-        )->getResultArray();
-
-        return $this->paymentMap($rows);
-    }
-
-    private function sumSupplierPayments(string $tokoId, string $start, string $end): array
-    {
-        $rows = $this->db->query(
-            "SELECT cara_bayar, COALESCE(SUM(jumlah_bayar),0) AS total
-             FROM pembelian_pembayaran
-             WHERE toko_id=:toko_id:
-               AND tanggal_bayar BETWEEN :start: AND :end:
-             GROUP BY cara_bayar",
+             WHERE pp.toko_id=:toko_id: AND pp.tgl_bayar BETWEEN :start: AND :end:
+               AND pp.cara_bayar IN ('TUNAI','TRANSFER','QRIS')
+             GROUP BY DATE(pp.tgl_bayar), kategori",
             ['toko_id' => $tokoId, 'start' => $start, 'end' => $end]
         )->getResultArray();
 
-        return $this->paymentMap($rows);
-    }
-
-    private function paymentMap(array $rows): array
-    {
-        $map = ['TUNAI' => 0.0, 'TRANSFER' => 0.0, 'QRIS' => 0.0];
+        $map = [];
         foreach ($rows as $row) {
-            $method = strtoupper((string) ($row['cara_bayar'] ?? ''));
-            if (isset($map[$method])) {
-                $map[$method] += (float) ($row['total'] ?? 0);
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            $kategori = strtoupper((string) ($row['kategori'] ?? ''));
+            if (!isset($map[$tanggal])) {
+                $map[$tanggal] = ['TUNAI' => 0.0, 'TRANSFER' => 0.0, 'QRIS' => 0.0, 'PIUTANG_TUNAI' => 0.0, 'PIUTANG_TRANSFER' => 0.0, 'PIUTANG_QRIS' => 0.0];
+            }
+            if (isset($map[$tanggal][$kategori])) {
+                $map[$tanggal][$kategori] += (float) ($row['total'] ?? 0);
             }
         }
+
         return $map;
     }
 
-    private function sumKasMutasi(string $tokoId, string $start, string $end): array
+    private function getSupplierPaymentsByDate(string $tokoId, string $start, string $end): array
     {
         $rows = $this->db->query(
-            "SELECT channel, direction, COALESCE(SUM(total),0) AS total
-             FROM (
-                SELECT CASE WHEN COALESCE(km.saldo_channel, 'CASH')='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
-                        CASE WHEN ak.jenis_akun='MASUK' THEN 'in' ELSE 'out' END AS direction,
-                        COALESCE(km.nominal,0) AS total
-                 FROM kas_mutasi km
-                 INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
-                 WHERE km.toko_id=?
-                   AND km.tanggal BETWEEN ? AND ?
-                   AND COALESCE(km.tipe_mutasi, 'OPERASIONAL')='OPERASIONAL'
-                UNION ALL
-                SELECT CASE WHEN km.saldo_asal='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
-                        'out' AS direction,
-                        COALESCE(km.nominal,0) AS total
-                 FROM kas_mutasi km
-                 WHERE km.toko_id=?
-                   AND km.tanggal BETWEEN ? AND ?
-                   AND km.tipe_mutasi='PINDAH_SALDO'
-                UNION ALL
-                SELECT CASE WHEN km.saldo_tujuan='NONCASH' THEN 'noncash' ELSE 'cash' END AS channel,
-                        'in' AS direction,
-                        COALESCE(km.nominal,0) AS total
-                 FROM kas_mutasi km
-                 WHERE km.toko_id=?
-                   AND km.tanggal BETWEEN ? AND ?
-                   AND km.tipe_mutasi='PINDAH_SALDO'
-             ) x
-             GROUP BY channel, direction",
-            [$tokoId, $start, $end, $tokoId, $start, $end, $tokoId, $start, $end]
+            "SELECT DATE(tanggal_bayar) AS tanggal, cara_bayar, COALESCE(SUM(jumlah_bayar),0) AS total
+             FROM pembelian_pembayaran
+             WHERE toko_id=:toko_id: AND tanggal_bayar BETWEEN :start: AND :end:
+               AND cara_bayar IN ('TUNAI','TRANSFER')
+             GROUP BY DATE(tanggal_bayar), cara_bayar",
+            ['toko_id' => $tokoId, 'start' => $start, 'end' => $end]
         )->getResultArray();
 
-        $map = ['cash_in' => 0.0, 'cash_out' => 0.0, 'noncash_in' => 0.0, 'noncash_out' => 0.0];
+        $map = [];
         foreach ($rows as $row) {
-            $key = strtolower((string) ($row['channel'] ?? 'cash')) . '_' . strtolower((string) ($row['direction'] ?? 'in'));
-            if (isset($map[$key])) {
-                $map[$key] = (float) ($row['total'] ?? 0);
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            $method = strtoupper((string) ($row['cara_bayar'] ?? ''));
+            if (!isset($map[$tanggal])) {
+                $map[$tanggal] = ['TUNAI' => 0.0, 'TRANSFER' => 0.0];
             }
+            if (isset($map[$tanggal][$method])) {
+                $map[$tanggal][$method] += (float) ($row['total'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
+
+    private function getKasMutasiByDate(string $tokoId, string $start, string $end): array
+    {
+        $rows = $this->db->query(
+            "SELECT DATE(km.tanggal) AS tanggal, 'OP' AS kind, ak.jenis_akun AS jenis, km.nama_akun,
+                    COALESCE(km.saldo_channel, 'CASH') AS channel, COALESCE(km.saldo_target, 'TOKO') AS target,
+                    COALESCE(km.nominal, 0) AS nominal
+             FROM kas_mutasi km
+             INNER JOIN akun_kas ak ON ak.nama_akun=km.nama_akun
+             WHERE km.toko_id=:toko_id: AND km.tanggal BETWEEN :start: AND :end:
+               AND COALESCE(km.tipe_mutasi, 'OPERASIONAL')='OPERASIONAL'
+             UNION ALL
+             SELECT DATE(km.tanggal) AS tanggal, 'PINDAH_OUT' AS kind, '' AS jenis, '' AS nama_akun,
+                    km.saldo_asal AS channel, COALESCE(km.saldo_asal_target, 'TOKO') AS target,
+                    COALESCE(km.nominal, 0) AS nominal
+             FROM kas_mutasi km
+             WHERE km.toko_id=:toko_id: AND km.tanggal BETWEEN :start: AND :end:
+               AND km.tipe_mutasi='PINDAH_SALDO'
+             UNION ALL
+             SELECT DATE(km.tanggal) AS tanggal, 'PINDAH_IN' AS kind, '' AS jenis, '' AS nama_akun,
+                    km.saldo_tujuan AS channel, COALESCE(km.saldo_tujuan_target, 'TOKO') AS target,
+                    COALESCE(km.nominal, 0) AS nominal
+             FROM kas_mutasi km
+             WHERE km.toko_id=:toko_id: AND km.tanggal BETWEEN :start: AND :end:
+               AND km.tipe_mutasi='PINDAH_SALDO'",
+            ['toko_id' => $tokoId, 'start' => $start, 'end' => $end]
+        )->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $tanggal = (string) ($row['tanggal'] ?? '');
+            if ($tanggal === '') {
+                continue;
+            }
+            if (!isset($map[$tanggal])) {
+                $map[$tanggal] = [
+                    'kas_masuk_toko' => 0.0,
+                    'kas_keluar_toko' => 0.0,
+                    'kas_masuk_pemilik' => 0.0,
+                    'kas_keluar_pemilik' => 0.0,
+                    'kas_masuk_noncash' => 0.0,
+                    'kas_keluar_noncash' => 0.0,
+                    'deposit_toko_ke_pemilik' => 0.0,
+                    'tarik_pemilik_ke_toko' => 0.0,
+                    'tarik_keuntungan_toko' => 0.0,
+                    'tarik_keuntungan_pemilik' => 0.0,
+                ];
+            }
+
+            $nominal = (float) ($row['nominal'] ?? 0);
+            $kind = (string) ($row['kind'] ?? '');
+            $channel = strtoupper((string) ($row['channel'] ?? 'CASH'));
+            $target = strtoupper((string) ($row['target'] ?? 'TOKO'));
+
+            if ($kind === 'OP') {
+                $bucketKey = $channel === 'NONCASH' ? 'noncash' : ($target === 'PEMILIK' ? 'pemilik' : 'toko');
+                $direction = strtoupper((string) ($row['jenis'] ?? '')) === 'MASUK' ? 'masuk' : 'keluar';
+                $map[$tanggal]['kas_' . $direction . '_' . $bucketKey] += $nominal;
+
+                if ((string) ($row['nama_akun'] ?? '') === 'TARIK_KEUNTUNGAN' && $direction === 'keluar') {
+                    if ($channel === 'CASH') {
+                        $map[$tanggal]['tarik_keuntungan_' . strtolower($target)] += $nominal;
+                    }
+                }
+                continue;
+            }
+
+            $isDeposit = $kind === 'PINDAH_OUT' && $channel === 'CASH' && $target === 'TOKO';
+            $isTarikPemilik = $kind === 'PINDAH_IN' && $channel === 'CASH' && $target === 'TOKO';
+            if ($isDeposit || $isTarikPemilik) {
+                continue;
+            }
+            if ($kind === 'PINDAH_OUT' && $channel === 'CASH' && $target === 'PEMILIK') {
+                $map[$tanggal]['deposit_toko_ke_pemilik'] += $nominal;
+                continue;
+            }
+            if ($kind === 'PINDAH_IN' && $channel === 'CASH' && $target === 'PEMILIK') {
+                $map[$tanggal]['tarik_pemilik_ke_toko'] += $nominal;
+                continue;
+            }
+
+            $bucketKey = $channel === 'NONCASH' ? 'noncash' : ($target === 'PEMILIK' ? 'pemilik' : 'toko');
+            $direction = $kind === 'PINDAH_IN' ? 'masuk' : 'keluar';
+            $map[$tanggal]['kas_' . $direction . '_' . $bucketKey] += $nominal;
         }
 
         return $map;

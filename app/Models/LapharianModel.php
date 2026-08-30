@@ -127,6 +127,23 @@ class LapharianModel extends Model
         $storeSummaries = $this->buildStoreSummaries($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
         $cashierGroups = $this->buildCashierGroups($dateStart, $dateEnd, $tanggal, $storeSql, array_values($binds));
 
+        $kasModel = new \App\Models\KasModel();
+        $cashBalances = $kasModel->getRealtimeCash($storeIds);
+
+        $depositHistory = $this->db->query(
+            "SELECT km.tanggal, km.toko_id, COALESCE(t.toko_nama, km.toko_id) AS toko_nama,
+                    km.nominal, km.keterangan, km.updid
+             FROM kas_mutasi km
+             LEFT JOIN toko t ON t.toko_id=km.toko_id
+             WHERE km.tipe_mutasi='PINDAH_SALDO'
+               AND km.saldo_asal='CASH' AND km.saldo_tujuan='CASH'
+               AND km.saldo_asal_target='TOKO' AND km.saldo_tujuan_target='PEMILIK'
+               AND DATE(km.tanggal)=?
+               AND km.$storeSql
+             ORDER BY km.tanggal DESC",
+            array_merge([$tanggal], array_values($binds))
+        )->getResultArray();
+
         return [
             'tanggal' => $tanggal,
             'printed_at' => date('Y-m-d H:i:s'),
@@ -166,6 +183,8 @@ class LapharianModel extends Model
                 'tunai' => $customerCash,
             ],
             'uang_harus_disetor' => $uangHarusDisetor,
+            'cash_balances' => $cashBalances,
+            'deposit_history' => $depositHistory,
         ];
     }
 

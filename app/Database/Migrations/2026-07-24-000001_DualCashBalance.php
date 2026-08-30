@@ -20,6 +20,30 @@ class DualCashBalance extends Migration
             ]);
         }
 
+        // 1b. Single-row PINDAH_SALDO source/destination buckets
+        if (!$this->db->fieldExists('saldo_asal_target', 'kas_mutasi')) {
+            $this->forge->addColumn('kas_mutasi', [
+                'saldo_asal_target' => [
+                    'type'       => 'ENUM',
+                    'constraint' => ['TOKO', 'PEMILIK'],
+                    'null'       => true,
+                    'after'      => 'saldo_asal',
+                ],
+            ]);
+        }
+        if (!$this->db->fieldExists('saldo_tujuan_target', 'kas_mutasi')) {
+            $this->forge->addColumn('kas_mutasi', [
+                'saldo_tujuan_target' => [
+                    'type'       => 'ENUM',
+                    'constraint' => ['TOKO', 'PEMILIK'],
+                    'null'       => true,
+                    'after'      => 'saldo_tujuan',
+                ],
+            ]);
+        }
+
+        $this->seedDualCashAccounts();
+
         // 2. Add saldo_toko and saldo_pemilik columns to saldo_cash
         if (!$this->db->fieldExists('saldo_toko', 'saldo_cash')) {
             $this->forge->addColumn('saldo_cash', [
@@ -179,20 +203,41 @@ class DualCashBalance extends Migration
 
         // 4. Backfill saldo_target = 'TOKO' for existing CASH mutasi
         $this->db->query(
-            "UPDATE kas_mutasi 
-             SET saldo_target = 'TOKO' 
-             WHERE COALESCE(saldo_channel, 'CASH') = 'CASH' 
+            "UPDATE kas_mutasi
+             SET saldo_target = 'TOKO'
+             WHERE COALESCE(saldo_channel, 'CASH') = 'CASH'
              AND (saldo_target IS NULL OR saldo_target = '')"
         );
 
         // 5. Backfill saldo_toko from existing saldo_tunai in saldo_cash
         $this->db->query(
-            "UPDATE saldo_cash 
-             SET saldo_toko = COALESCE(saldo_tunai, 0), 
-                 saldo_pemilik = 0 
-             WHERE (saldo_toko IS NULL OR saldo_toko = 0) 
+            "UPDATE saldo_cash
+             SET saldo_toko = COALESCE(saldo_tunai, 0),
+                 saldo_pemilik = 0
+             WHERE (saldo_toko IS NULL OR saldo_toko = 0)
              AND (saldo_pemilik IS NULL OR saldo_pemilik = 0)"
         );
+    }
+
+    private function seedDualCashAccounts(): void
+    {
+        $accounts = [
+            ['nama_akun' => 'TAMBAH_MODAL_KAS', 'jenis_akun' => 'MASUK', 'flag_beban' => 'N'],
+            ['nama_akun' => 'TARIK_KEUNTUNGAN', 'jenis_akun' => 'KELUAR', 'flag_beban' => 'N'],
+        ];
+
+        foreach ($accounts as $account) {
+            $exists = $this->db->query(
+                "SELECT nama_akun FROM akun_kas WHERE nama_akun=:nama_akun: LIMIT 1",
+                ['nama_akun' => $account['nama_akun']]
+            )->getRowArray();
+            if ($exists) {
+                continue;
+            }
+            $this->db->table('akun_kas')->insert(array_merge($account, [
+                'updid'      => 'MIGRATION',
+            ]));
+        }
     }
 
     public function down()
@@ -208,6 +253,14 @@ class DualCashBalance extends Migration
         }
         if ($this->db->fieldExists('saldo_pemilik', 'saldo_cash')) {
             $this->forge->dropColumn('saldo_cash', 'saldo_pemilik');
+        }
+
+        // Remove saldo_asal_target/saldo_tujuan_target from kas_mutasi
+        if ($this->db->fieldExists('saldo_tujuan_target', 'kas_mutasi')) {
+            $this->forge->dropColumn('kas_mutasi', 'saldo_tujuan_target');
+        }
+        if ($this->db->fieldExists('saldo_asal_target', 'kas_mutasi')) {
+            $this->forge->dropColumn('kas_mutasi', 'saldo_asal_target');
         }
 
         // Remove saldo_target from kas_mutasi

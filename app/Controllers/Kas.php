@@ -19,6 +19,8 @@ class Kas extends BaseController
         $data['title'] = 'Kas Masuk / Keluar';
         $data['akunOptions'] = $this->kasModel->getAkunOptions();
         $data['karyawanOptions'] = $this->kasModel->getKaryawanOptions((string) session('toko_id'));
+        $data['cashBalances'] = $this->kasModel->getRealtimeCash([(string) session('toko_id')]);
+        $data['canMutateSaldo'] = $this->kasModel->canMutateSaldo();
         cek_akses_menu('kas/index', $data);
     }
 

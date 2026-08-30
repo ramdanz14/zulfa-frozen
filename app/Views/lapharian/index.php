@@ -6,6 +6,8 @@
  * @var string $akses_menu
  * @var array $tokoOptions
  */
+$aksesMenuData = json_decode((string) ($akses_menu ?? '{}'), true) ?: [];
+$canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 ?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
@@ -49,16 +51,70 @@
 
         <div class="row g-3 mb-3">
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Total Pendapatan POS</div><div class="fs-6 fw-semibold mt-2" id="sum-pos">Rp 0</div><small id="sum-pos-detail" class="text-muted"></small></div></div>
+                <div class="card h-100 mb-0 border-primary">
+                    <div class="card-body py-3">
+                        <div class="text-muted small">Uang Harus Disetor</div>
+                        <div class="fs-6 fw-semibold mt-2 text-primary" id="sum-setor">Rp 0</div>
+                        <small class="text-muted">Saldo kas komputer</small>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Total Diskon Item</div><div class="fs-6 fw-semibold mt-2" id="sum-diskon">Rp 0</div><small id="sum-diskon-detail" class="text-muted"></small></div></div>
+                <div class="card h-100 mb-0 border-info">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-muted small">Saldo Kas Toko</div>
+                                <div class="fs-6 fw-semibold mt-2 text-info" id="sum-saldo-toko">Rp 0</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-success" id="btn-deposit" title="Setor tunai toko ke pemilik"><i class="ti ti-arrow-up-circle"></i>Setor tunai toko ke pemilik</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Arus Kas Kecil</div><div class="fs-6 fw-semibold mt-2" id="sum-kas">Rp 0</div><small id="sum-kas-detail" class="text-muted"></small></div></div>
+                <div class="card h-100 mb-0 border-dark">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-muted small">Saldo Kas Pemilik</div>
+                                <div class="fs-6 fw-semibold mt-2" id="sum-saldo-pemilik">Rp 0</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" id="btn-withdraw-profit" title="Tarik keuntungan pemilik" <?= ($canDeleteAkses ? '' : 'disabled') ?>><i class="ti ti-arrow-down-circle"></i>Tarik keuntungan</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Uang Harus Disetor</div><div class="fs-6 fw-semibold mt-2" id="sum-setor">Rp 0</div><small class="text-muted">Saldo kas komputer</small></div></div>
+                <div class="card h-100 mb-0">
+                    <div class="card-body">
+                        <div class="text-muted small">Arus Kas Kecil</div>
+                        <div class="fs-6 fw-semibold mt-2" id="sum-kas">Rp 0</div><small id="sum-kas-detail" class="text-muted"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3" id="deposit-history-section" style="display:none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="fw-semibold mb-2">Setoran Hari Ini (Toko → Pemilik)</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>Toko</th>
+                                        <th class="text-end">Nominal</th>
+                                        <th>Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-deposit-history"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -129,7 +185,13 @@
                         <div class="fw-semibold mb-3">Arus Kas Kecil per Akun</div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead><tr><th>Akun</th><th>Jenis</th><th class="text-end">Nominal</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>Akun</th>
+                                        <th>Jenis</th>
+                                        <th class="text-end">Nominal</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="table-kas"></tbody>
                             </table>
                         </div>
@@ -142,7 +204,13 @@
                         <div class="fw-semibold mb-3">Rekap Pembayaran Hutang ke Supplier</div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead><tr><th>Supplier</th><th>Metode</th><th class="text-end">Nominal</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th>Metode</th>
+                                        <th class="text-end">Nominal</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="table-supplier"></tbody>
                             </table>
                         </div>
@@ -155,7 +223,13 @@
                         <div class="fw-semibold mb-3">Rekap Pembayaran Piutang dari Customer</div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead><tr><th>Customer</th><th>Metode</th><th class="text-end">Nominal</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Metode</th>
+                                        <th class="text-end">Nominal</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="table-customer"></tbody>
                             </table>
                         </div>
@@ -165,6 +239,71 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modal-deposit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Setor Tunai Toko &rarr; Pemilik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nominal</label>
+                    <input type="text" class="form-control money" id="deposit-nominal" placeholder="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Keterangan</label>
+                    <input type="text" class="form-control" id="deposit-keterangan" value="Setoran tunai dari toko ke pemilik">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-success" id="btn-deposit-save">Simpan Setoran</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-withdraw-profit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tarik Keuntungan Pemilik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nominal</label>
+                    <input type="text" class="form-control money" id="withdraw-nominal" placeholder="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Channel</label>
+                    <select class="form-select" id="withdraw-channel">
+                        <option value="CASH">Tunai</option>
+                        <option value="NONCASH">Non Tunai</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="withdraw-target-wrapper">
+                    <label class="form-label">Saldo Tunai Tujuan</label>
+                    <select class="form-select" id="withdraw-target">
+                        <option value="TOKO">Saldo Toko</option>
+                        <option value="PEMILIK">Saldo Pemilik</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Keterangan</label>
+                    <input type="text" class="form-control" id="withdraw-keterangan" value="Penarikan keuntungan  pemilik">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-primary" id="btn-withdraw-save">Simpan Penarikan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection('content') ?>
 
 <?= $this->section('javascript') ?>
@@ -246,8 +385,21 @@
         $('#sum-kas').text(rp(kas.bersih || 0));
         $('#sum-kas-detail').text(`Masuk ${rp(kas.masuk || 0)} - Keluar ${rp(kas.keluar || 0)}`);
         $('#sum-setor').text(rp(report.uang_harus_disetor || 0));
+        const cb = report.cash_balances || {};
+        $('#sum-saldo-toko').text(rp(cb.saldo_toko || 0));
+        $('#sum-saldo-pemilik').text(rp(cb.saldo_pemilik || 0));
         $('#table-store-summary').html(summaryRows(report.store_summaries || [], false));
         $('#table-cashier-summary').html(summaryRows(report.cashier_groups || [], true));
+
+        const depRows = report.deposit_history || [];
+        if (depRows.length) {
+            $('#deposit-history-section').show();
+            $('#table-deposit-history').html(depRows.map(row =>
+                `<tr><td>${esc(row.tanggal || '-')}</td><td>${esc(row.toko_nama || row.toko_id)}</td><td class="text-end">${rp(row.nominal || 0)}</td><td>${esc(row.keterangan || '-')}</td></tr>`
+            ).join(''));
+        } else {
+            $('#deposit-history-section').hide();
+        }
 
         $('#table-pos').html([
             rowHtml('Tunai', pos.tunai || 0),
@@ -353,5 +505,72 @@
     function esc(value) {
         return $('<div>').text(value || '-').html();
     }
+
+    const modalDeposit = new bootstrap.Modal(document.getElementById('modal-deposit'));
+    const modalWithdrawProfit = new bootstrap.Modal(document.getElementById('modal-withdraw-profit'));
+    const today = () => $('#filter-tanggal').val() || new Date().toISOString().slice(0, 10);
+    $('#withdraw-channel').on('change', function() {
+        $('#withdraw-target-wrapper').toggle($(this).val() === 'CASH');
+    });
+
+    $('#btn-deposit').on('click', function() {
+        $('#deposit-nominal').val('');
+        $('#deposit-keterangan').val('Setoran tunai dari toko ke pemilik');
+        modalDeposit.show();
+    });
+    $('#btn-deposit-save').on('click', function() {
+        const nominal = parseFloat($('#deposit-nominal').val()) || 0;
+        if (nominal <= 0) {
+            toastr.error('Nominal harus lebih dari 0');
+            return;
+        }
+        $.post('<?= base_url('/lapharian/deposit') ?>', {
+            nominal: nominal,
+            tanggal: today(),
+            keterangan: $('#deposit-keterangan').val(),
+            toko_id: '<?= session('toko_id') ?>'
+        }, function(res) {
+            if (res.tipe === 'success') {
+                toastr.success(res.data || 'Setoran berhasil');
+                modalDeposit.hide();
+                loadReport();
+                return;
+            }
+            toastr.error(res.data || 'Gagal menyimpan');
+        }, 'json').fail(function(xhr) {
+            toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan setoran'));
+        });
+    });
+
+    $('#btn-withdraw-profit').on('click', function() {
+        $('#withdraw-nominal').val('');
+        $('#withdraw-keterangan').val('Penarikan keuntungan dari pemilik');
+        modalWithdrawProfit.show();
+    });
+    $('#btn-withdraw-save').on('click', function() {
+        const nominal = parseFloat($('#withdraw-nominal').val()) || 0;
+        if (nominal <= 0) {
+            toastr.error('Nominal harus lebih dari 0');
+            return;
+        }
+        $.post('<?= base_url('/lapharian/withdraw-profit') ?>', {
+            nominal: nominal,
+            channel: $('#withdraw-channel').val(),
+            target: $('#withdraw-target').val(),
+            tanggal: today(),
+            keterangan: $('#withdraw-keterangan').val(),
+            toko_id: '<?= session('toko_id') ?>'
+        }, function(res) {
+            if (res.tipe === 'success') {
+                toastr.success(res.data || 'Penarikan berhasil');
+                modalWithdrawProfit.hide();
+                loadReport();
+                return;
+            }
+            toastr.error(res.data || 'Gagal menyimpan');
+        }, 'json').fail(function(xhr) {
+            toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan penarikan'));
+        });
+    });
 </script>
 <?= $this->endSection('javascript') ?>

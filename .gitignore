@@ -124,3 +124,7 @@ _modules/*
 
 /results/
 /phpunit*.xml
+.opencode
+.planning
+graphify-out
+/app/graphify-out/*

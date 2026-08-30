@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\AbsensiModel;
+use Config\Database;
 
 class Absensi extends BaseController
 {
@@ -133,7 +134,12 @@ class Absensi extends BaseController
         $periodStart = $this->normalizeDate((string) $this->request->getVar('period_start'));
         $periodEnd = $this->normalizeDate((string) $this->request->getVar('period_end'));
         $saldoChannel = strtoupper(trim((string) ($this->request->getVar('saldo_channel') ?? 'CASH')));
+        $saldoTarget = strtoupper(trim((string) ($this->request->getVar('saldo_target') ?? 'TOKO')));
         $selectedIds = json_decode((string) ($this->request->getVar('selected_ids') ?? '[]'), true) ?: [];
+
+        if ($saldoChannel === 'CASH' && $saldoTarget === 'PEMILIK' && !$this->hasAksesDelete()) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Pembayaran gaji dari saldo pemilik hanya untuk akun dengan hak delete']);
+        }
 
         $result = $this->absensiModel->createPaymentBatch(
             (string) session('username'),
@@ -141,7 +147,8 @@ class Absensi extends BaseController
             $periodStart ?: '',
             $periodEnd ?: '',
             $selectedIds,
-            $saldoChannel
+            $saldoChannel,
+            $saldoTarget
         );
         if (($result['tipe'] ?? '') === 'success') {
             tracelog('CREATE', 'BAYAR GAJI ' . ($result['batch_id'] ?? '') . ' payload=' . json_encode([
@@ -149,6 +156,7 @@ class Absensi extends BaseController
                 'period_start' => $periodStart,
                 'period_end' => $periodEnd,
                 'saldo_channel' => $saldoChannel,
+                'saldo_target' => $saldoTarget,
                 'selected_ids' => $selectedIds,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
@@ -174,5 +182,16 @@ class Absensi extends BaseController
         }
         $date = date_create($value);
         return $date ? $date->format('Y-m-d') : null;
+    }
+
+    private function hasAksesDelete(): bool
+    {
+        $db = Database::connect();
+        $row = $db->query(
+            "SELECT akses_delete FROM akses_menu WHERE level_id=:level_id: AND menu_id='absensi' LIMIT 1",
+            ['level_id' => session('level_id')]
+        )->getRowArray();
+
+        return ($row['akses_delete'] ?? '') === 'Y';
     }
 }

@@ -233,6 +233,8 @@ $routes->group('lapharian', static function ($route) {
     $route->get('', 'Lapharian::index');
     $route->post('report', 'Lapharian::report');
     $route->get('struk', 'Lapharian::struk');
+    $route->post('deposit', 'Lapharian::deposit');
+    $route->post('withdraw-profit', 'Lapharian::withdrawProfit');
 });
 
 $routes->group('laphutang', static function ($route) {

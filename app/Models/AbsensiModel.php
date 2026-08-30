@@ -278,12 +278,20 @@ class AbsensiModel extends Model
         ];
     }
 
-    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds, string $saldoChannel = 'CASH'): array
+    public function createPaymentBatch(string $username, string $tanggalBayar, string $periodStart, string $periodEnd, array $selectedIds, string $saldoChannel = 'CASH', string $saldoTarget = 'TOKO'): array
     {
         $selectedIds = array_values(array_unique(array_map('intval', $selectedIds)));
         $saldoChannel = strtoupper(trim($saldoChannel));
         if (!in_array($saldoChannel, ['CASH', 'NONCASH'], true)) {
             $saldoChannel = 'CASH';
+        }
+        $saldoTarget = strtoupper(trim($saldoTarget));
+        if ($saldoChannel === 'CASH') {
+            if (!in_array($saldoTarget, ['TOKO', 'PEMILIK'], true)) {
+                $saldoTarget = 'TOKO';
+            }
+        } else {
+            $saldoTarget = '';
         }
         if ($tanggalBayar === '' || $periodStart === '' || $periodEnd === '') {
             return ['tipe' => 'error', 'data' => 'Tanggal bayar dan periode wajib diisi'];
@@ -322,6 +330,21 @@ class AbsensiModel extends Model
             $totalNominal += (float) ($row['nominal_gaji'] ?? 0);
         }
 
+        if ($saldoChannel === 'CASH') {
+            $kasModel = new KasModel();
+            $shortfalls = [];
+            foreach ($grouped as $group) {
+                $balance = $kasModel->getRealtimeCash([$group['toko_id']]);
+                $available = $saldoTarget === 'PEMILIK' ? $balance['saldo_pemilik'] : $balance['saldo_toko'];
+                if ((float) $group['nominal'] > $available) {
+                    $shortfalls[] = $group['toko_id'] . ' (kurang Rp ' . number_format((float) $group['nominal'] - $available, 0, ',', '.') . ')';
+                }
+            }
+            if (!empty($shortfalls)) {
+                return ['tipe' => 'error', 'data' => 'Saldo kas tidak cukup untuk toko: ' . implode(', ', $shortfalls)];
+            }
+        }
+
         $this->db->transStart();
         $this->db->table('absensi_pembayaran')->insert([
             'batch_id' => $batchId,
@@ -345,8 +368,11 @@ class AbsensiModel extends Model
                 'nama_akun' => 'GAJI',
                 'tipe_mutasi' => 'OPERASIONAL',
                 'saldo_channel' => $saldoChannel,
+                'saldo_target' => $saldoChannel === 'CASH' ? $saldoTarget : 'TOKO',
                 'saldo_asal' => null,
                 'saldo_tujuan' => null,
+                'saldo_asal_target' => null,
+                'saldo_tujuan_target' => null,
                 'nominal' => (int) round($group['nominal'], 0),
                 'karyawan_id' => $group['karyawan_id'],
                 'keterangan' => substr($keterangan, 0, 150),
