@@ -36,6 +36,7 @@ class Login extends BaseController
                 session()->set('toko_nama', $row->toko_nama);
                 session()->set('toko_theme', $row->toko_theme);
                 session()->set('avatar', $row->avatar);
+                session()->set('karyawan_id', $row->karyawan_id);
                 tracelog('LOGIN', 'Login dengan user : ' . $row->fullname);
                 $redirect = $this->request->getGet('redirect') ?? "";
                 if ($redirect != "") {
