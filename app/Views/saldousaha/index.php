@@ -114,6 +114,13 @@
                             <div class="text-muted small-9 mt-1">Tunai: <span id="summary-kas-tunai">0</span> | NonTunai: <span id="summary-kas-nontunai">0</span></div>
                         </div>
                     </div>
+                    <div class="col-auto d-flex align-items-center justify-content-center px-1"><span class="fs-4 fw-bold text-muted">+</span></div>
+                    <div class="col-md">
+                        <div class="p-3 border border-success rounded-3 bg-success-subtle h-100">
+                            <div class="small text-success fw-medium mb-1"><i class="ti ti-packages me-1"></i> Saldo Stok</div>
+                            <div class="fw-bold fs-5 text-success" id="summary-stok">Rp 0</div>
+                        </div>
+                    </div>
                     <div class="col-auto d-flex align-items-center justify-content-center px-1"><span class="fs-4 fw-bold text-muted">-</span></div>
                     <div class="col-md">
                         <div class="p-3 border border-danger rounded-3 bg-danger-subtle h-100">
@@ -128,13 +135,6 @@
                             <div class="fw-bold fs-5 text-success" id="summary-piutang">Rp 0</div>
                         </div>
                     </div>
-                    <div class="col-auto d-flex align-items-center justify-content-center px-1"><span class="fs-4 fw-bold text-muted">-</span></div>
-                    <div class="col-md">
-                        <div class="p-3 border border-success rounded-3 bg-success-subtle h-100">
-                            <div class="small text-success fw-medium mb-1"><i class="ti ti-packages me-1"></i> Saldo Stok</div>
-                            <div class="fw-bold fs-5 text-success" id="summary-stok">Rp 0</div>
-                        </div>
-                    </div>
                     <div class="col-auto d-flex align-items-center justify-content-center px-1"><span class="fs-4 fw-bold text-muted">=</span></div>
                     <div class="col-md-3">
                         <div class="p-3 border border-secondary rounded-3 bg-dark text-white h-100 shadow-sm">
@@ -146,7 +146,7 @@
 
 
                 <div class="p-2.5 bg-light rounded-3 text-center text-muted border border-light-subtle small font-monospace" id="summary-formula">
-                    Rp 0 - Rp 0 + Rp 0 - Rp 0 = Rp 0
+                    Rp 0 + Rp 0 - Rp 0 + Rp 0 = Rp 0
                 </div>
             </div>
         </div>
@@ -346,7 +346,7 @@
                 $('#summary-piutang').text(renderMoneyPlain(piutang));
                 $('#summary-stok').text(renderMoneyPlain(stok));
                 $('#summary-balance-asof').text(period.balance_as_of ? moment(period.balance_as_of, 'YYYY-MM-DD').format('DD/MM/YYYY') : '-');
-                $('#summary-formula').html(`(${renderMoneyPlain(saldoKas)}) - (${renderMoneyPlain(hutang)}) + (${renderMoneyPlain(piutang)}) - (${renderMoneyPlain(stok)}) = <strong>${renderMoneyPlain(saldoAkhir)}</strong>`);
+                $('#summary-formula').html(`(${renderMoneyPlain(saldoKas)}) + (${renderMoneyPlain(stok)}) - (${renderMoneyPlain(hutang)}) + (${renderMoneyPlain(piutang)}) = <strong>${renderMoneyPlain(saldoAkhir)}</strong>`);
                 $('#summary-cash-ratio').text(formatRatio(summary.cash_ratio));
                 $('#summary-cash-ratio-psn').text(formatRatioPsn(summary.cash_ratio));
                 $('#summary-current-ratio').text(formatRatio(summary.current_ratio));

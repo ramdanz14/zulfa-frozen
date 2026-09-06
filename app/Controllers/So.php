@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\SoModel;
+use Config\Database;
 
 class So extends BaseController
 {
@@ -47,6 +48,9 @@ class So extends BaseController
 
     public function satuan()
     {
+        if (!$this->hasAccess('akses_delete')) {
+            return view('errors/html/error_401');
+        }
         $data['title'] = 'Adjust SO Satuan';
         $data['closingDate'] = $this->soModel->getClosingDate((string) session('toko_id'));
         cek_akses_menu('so/satuan', $data);
@@ -145,6 +149,9 @@ class So extends BaseController
 
     public function createAll()
     {
+        if (!$this->hasAccess('akses_delete')) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Hanya koordinator yang dapat membuat SO'])->setStatusCode(400);
+        }
         $result = $this->soModel->createSoSession((string) session('toko_id'), (string) session('username'));
         if (($result['tipe'] ?? '') === 'success') {
             tracelog('CREATE', 'CREATE SO ALL ' . ($result['so_table'] ?? ''));
@@ -154,6 +161,9 @@ class So extends BaseController
 
     public function createKategori()
     {
+        if (!$this->hasAccess('akses_delete')) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Hanya koordinator yang dapat membuat SO'])->setStatusCode(400);
+        }
         $kategoriIds = $this->request->getVar('kat_id');
         $kategoriIds = is_array($kategoriIds) ? $kategoriIds : [$kategoriIds];
         $result = $this->soModel->createSoSession((string) session('toko_id'), (string) session('username'), $kategoriIds);
@@ -203,6 +213,9 @@ class So extends BaseController
 
     public function storeAdjust()
     {
+        if (!$this->hasAccess('akses_delete')) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Hanya koordinator yang dapat membuat SO satuan'])->setStatusCode(400);
+        }
         $input = $this->request->getRawInput();
         $result = $this->soModel->createSatuanAdjust((string) session('toko_id'), (string) session('username'), $input);
         if (($result['tipe'] ?? '') === 'success') {
@@ -213,6 +226,9 @@ class So extends BaseController
 
     public function deleteAdjust()
     {
+        if (!$this->hasAccess('akses_delete')) {
+            return $this->response->setJSON(['tipe' => 'error', 'data' => 'Hanya koordinator yang dapat menghapus SO satuan'])->setStatusCode(400);
+        }
         $input = $this->request->getRawInput();
         $result = $this->soModel->deleteAdjust((string) session('toko_id'), (int) ($input['so_id'] ?? 0));
         if (($result['tipe'] ?? '') === 'success') {
@@ -226,5 +242,16 @@ class So extends BaseController
         return $this->response->setJSON(
             $this->soModel->getHistorySessions((string) session('toko_id'))
         );
+    }
+
+    private function hasAccess(string $akses): bool
+    {
+        $db = Database::connect();
+        $row = $db->query(
+            "SELECT * FROM akses_menu WHERE level_id=:level_id: AND menu_id='so' LIMIT 1",
+            ['level_id' => session('level_id')]
+        )->getRowArray();
+
+        return !empty($row[$akses]) && $row[$akses] === 'Y';
     }
 }

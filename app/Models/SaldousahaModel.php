@@ -34,7 +34,7 @@ class SaldousahaModel extends Model
         $totalBeban = $beban['total_beban'] + $adjustmentBeban['beban_hilang'] + $adjustmentBeban['beban_rusak'];
         $labaBersih = $sales['laba_kotor'] - $returPenjualan - $totalBeban;
         $saldoKas = $kas['saldo_tunai'] + $kas['saldo_nontunai'];
-        $saldoAkhir = $saldoKas - $hutang + $piutang - $stok;
+        $saldoAkhir = $saldoKas + $stok - $hutang + $piutang;
         $cashRatio = $hutang > 0 ? $saldoKas / $hutang : null;
         $currentRatio = $hutang > 0 ? ($saldoKas + $stok + $piutang) / $hutang : null;
 
@@ -87,9 +87,9 @@ class SaldousahaModel extends Model
                 ['label' => 'Saldo Kas Tunai Toko', 'amount' => $kas['saldo_toko'], 'type' => 'asset'],
                 ['label' => 'Saldo Kas Tunai Pemilik', 'amount' => $kas['saldo_pemilik'], 'type' => 'asset'],
                 ['label' => 'Saldo Kas Non Tunai', 'amount' => $kas['saldo_nontunai'], 'type' => 'asset'],
+                ['label' => 'Total Stok Rupiah', 'amount' => $stok, 'type' => 'asset'],
                 ['label' => 'Total Hutang', 'amount' => $hutang, 'type' => 'liability'],
                 ['label' => 'Total Piutang', 'amount' => $piutang, 'type' => 'asset'],
-                ['label' => 'Total Stok Rupiah', 'amount' => $stok, 'type' => 'asset'],
                 ['label' => 'Saldo Akhir', 'amount' => $saldoAkhir, 'type' => 'total'],
             ],
         ];
