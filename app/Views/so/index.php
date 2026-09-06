@@ -5,8 +5,11 @@
 /**
  * @var array  $soAktif
  * @var array  $kategoriOptions
+ * @var string $akses_menu
  */
 $soLabel = !empty($soAktif['tanggal'] ?? '') ? 'SO aktif: ' . $soAktif['tanggal'] : 'Tidak ada SO aktif';
+$aksesMenuData = json_decode((string) ($akses_menu ?? '{}'), true) ?: [];
+$canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 ?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
@@ -27,6 +30,7 @@ $soLabel = !empty($soAktif['tanggal'] ?? '') ? 'SO aktif: ' . $soAktif['tanggal'
         </div>
 
         <div class="row g-3">
+            <?php if ($canBuatSo): ?>
             <div class="col-md-6 col-xl-3">
                 <a href="javascript:void(0)" class="card h-100 text-decoration-none" onclick="createSoAll()">
                     <div class="card-body">
@@ -43,6 +47,7 @@ $soLabel = !empty($soAktif['tanggal'] ?? '') ? 'SO aktif: ' . $soAktif['tanggal'
                     </div>
                 </a>
             </div>
+            <?php endif; ?>
             <div class="col-md-6 col-xl-3">
                 <a href="<?= base_url('/so/input') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
@@ -59,6 +64,7 @@ $soLabel = !empty($soAktif['tanggal'] ?? '') ? 'SO aktif: ' . $soAktif['tanggal'
                     </div>
                 </a>
             </div>
+            <?php if ($canBuatSo): ?>
             <div class="col-md-6 col-xl-3">
                 <a href="<?= base_url('/so/satuan') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
@@ -67,6 +73,7 @@ $soLabel = !empty($soAktif['tanggal'] ?? '') ? 'SO aktif: ' . $soAktif['tanggal'
                     </div>
                 </a>
             </div>
+            <?php endif; ?>
             <div class="col-md-6 col-xl-3">
                 <a href="<?= base_url('/so/history') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
