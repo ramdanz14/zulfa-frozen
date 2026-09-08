@@ -88,7 +88,7 @@ class SettingHargaModel extends Model
         )->getResultArray();
 
 
-        $cekgram = $this->db->query("SELECT * FROM CONST WHERE rkey='satuan_gramasi'")->getRow();
+        $cekgram = $this->db->query("SELECT * FROM const WHERE rkey='satuan_gramasi'")->getRow();
         $satGramasiRaw = $cekgram->nilai ?? "GR;GRAM;ML";
         $satuanGramasi = explode(';', $satGramasiRaw);
 

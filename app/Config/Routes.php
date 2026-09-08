@@ -18,7 +18,7 @@ $routes->get('/', 'Main::index');
 $routes->get('/main', 'Main::index');
 $routes->get('/login', 'Login::index');
 $routes->get('/logout', 'Login::out');
-$routes->match(['post'], '/login', 'Login::check');
+$routes->match(['POST'], '/login', 'Login::check');
 $routes->get('/profile', 'Profile::index');
 $routes->post('/profile/change-password', 'Profile::changePassword');
 $routes->post('/profile/change-avatar', 'Profile::changeAvatar');

@@ -881,7 +881,7 @@ class PembelianModel extends Model
 
     private function applyStoreCostUpdates(string $toko_id, string $beli_id, string $tanggal, string $supco, array $details): void
     {
-        $cekgram = $this->db->query("SELECT * FROM CONST WHERE rkey='satuan_gramasi'")->getRow();
+        $cekgram = $this->db->query("SELECT * FROM const WHERE rkey='satuan_gramasi'")->getRow();
         $satGramasiRaw = $cekgram->nilai ?? "GR;GRAM;ML";
         $satuanGramasi = explode(';', $satGramasiRaw);
         foreach ($details as $detail) {
