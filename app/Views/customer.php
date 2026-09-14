@@ -518,7 +518,7 @@
                 max: 999999
             },
             margin_grosir: {
-                min: <?= json_encode($min_margin_grosir ?? 5) ?>,
+                min: 0,
                 max: 100
             }
         },
@@ -612,7 +612,7 @@
                            class="form-control"
                            id="margin_grosir"
                            name="margin_grosir"
-                           min="<?= esc((string) ($min_margin_grosir ?? 5)) ?>"
+                           min="0"
                            max="100"
                            step="0.01">
                     <small class="text-muted">

@@ -16,7 +16,7 @@ class Customer extends BaseController
     public function index()
     {
         $data['title'] = 'Customer';
-        $data['min_margin_grosir'] = $this->getMinMarginGrosir();
+        // $data['min_margin_grosir'] = $this->getMinMarginGrosir();
         cek_akses_menu('customer', $data);
     }
 
