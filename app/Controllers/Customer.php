@@ -16,6 +16,7 @@ class Customer extends BaseController
     public function index()
     {
         $data['title'] = 'Customer';
+        $data['min_margin_grosir'] = $this->getMinMarginGrosir();
         cek_akses_menu('customer', $data);
     }
 
@@ -93,7 +94,7 @@ class Customer extends BaseController
     /**
      * Validate harga_grosir flag and margin_grosir percentage.
      * - harga_grosir must be Y or N (default N)
-     * - if harga_grosir = Y, margin_grosir must be at least 5
+     * - if harga_grosir = Y, margin_grosir must meet the configured minimum
      * - if harga_grosir = N, margin_grosir is reset to 0
      *
      */
@@ -104,9 +105,10 @@ class Customer extends BaseController
         $input['harga_grosir'] = $hargaGrosir;
 
         if ($hargaGrosir === 'Y') {
+            $minMarginGrosir = $this->getMinMarginGrosir();
             $marginGrosir = (float) ($input['margin_grosir'] ?? 0);
-            if ($marginGrosir < 5) {
-                return 'Margin grosir minimal 5% untuk customer dengan harga grosir.';
+            if ($marginGrosir < $minMarginGrosir) {
+                return "Margin grosir minimal {$minMarginGrosir}% untuk customer dengan harga grosir.";
             }
             $input['margin_grosir'] = $marginGrosir;
         } else {
@@ -114,6 +116,18 @@ class Customer extends BaseController
         }
 
         return true;
+    }
+
+    private function getMinMarginGrosir(): float
+    {
+        $nilai = \Config\Database::connect()
+            ->table('const')
+            ->select('nilai')
+            ->where('rkey', 'min_margin_grosir')
+            ->get()
+            ->getRowArray()['nilai'] ?? null;
+
+        return $nilai === null ? 5 : (float) $nilai;
     }
 
     public function delete()

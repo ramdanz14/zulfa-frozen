@@ -17,7 +17,7 @@ $defaultTanggal = $tanggalAcuan ?? (!empty($soAktif['tanggal'] ?? '') ? $soAktif
                         <p class="mb-0"><span class="page-pretitle"><?= esc($defaultTanggal) ?></span> | Ringkasan dan detail selisih hasil stock opname.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/so') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
+                        <a href="<?= base_url('/opname') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
                     </div>
                 </div>
             </div>
@@ -69,7 +69,7 @@ $defaultTanggal = $tanggalAcuan ?? (!empty($soAktif['tanggal'] ?? '') ? $soAktif
 <?= $this->section('javascript') ?>
 <script>
     function refreshSummary() {
-        $.post('<?= base_url('/so/summary') ?>', {
+        $.post('<?= base_url('/opname/summary') ?>', {
             tanggal: $('#tanggal').val()
         }, function(res) {
             ['sum_periode', 'sum_sudah_input', 'sum_belum_input', 'sum_nk_qty', 'sum_nk_rp', 'sum_nl_qty', 'sum_nl_rp', 'sum_nkl_qty', 'sum_nkl_rp'].forEach((key) => {
@@ -108,7 +108,7 @@ $defaultTanggal = $tanggalAcuan ?? (!empty($soAktif['tanggal'] ?? '') ? $soAktif
         serverSide: true,
         ordering: false,
         ajax: {
-            url: '<?= base_url('/so/ajax-hasil') ?>',
+            url: '<?= base_url('/opname/ajax-hasil') ?>',
             type: 'post',
             data: function(d) {
                 d.tanggal = $('#tanggal').val();

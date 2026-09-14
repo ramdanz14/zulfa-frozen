@@ -168,7 +168,7 @@ $routes->group('poinmember', static function ($route) {
     $route->post('hard-reset', 'Poinmember::hardReset');
 });
 
-$routes->group('so', static function ($route) {
+$routes->group('opname', static function ($route) {
     $route->get('', 'So::index');
     $route->get('input', 'So::input');
     $route->get('hasil', 'So::hasil');

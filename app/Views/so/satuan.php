@@ -11,7 +11,7 @@
                         <p class="mb-0"><span class="page-pretitle">Closing aktif: <?= esc($closingDate ?? '-') ?></span> | Adjustment manual akan disimpan ke tabel `adjust` dengan `istype=SO`.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/so') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
+                        <a href="<?= base_url('/opname') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
                     </div>
                 </div>
             </div>
@@ -88,7 +88,7 @@
             placeholder: 'Pilih produk',
             dropdownParent: $('#modal-adjust'),
             ajax: {
-                url: '<?= base_url('/so/search-item') ?>',
+                url: '<?= base_url('/opname/search-item') ?>',
                 type: 'post',
                 dataType: 'json',
                 delay: 250,
@@ -157,7 +157,7 @@
         serverSide: true,
         ordering: false,
         ajax: {
-            url: '<?= base_url('/so/ajax-adjust') ?>',
+            url: '<?= base_url('/opname/ajax-adjust') ?>',
             type: 'post'
         },
         columns: [{
@@ -223,7 +223,7 @@
         }
         $.ajax({
             type: 'PUT',
-            url: '<?= base_url('/so/adjust') ?>',
+            url: '<?= base_url('/opname/adjust') ?>',
             dataType: 'json',
             data: {
                 kode_item: $('#kode_item').val(),
@@ -260,7 +260,7 @@
             if (!result.isConfirmed) return;
             $.ajax({
                 type: 'DELETE',
-                url: '<?= base_url('/so/adjust') ?>',
+                url: '<?= base_url('/opname/adjust') ?>',
                 dataType: 'json',
                 data: {
                     so_id: soId

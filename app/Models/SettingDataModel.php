@@ -38,6 +38,13 @@ class SettingDataModel extends Model
             'suffix' => 'persen',
             'description' => 'Persentase markup dari harga pokok untuk menghitung harga jual transfer dari gudang ke toko.',
         ],
+        'min_margin_grosir' => [
+            'label' => 'Minimal Markup Grosir',
+            'default' => '2',
+            'type' => 'number',
+            'suffix' => 'persen',
+            'description' => 'Batas Bawah Persentase markup dari harga pokok untuk menghitung harga jual khusus customer grosir.',
+        ],
     ];
 
     public function getSettings(): array

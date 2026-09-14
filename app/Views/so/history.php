@@ -11,7 +11,7 @@
                         <p class="mb-0"><span class="page-pretitle">Riwayat sesi SO</span> | Menampilkan sesi SO yang pernah dibuat untuk toko aktif.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/so') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
+                        <a href="<?= base_url('/opname') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
                     </div>
                 </div>
             </div>
@@ -32,7 +32,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="7">Memuat data...</td></tr>
+                        <tr>
+                            <td colspan="7">Memuat data...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -52,7 +54,7 @@
             searching: true,
             paging: true,
             ajax: {
-                url: '<?= base_url('/so/history-data') ?>',
+                url: '<?= base_url('/opname/history-data') ?>',
                 type: 'POST',
                 dataSrc: ''
             },
@@ -79,16 +81,16 @@
                     data: 'status',
                     className: 'text-center',
                     render: function(data) {
-                        return data === 'AKTIF'
-                            ? '<span class="badge bg-danger-subtle text-danger">AKTIF</span>'
-                            : '<span class="badge bg-success-subtle text-success">SELESAI</span>';
+                        return data === 'AKTIF' ?
+                            '<span class="badge bg-danger-subtle text-danger">AKTIF</span>' :
+                            '<span class="badge bg-success-subtle text-success">SELESAI</span>';
                     }
                 },
                 {
                     data: null,
                     className: 'text-center',
                     render: function(row) {
-                        return `<a class="btn btn-sm btn-primary" href="<?= base_url('/so/hasil') ?>?tanggal=${encodeURIComponent(row.tanggal || '')}">
+                        return `<a class="btn btn-sm btn-primary" href="<?= base_url('/opname/hasil') ?>?tanggal=${encodeURIComponent(row.tanggal || '')}">
                             <i class="ti ti-eye"></i> Lihat Hasil SO
                         </a>`;
                     }

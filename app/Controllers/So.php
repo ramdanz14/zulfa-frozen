@@ -248,7 +248,7 @@ class So extends BaseController
     {
         $db = Database::connect();
         $row = $db->query(
-            "SELECT * FROM akses_menu WHERE level_id=:level_id: AND menu_id='so' LIMIT 1",
+            "SELECT * FROM akses_menu WHERE level_id=:level_id: AND menu_id='opname' LIMIT 1",
             ['level_id' => session('level_id')]
         )->getRowArray();
 

@@ -17,7 +17,7 @@
                         <p class="mb-0"><span class="page-pretitle"><?= !empty($soAktif['tanggal'] ?? '') ? esc($soAktif['tanggal']) : 'Tidak ada SO aktif' ?></span> | Input stok fisik per item.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/so') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
+                        <a href="<?= base_url('/opname') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke Menu SO</a>
                     </div>
                 </div>
             </div>
@@ -155,7 +155,7 @@
         serverSide: true,
         ordering: false,
         ajax: {
-            url: '<?= base_url('/so/ajax-input') ?>',
+            url: '<?= base_url('/opname/ajax-input') ?>',
             type: 'post',
             data: function(d) {
                 d.status_input = $('#status_input').val();
@@ -241,7 +241,7 @@
         e.preventDefault();
         $.ajax({
             type: 'PATCH',
-            url: '<?= base_url('/so/input-save') ?>',
+            url: '<?= base_url('/opname/input-save') ?>',
             dataType: 'json',
             data: $(this).serialize(),
             success: function(res) {
@@ -263,7 +263,7 @@
         $('#history-title').text(`${kodeItem} - ${namaItem}`);
         $('#history-body').html('<tr><td colspan="3" class="text-center text-muted">Memuat data...</td></tr>');
         historyModal.show();
-        $.post('<?= base_url('/so/history-input') ?>', {
+        $.post('<?= base_url('/opname/history-input') ?>', {
             kode_item: kodeItem
         }, function(res) {
             if (!Array.isArray(res) || !res.length) {

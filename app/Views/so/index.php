@@ -31,25 +31,25 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 
         <div class="row g-3">
             <?php if ($canBuatSo): ?>
-            <div class="col-md-6 col-xl-3">
-                <a href="javascript:void(0)" class="card h-100 text-decoration-none" onclick="createSoAll()">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-1">Buat SO All</div>
-                        <div class="text-muted small">Load snapshot semua item aktif toko ini ke sesi SO baru.</div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <a href="javascript:void(0)" class="card h-100 text-decoration-none" onclick="openKategoriModal()">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-1">Buat SO Kategori</div>
-                        <div class="text-muted small">Load snapshot item berdasarkan kategori tertentu.</div>
-                    </div>
-                </a>
-            </div>
+                <div class="col-md-6 col-xl-3">
+                    <a href="javascript:void(0)" class="card h-100 text-decoration-none" onclick="createSoAll()">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-1">Buat SO All</div>
+                            <div class="text-muted small">Load snapshot semua item aktif toko ini ke sesi SO baru.</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <a href="javascript:void(0)" class="card h-100 text-decoration-none" onclick="openKategoriModal()">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-1">Buat SO Kategori</div>
+                            <div class="text-muted small">Load snapshot item berdasarkan kategori tertentu.</div>
+                        </div>
+                    </a>
+                </div>
             <?php endif; ?>
             <div class="col-md-6 col-xl-3">
-                <a href="<?= base_url('/so/input') ?>" class="card h-100 text-decoration-none">
+                <a href="<?= base_url('/opname/input') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
                         <div class="fw-semibold mb-1">Input SO</div>
                         <div class="text-muted small">Input stok fisik per item pada sesi SO aktif.</div>
@@ -57,7 +57,7 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                 </a>
             </div>
             <div class="col-md-6 col-xl-3">
-                <a href="<?= base_url('/so/hasil') ?>" class="card h-100 text-decoration-none">
+                <a href="<?= base_url('/opname/hasil') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
                         <div class="fw-semibold mb-1">Hasil SO</div>
                         <div class="text-muted small">Lihat hasil selisih, ringkasan NK/NL, dan progres input.</div>
@@ -65,17 +65,17 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                 </a>
             </div>
             <?php if ($canBuatSo): ?>
-            <div class="col-md-6 col-xl-3">
-                <a href="<?= base_url('/so/satuan') ?>" class="card h-100 text-decoration-none">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-1">SO Satuan</div>
-                        <div class="text-muted small">Tambah adjustment manual satuan ke tabel `adjust`.</div>
-                    </div>
-                </a>
-            </div>
+                <div class="col-md-6 col-xl-3">
+                    <a href="<?= base_url('/opname/satuan') ?>" class="card h-100 text-decoration-none">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-1">SO Satuan</div>
+                            <div class="text-muted small">Tambah adjustment manual satuan ke tabel `adjust`.</div>
+                        </div>
+                    </a>
+                </div>
             <?php endif; ?>
             <div class="col-md-6 col-xl-3">
-                <a href="<?= base_url('/so/history') ?>" class="card h-100 text-decoration-none">
+                <a href="<?= base_url('/opname/history') ?>" class="card h-100 text-decoration-none">
                     <div class="card-body">
                         <div class="fw-semibold mb-1">History SO</div>
                         <div class="text-muted small">Lihat riwayat sesi SO yang pernah dibuat di toko ini.</div>
@@ -152,7 +152,7 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (!result.isConfirmed) return;
-            $.post('<?= base_url('/so/create-all') ?>', function(res) {
+            $.post('<?= base_url('/opname/create-all') ?>', function(res) {
                 if (res.tipe === 'success') {
                     toastr.success(res.data || 'SO berhasil dibuat');
                     window.location.reload();
@@ -173,7 +173,7 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
         }
         $.ajax({
             type: 'POST',
-            url: '<?= base_url('/so/create-kategori') ?>',
+            url: '<?= base_url('/opname/create-kategori') ?>',
             dataType: 'json',
             traditional: true,
             data: {
@@ -195,7 +195,7 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
     }
 
     function adjustSoAll() {
-        $.post('<?= base_url('/so/summary') ?>', {
+        $.post('<?= base_url('/opname/summary') ?>', {
             tanggal: 'aktif'
         }, function(summary) {
             Swal.fire({
@@ -212,7 +212,7 @@ $canBuatSo = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (!result.isConfirmed) return;
-                $.post('<?= base_url('/so/adjust-all') ?>', function(res) {
+                $.post('<?= base_url('/opname/adjust-all') ?>', function(res) {
                     if (res.tipe === 'success') {
                         toastr.success(res.data || 'Adjust SO berhasil');
                         window.location.reload();
