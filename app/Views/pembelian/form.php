@@ -7,17 +7,254 @@
  * @var array $supplierOptions
  */
 ?>
+
+<style>
+    /* =========================================================
+   PEMBELIAN WORKSPACE STYLING (Optimized for Mobile & Tablet)
+   ========================================================= */
+    .pembelian-container {
+        padding-bottom: 90px;
+        /* Space for sticky bottom bar on mobile */
+    }
+
+    /* Compact Collapsible Header */
+    .purchase-header-card {
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        transition: all 0.2s ease;
+    }
+
+    .purchase-header-summary {
+        cursor: pointer;
+        user-select: none;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+    }
+
+    .purchase-header-summary:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.04);
+    }
+
+    .header-tag-pill {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    /* Item Workspace (Dominant Area) */
+    .item-workspace-card {
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .item-search-wrapper .select2-container--default .select2-selection--single {
+        height: 46px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        border: 2px solid #cbd5e1;
+        transition: border-color 0.2s;
+    }
+
+    .item-search-wrapper .select2-container--default .select2-selection--single:focus,
+    .item-search-wrapper .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: var(--bs-primary);
+    }
+
+    .item-search-wrapper .select2-selection__rendered {
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding-left: 12px !important;
+    }
+
+    /* Detail Item Cards */
+    .detail-item-card {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        transition: box-shadow 0.15s ease, border-color 0.15s ease;
+        position: relative;
+        padding: 0.85rem;
+    }
+
+    .detail-item-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .detail-item-card .item-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.3;
+    }
+
+    .detail-item-card .item-code {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-family: var(--bs-font-monospace);
+        background: #f8fafc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .detail-item-card .row-stock-hint {
+        font-size: 0.75rem;
+        color: #059669;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .detail-input-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .detail-input-grid {
+            grid-template-columns: 140px 100px 1fr 1fr;
+        }
+    }
+
+    .input-label-compact {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .form-control-touch {
+        height: 40px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+
+    /* Delete item button */
+    .btn-delete-item {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #dc3545;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        transition: all 0.15s;
+    }
+
+    .btn-delete-item:hover,
+    .btn-delete-item:active {
+        background: #dc3545;
+        color: #ffffff;
+        border-color: #dc3545;
+    }
+
+    /* Mobile Sticky Action Bar */
+    .mobile-sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+        z-index: 1040;
+    }
+
+    /* Payment Card Row Styling (Card-based, No Horizontal Scroll) */
+    .pay-card-item {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        padding: 0.85rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    .pay-card-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+    .pay-card-item.is-transfer {
+        border-left: 4px solid #0d6efd;
+    }
+    .pay-card-item.is-tunai {
+        border-left: 4px solid #198754;
+    }
+    .btn-delete-pay {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #dc3545;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        transition: all 0.15s;
+    }
+    .btn-delete-pay:hover, .btn-delete-pay:active {
+        background: #dc3545;
+        color: #ffffff;
+        border-color: #dc3545;
+    }
+    .existing-pay-card {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 0.75rem 0.85rem;
+    }
+
+    /* Desktop summary sidebar sticky */
+    @media (min-width: 1200px) {
+        .sticky-summary {
+            position: sticky;
+            top: 80px;
+        }
+    }
+</style>
+
 <div class="body-wrapper">
-    <div class="container-fluid p-0">
-        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden">
-            <div class="card-body px-4 py-3">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2"><?= $mode === 'create' ? 'Tambah' : 'Edit' ?> Pembelian</h4>
-                        <p class="mb-0">Kelola draft PO, penerimaan barang, dan pembayaran supplier dalam satu form.</p>
+    <div class="container-fluid p-0 pembelian-container">
+        <!-- Breadcrumb / Header Banner -->
+        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-2 px-md-4 py-md-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+                            <i class="ti ti-shopping-cart fs-6 text-white"></i>
+                        </span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark"><?= $mode === 'create' ? 'Tambah' : 'Edit' ?> Pembelian</h5>
+                            <small class="text-muted d-none d-sm-inline">Draft PO, penerimaan barang & pembayaran supplier</small>
+                        </div>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/pembelian') ?>" class="btn btn-secondary btn-sm">Kembali ke List</a>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="<?= base_url('/hutang') ?>" class="btn btn-outline-danger btn-sm d-none d-md-inline-flex align-items-center gap-1">
+                            <i class="ti ti-receipt-2"></i> Monitoring Hutang
+                        </a>
+                        <a href="<?= base_url('/pembelian') ?>" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1">
+                            <i class="ti ti-arrow-left"></i> Kembali
+                        </a>
                     </div>
                 </div>
             </div>
@@ -29,139 +266,199 @@
             <input type="hidden" name="payment_json" id="payment_json">
 
             <div class="row g-3">
-                <div class="col-xl-8 mt-1">
-                    <div class="card">
-                        <div class="card-header py-1">
-                            <h5 class="mb-0">Informasi Pembelian</h5>
+                <!-- MAIN WORKSPACE: Item Area & Compact Header -->
+                <div class="col-xl-8">
+
+                    <!-- COMPACT INFO PEMBELIAN (Collapsible on Mobile, streamlined on Tablet/Desktop) -->
+                    <div class="card purchase-header-card mb-3">
+                        <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#collapseHeaderInfo" aria-expanded="true">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold text-dark fs-3"><i class="ti ti-file-text text-primary me-1"></i> Data Transaksi & Supplier</span>
+                                <span class="header-tag-pill" id="header-chip-sup">
+                                    <i class="ti ti-building-store"></i> <span id="chip-sup-text">Pilih Supplier</span>
+                                </span>
+                                <span class="header-tag-pill" id="header-chip-inv">
+                                    <i class="ti ti-barcode"></i> <span id="chip-inv-text">-</span>
+                                </span>
+                                <span class="badge bg-light-primary text-primary" id="chip-status-text">PO / Draft</span>
+                            </div>
+                            <div class="text-muted small d-flex align-items-center gap-1">
+                                <span class="d-none d-sm-inline">Ubah Info</span>
+                                <i class="ti ti-chevron-down fs-4 transition-all" id="header-collapse-icon"></i>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">ID Pembelian</label>
-                                    <input type="text" class="form-control" name="beli_id" id="beli_id" readonly value="<?= esc($formData['header']['beli_id'] ?? '') ?>">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Tanggal</label>
-                                    <input type="date" class="form-control" name="tanggal" id="tanggal" value="<?= esc($formData['header']['tanggal'] ?? date('Y-m-d')) ?>" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Status Nota</label>
-                                    <select class="form-select" name="status_nota" id="status_nota">
-                                        <option value="PO" <?= ($formData['header']['status_nota'] ?? 'PO') === 'PO' ? 'selected' : '' ?>>PO / Draft</option>
-                                        <option value="TERIMA" <?= ($formData['header']['status_nota'] ?? '') === 'TERIMA' ? 'selected' : '' ?>>TERIMA / Barang Masuk</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-7">
-                                    <label class="form-label">Supplier</label>
-                                    <select class="form-select select2" name="supco" id="supco" required>
-                                        <option value="">Pilih Supplier</option>
-                                        <?php foreach ($supplierOptions as $row) : ?>
-                                            <option value="<?= esc($row['supco']) ?>" <?= ($formData['header']['supco'] ?? '') === $row['supco'] ? 'selected' : '' ?>>
-                                                <?= esc($row['supco']) ?> - <?= esc($row['nama']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label">Invoice Supplier</label>
-                                    <input type="text" class="form-control" name="invoice" id="invoice" required value="<?= esc($formData['header']['invoice'] ?? '') ?>">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Keterangan</label>
-                                    <input type="text" class="form-control" name="keterangan" id="keterangan" value="<?= esc($formData['header']['keterangan'] ?? '') ?>">
+                        <div class="collapse show" id="collapseHeaderInfo">
+                            <div class="card-body p-3 bg-light-subtle border-top">
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">ID Pembelian</label>
+                                        <input type="text" class="form-control form-control-sm font-monospace bg-white" name="beli_id" id="beli_id" readonly value="<?= esc($formData['header']['beli_id'] ?? '') ?>" placeholder="(Auto)">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">Tanggal <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control form-control-sm bg-white" name="tanggal" id="tanggal" value="<?= esc($formData['header']['tanggal'] ?? date('Y-m-d')) ?>" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="input-label-compact">Supplier <span class="text-danger">*</span></label>
+                                        <select class="form-select select2" name="supco" id="supco" required>
+                                            <option value="">Pilih Supplier</option>
+                                            <?php foreach ($supplierOptions as $row) : ?>
+                                                <option value="<?= esc($row['supco']) ?>" <?= ($formData['header']['supco'] ?? '') === $row['supco'] ? 'selected' : '' ?>>
+                                                    <?= esc($row['supco']) ?> - <?= esc($row['nama']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-5">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="input-label-compact">Invoice Supplier <span class="text-danger">*</span></label>
+                                            <small class="text-muted" style="font-size: 0.68rem;">Auto format: <span class="font-monospace">supco-YYMMDD</span></small>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white"><i class="ti ti-file-invoice text-muted"></i></span>
+                                            <input type="text" class="form-control form-control-sm bg-white font-monospace" name="invoice" id="invoice" required value="<?= esc($formData['header']['invoice'] ?? '') ?>" placeholder="SUP01-260917">
+                                            <button class="btn btn-outline-secondary" type="button" id="btn-re-generate-inv" title="Generate ulang kode invoice otomatis"><i class="ti ti-refresh"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">Status Nota <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm bg-white fw-semibold" name="status_nota" id="status_nota">
+                                            <option value="PO" <?= ($formData['header']['status_nota'] ?? 'PO') === 'PO' ? 'selected' : '' ?>>PO (Draft Pesanan)</option>
+                                            <option value="TERIMA" <?= ($formData['header']['status_nota'] ?? '') === 'TERIMA' ? 'selected' : '' ?>>TERIMA (Barang Masuk)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="input-label-compact">Keterangan / Catatan</label>
+                                        <input type="text" class="form-control form-control-sm bg-white" name="keterangan" id="keterangan" value="<?= esc($formData['header']['keterangan'] ?? '') ?>" placeholder="Catatan pengiriman / PO">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center">
-                            <div>
-                                <h5 class="mb-1">Detail Item</h5>
-                                <small class="text-muted">Cari item dengan nama, kode, atau barcode lalu tambahkan ke daftar.</small>
-                            </div>
-                            <div class="w-100" style="max-width: 420px;">
-                                <select class="form-select" id="item-search"></select>
+                    <!-- PRIMARY ITEM WORKSPACE (Dominant Focus Area) -->
+                    <div class="card item-workspace-card">
+                        <div class="card-header bg-white py-3 px-3 border-bottom">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-12 col-md-5">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary-subtle text-primary p-2 rounded-3"><i class="ti ti-package fs-5"></i></span>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">Daftar Item Pembelian</h6>
+                                            <small class="text-muted" id="item-count-badge">0 item dipilih</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-7">
+                                    <div class="item-search-wrapper position-relative">
+                                        <select class="form-select" id="item-search" style="width: 100%;"></select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="card-body p-2">
-                            <div id="detail-list" class="d-grid gap-2"></div>
+                        <div class="card-body p-2 p-md-3">
+                            <!-- Items List Container -->
+                            <div id="detail-list" class="d-flex flex-column gap-2"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-4 mt-1">
-                    <div class="card" id="summary-card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Summary</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Jumlah Item</span>
-                                <span class="fw-semibold" id="summary-item">0</span>
+                <!-- SIDEBAR / SUMMARY COLUMN -->
+                <div class="col-xl-4">
+                    <div class="sticky-summary d-flex flex-column gap-3">
+                        <!-- Ringkasan Nilai -->
+                        <div class="card shadow-sm border-0" id="summary-card" style="border-radius: 12px; background: #ffffff;">
+                            <div class="card-header bg-white py-3 px-3 border-bottom d-flex align-items-center justify-content-between">
+                                <h6 class="fw-bold mb-0 text-dark"><i class="ti ti-calculator text-primary me-1"></i> Ringkasan Pembelian</h6>
+                                <span class="badge bg-success-subtle text-success fs-2" id="summary-nota-badge">PO / DRAFT</span>
                             </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Total Qty</span>
-                                <span class="fw-semibold" id="summary-qty">0</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Total Gross</span>
-                                <span class="fw-semibold" id="summary-gross">Rp 0</span>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Pembayaran Existing</span>
-                                <span class="fw-semibold" id="summary-existing-paid">Rp 0</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Pembayaran Form</span>
-                                <span class="fw-semibold" id="summary-form-paid">Rp 0</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Sisa Bayar</span>
-                                <span class="fw-semibold text-danger" id="summary-sisa">Rp 0</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php if (!empty($formData['payments'])) : ?>
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Histori Pembayaran Tersimpan</h5>
-                            </div>
-                            <div class="card-body p-2">
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Tanggal</th>
-                                                <th>Metode</th>
-                                                <th>Bank</th>
-                                                <th>Nominal</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($formData['payments'] as $row) : ?>
-                                                <tr>
-                                                    <td><?= esc($row['tanggal_bayar']) ?></td>
-                                                    <td><?= esc($row['cara_bayar']) ?></td>
-                                                    <td><?= esc(($row['bank_nama'] ?? '-') . ' / ' . ($row['rekening_no'] ?? '-')) ?></td>
-                                                    <td class="text-end">Rp <?= digit_group($row['jumlah_bayar']) ?></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Total Jenis Item</span>
+                                    <span class="fw-bold" id="summary-item">0</span>
                                 </div>
-                                <small class="text-muted d-block mt-2">Untuk menambah cicilan baru gunakan menu monitoring hutang agar histori tetap konsisten.</small>
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Total Kuantitas (Qty)</span>
+                                    <span class="fw-bold" id="summary-qty">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded-3">
+                                    <span class="fw-semibold text-dark">Total Gross / Tagihan</span>
+                                    <span class="fw-bolder fs-5 text-primary" id="summary-gross">Rp 0</span>
+                                </div>
+
+                                <div id="summary-payment-section" class="border-top pt-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted small">Pembayaran Tersimpan</span>
+                                        <span class="fw-semibold text-secondary" id="summary-existing-paid">Rp 0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small">Pembayaran Baru (Form)</span>
+                                        <span class="fw-semibold text-success" id="summary-form-paid">Rp 0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-danger-subtle">
+                                        <span class="fw-semibold text-danger small">Sisa Bayar (Hutang)</span>
+                                        <span class="fw-bolder fs-4 text-danger font-monospace" id="summary-sisa">Rp 0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Desktop Action Button -->
+                                <div class="d-none d-xl-grid gap-2 mt-3 pt-2 border-top">
+                                    <button type="submit" class="btn btn-success btn-lg fw-bold d-flex align-items-center justify-content-center gap-2" id="btn-save">
+                                        <i class="ti ti-device-floppy fs-5"></i> Simpan Pembelian
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    <?php endif; ?>
 
-                    <div class="card">
-                        <div class="card-body d-grid gap-2">
-                            <button type="submit" class="btn btn-success" id="btn-save">Simpan Pembelian</button>
-                            <a href="<?= base_url('/hutang') ?>" class="btn btn-outline-danger">Buka Monitoring Hutang</a>
-                        </div>
+                        <!-- Histori Pembayaran Tersimpan Card (if any) -->
+                        <?php if (!empty($formData['payments'])) : ?>
+                            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                <div class="card-header bg-white py-2 px-3 border-bottom">
+                                    <h6 class="fw-bold mb-0 text-dark small"><i class="ti ti-history text-secondary me-1"></i> Histori Pembayaran</h6>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 0.8rem;">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Tgl</th>
+                                                    <th>Metode</th>
+                                                    <th>Nominal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($formData['payments'] as $row) : ?>
+                                                    <tr>
+                                                        <td><?= esc(date('d/m/y', strtotime($row['tanggal_bayar']))) ?></td>
+                                                        <td><?= esc($row['cara_bayar']) ?></td>
+                                                        <td class="text-end fw-semibold">Rp <?= digit_group($row['jumlah_bayar']) ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted d-block mt-2" style="font-size: 0.72rem;">* Guna menambah cicilan lanjutan, gunakan menu monitoring hutang.</small>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE STICKY ACTION BAR -->
+            <div class="mobile-sticky-action-bar d-xl-none">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div>
+                        <div class="small text-muted" style="font-size: 0.72rem; line-height: 1;">Total Tagihan</div>
+                        <div class="fw-bolder fs-4 text-primary" id="mobile-summary-gross">Rp 0</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#summary-modal-mobile" title="Detail Ringkasan">
+                            <i class="ti ti-info-circle fs-5"></i>
+                        </button>
+                        <button type="submit" class="btn btn-success px-3 fw-bold d-flex align-items-center gap-1" id="mobile-btn-save">
+                            <i class="ti ti-device-floppy fs-5"></i> Simpan
+                        </button>
                     </div>
                 </div>
             </div>
@@ -169,93 +466,120 @@
     </div>
 </div>
 
-<div class="modal fade" id="payment-modal" data-bs-focus="false">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+<!-- MODAL SUMMARY UNTUK MOBILE -->
+<div class="modal fade" id="summary-modal-mobile" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Input Pembayaran Pembelian</h5>
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-bold">Detail Ringkasan</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Jenis Item:</span>
+                    <span class="fw-bold" id="m-modal-item">0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Total Qty:</span>
+                    <span class="fw-bold" id="m-modal-qty">0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Total Gross:</span>
+                    <span class="fw-bold text-primary" id="m-modal-gross">Rp 0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Sudah Dibayar:</span>
+                    <span class="fw-semibold text-secondary" id="m-modal-paid">Rp 0</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 rounded bg-danger-subtle">
+                    <span class="text-danger small fw-semibold">Sisa Tagihan:</span>
+                    <span class="fw-bold text-danger" id="m-modal-sisa">Rp 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INPUT PEMBAYARAN -->
+<div class="modal fade" id="payment-modal" data-bs-focus="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light py-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Input Pembayaran Pembelian</h5>
+                    <small class="text-muted">Lengkapi pembayaran untuk transaksi penerimaan barang (TERIMA)</small>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="row g-3 mb-3">
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted">Total Gross</small>
-                            <div class="fw-semibold" id="modal-total-gross">Rp 0</div>
+            <div class="modal-body p-3">
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Total Tagihan</small>
+                            <div class="fw-bold text-primary" id="modal-total-gross">Rp 0</div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted">Pembayaran Existing</small>
-                            <div class="fw-semibold" id="modal-existing-paid">Rp 0</div>
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Telah Dibayar</small>
+                            <div class="fw-semibold text-secondary" id="modal-existing-paid">Rp 0</div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted">Sisa Setelah Form</small>
-                            <div class="fw-semibold text-danger" id="modal-remaining">Rp 0</div>
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-danger-subtle border-danger-subtle">
+                            <small class="text-danger d-block fw-semibold" style="font-size: 0.72rem;">Sisa Tagihan</small>
+                            <div class="fw-bolder text-danger font-monospace" id="modal-remaining">Rp 0</div>
                         </div>
                     </div>
                 </div>
 
-                <div id="credit-alert-container" class="d-none"></div>
+                <div id="credit-alert-container" class="d-none mb-3"></div>
 
                 <div class="mb-3 d-none" id="existing-payment-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div>
-                            <h6 class="mb-1">Histori Pembayaran Tersimpan</h6>
-                            <small class="text-muted">Data existing readonly. Hapus dulu jika perlu koreksi total bayar sebelum simpan ulang.</small>
+                            <h6 class="mb-0 fw-bold small text-secondary">Histori Pembayaran Tersimpan</h6>
+                            <small class="text-muted">Hapus baris jika ingin membatalkan pembayaran sebelumnya.</small>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered align-middle mb-0" id="existing-payment-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Metode</th>
-                                    <th>Tanggal/Jam</th>
-                                    <th>Nominal</th>
-                                    <th>Bank / Rekening</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
+                    <div id="existing-payment-list" class="d-flex flex-column gap-2"></div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
-                        <h6 class="mb-1">Pembayaran Awal</h6>
-                        <small class="text-muted">Boleh campur tunai dan transfer dalam beberapa baris.</small>
+                        <h6 class="mb-0 fw-bold text-dark fs-3">Pembayaran Transaksi</h6>
+                        <small class="text-muted">Cukup pilih Metode & Nominal (tanggal otomatis saat ini).</small>
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-payment">Tambah</button>
+                    <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" id="btn-add-payment">
+                        <i class="ti ti-plus"></i> Tambah Metode
+                    </button>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered align-middle mb-0" id="payment-table">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Metode</th>
-                                <th>Tanggal/Jam</th>
-                                <th>Nominal</th>
-                                <th>Bank / Rekening</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+                <!-- Card-based payment list (No horizontal scrolling) -->
+                <div id="payment-list" class="d-flex flex-column gap-2 mb-3"></div>
 
-                <div class="border rounded p-3 mt-3 d-none" id="credit-box">
-                    <div class="fw-semibold mb-2 text-danger">Sisa pembayaran akan dicatat sebagai hutang supplier.</div>
-                    <label class="form-label">Tanggal Jatuh Tempo</label>
-                    <input type="date" class="form-control" name="jatuh_tempo" id="jatuh_tempo" min="<?= date('Y-m-d') ?>" value="<?= esc($formData['header']['jatuh_tempo'] ?? date('Y-m-d', strtotime('+1 month'))) ?>">
-                    <small class="text-muted mt-2 d-block">Default jatuh tempo satu bulan ke depan dan tidak boleh lebih kecil dari hari ini.</small>
+                <div class="border border-warning rounded p-3 bg-warning-subtle d-none" id="credit-box">
+                    <div class="d-flex align-items-center gap-2 mb-2 text-warning-emphasis">
+                        <i class="ti ti-alert-triangle fs-5"></i>
+                        <span class="fw-bold">Pencatatan Hutang Supplier</span>
+                    </div>
+                    <p class="small text-muted mb-2">Sisa pembayaran yang belum terbayar akan otomatis dicatat sebagai hutang dagang supplier.</p>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-sm-6">
+                            <label class="input-label-compact">Tanggal Jatuh Tempo <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm bg-white" name="jatuh_tempo" id="jatuh_tempo" min="<?= date('Y-m-d') ?>" value="<?= esc($formData['header']['jatuh_tempo'] ?? date('Y-m-d', strtotime('+1 month'))) ?>">
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <small class="text-muted d-block mt-3">* Minimal hari ini. Default adalah tempo 30 hari.</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer bg-light py-2">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-success" id="btn-confirm-save">Simpan Pembelian</button>
+                <button type="button" class="btn btn-success fw-bold px-4" id="btn-confirm-save">
+                    <i class="ti ti-check me-1"></i> Konfirmasi & Simpan
+                </button>
             </div>
         </div>
     </div>
@@ -283,9 +607,8 @@
     let pendingRequestData = null;
 
     $('#payment-modal').on('shown.bs.modal', function() {
-        applyMoneyMask('#payment-table');
-        applyMoneyMask('#existing-payment-table');
-        console.log('jalankan mask dari event');
+        applyMoneyMask('#payment-list');
+        applyMoneyMask('#existing-payment-list');
     });
     $(function() {
         $('.select2').select2({
@@ -318,9 +641,15 @@
         }
 
         renderDetailList();
-        renderExistingPaymentTable();
+        renderExistingPaymentCards();
         bindEvents();
         updateSummary();
+        syncHeaderChips();
+
+        // If create mode and invoice empty, check if we can auto-generate
+        if (mode === 'create' && !$('#invoice').val().trim()) {
+            autoGenerateInvoice();
+        }
     });
 
     function normalizeInitialRow(row) {
@@ -344,15 +673,88 @@
         };
     }
 
+    // Auto-generate Invoice Supplier format: supco-YYMMDD
+    let invoiceManuallyEdited = <?= !empty($formData['header']['invoice']) ? 'true' : 'false' ?>;
+
+    function autoGenerateInvoice(force = false) {
+        if (invoiceManuallyEdited && !force) {
+            return;
+        }
+        const supco = $('#supco').val();
+        const tglVal = $('#tanggal').val(); // YYYY-MM-DD
+        if (!supco) {
+            return;
+        }
+
+        let dateStr = '';
+        if (tglVal && tglVal.length >= 10) {
+            const parts = tglVal.split('-'); // [YYYY, MM, DD]
+            const yy = parts[0].slice(2);
+            const mm = parts[1];
+            const dd = parts[2];
+            dateStr = `${yy}${mm}${dd}`;
+        } else {
+            const d = new Date();
+            const yy = String(d.getFullYear()).slice(2);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            dateStr = `${yy}${mm}${dd}`;
+        }
+
+        const generated = `${supco}-${dateStr}`;
+        $('#invoice').val(generated);
+        toggleInvalidState($('#invoice'), true);
+        syncHeaderChips();
+    }
+
+    function syncHeaderChips() {
+        const supText = $('#supco option:selected').text().trim() || 'Pilih Supplier';
+        const invVal = $('#invoice').val().trim() || '-';
+        const statusVal = $('#status_nota').val();
+
+        $('#chip-sup-text').text(supText.length > 22 ? supText.substring(0, 20) + '...' : supText);
+        $('#chip-inv-text').text(invVal);
+
+        if (statusVal === 'TERIMA') {
+            $('#chip-status-text').removeClass('bg-light-primary text-primary').addClass('bg-success-subtle text-success').text('TERIMA (Masuk)');
+            $('#summary-nota-badge').removeClass('bg-primary-subtle text-primary').addClass('bg-success-subtle text-success').text('TERIMA / MASUK');
+        } else {
+            $('#chip-status-text').removeClass('bg-success-subtle text-success').addClass('bg-light-primary text-primary').text('PO / Draft');
+            $('#summary-nota-badge').removeClass('bg-success-subtle text-success').addClass('bg-primary-subtle text-primary').text('PO / DRAFT');
+        }
+    }
+
     function bindEvents() {
-        $('#status_nota').on('change', updateSummary);
+        $('#status_nota').on('change', function() {
+            syncHeaderChips();
+            updateSummary();
+        });
 
         $('#supco').on('change', function() {
             toggleInvalidState($(this), !!$(this).val());
+            autoGenerateInvoice();
+            syncHeaderChips();
+        });
+
+        $('#tanggal').on('change', function() {
+            autoGenerateInvoice();
         });
 
         $('#invoice').on('input', function() {
+            invoiceManuallyEdited = true;
             toggleInvalidState($(this), $.trim($(this).val()) !== '');
+            syncHeaderChips();
+        });
+
+        $('#btn-re-generate-inv').on('click', function() {
+            autoGenerateInvoice(true);
+            toastr.info('Invoice di-generate ulang sesuai Supplier & Tanggal');
+        });
+
+        $('#collapseHeaderInfo').on('show.bs.collapse', function() {
+            $('#header-collapse-icon').removeClass('ti-chevron-down').addClass('ti-chevron-up');
+        }).on('hide.bs.collapse', function() {
+            $('#header-collapse-icon').removeClass('ti-chevron-up').addClass('ti-chevron-down');
         });
 
         $('#jatuh_tempo').on('change', function() {
@@ -368,7 +770,7 @@
                 bank_nama: '',
                 rekening_no: ''
             });
-            renderPaymentTable();
+            renderPaymentCards();
             updateSummary();
         });
 
@@ -380,8 +782,6 @@
         $('#btn-confirm-save').on('click', function() {
             finalizeSave();
         });
-
-
     }
 
     function loadItem(kodeItem) {
@@ -402,7 +802,7 @@
                 return;
             }
             const first = options[0];
-            detailRows.push({
+            detailRows.unshift({
                 kode_item: item.kode_item,
                 barcode: item.barcode || '',
                 nama_item: item.nama_item || '',
@@ -421,6 +821,7 @@
             });
             renderDetailList();
             updateSummary();
+            toastr.success(`${item.nama_item} ditambahkan`);
         }).fail(function(xhr) {
             toastr.error(extractErrorMessage(xhr, 'Gagal mengambil detail item'));
         });
@@ -429,45 +830,67 @@
     function renderDetailList() {
         const wrapper = $('#detail-list');
         wrapper.empty();
+        $('#item-count-badge').text(`${detailRows.length} item dipilih`);
+
         if (!detailRows.length) {
-            wrapper.html('<div class="text-center text-muted py-4">Belum ada item dipilih</div>');
+            wrapper.html(`
+                <div class="text-center text-muted py-5 border rounded-3 bg-light-subtle">
+                    <i class="ti ti-package-off fs-8 text-secondary d-block mb-2"></i>
+                    <h6 class="fw-semibold text-dark mb-1">Belum ada item dipilih</h6>
+                    <small>Cari item atau scan barcode pada kolom pencarian di atas untuk memasukkan pesanan.</small>
+                </div>
+            `);
             return;
         }
 
         detailRows.forEach((row, idx) => {
             const satuanOptions = (row.satuan_options || []).map(opt => `
                 <option value="${opt.sat_id}" ${opt.sat_id === row.sat_id ? 'selected' : ''} data-qty="${opt.qty_konversi}" data-price="${opt.harga_pokok}">
-                    ${opt.sat_id} (${Number(opt.qty_konversi).toLocaleString('id-ID')})
+                    ${opt.sat_id} (1=${Number(opt.qty_konversi).toLocaleString('id-ID')})
                 </option>
             `).join('');
 
             wrapper.append(`
-                <div class="border rounded px-2" data-idx="${idx}">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-10 col-lg-4">
-                            <div class="fw-semibold">${row.kode_item} - ${row.nama_item}</div>
-                            <small class="text-muted row-stock-hint">${stockHint(row)}</small>
+                <div class="detail-item-card" data-idx="${idx}">
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                <span class="item-code">${row.kode_item}</span>
+                                ${row.barcode ? `<span class="badge bg-light text-muted border font-monospace"><i class="ti ti-barcode"></i> ${row.barcode}</span>` : ''}
+                                <span class="row-stock-hint"><i class="ti ti-check"></i> ${stockHint(row)}</span>
+                            </div>
+                            <div class="item-title">${row.nama_item}</div>
                         </div>
-                        <div class="col-2 col-lg-1 text-end order-lg-last">
-                            <button type="button" class="btn btn-sm btn-outline-danger row-delete"><i class="ti ti-trash fs-5"></i></button>
-                        </div>
-                        <div class="col-6 col-md-3 col-lg-2">
-                            <label class="form-label">Satuan</label>
-                            <select class="form-select form-select-sm row-satuan">
+                        <button type="button" class="btn-delete-item row-delete" title="Hapus item">
+                            <i class="ti ti-trash fs-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Compact Input Grid for Ergonomic Mobile & Tablet Typing -->
+                    <div class="detail-input-grid">
+                        <div>
+                            <label class="input-label-compact"><i class="ti ti-scale"></i> Satuan</label>
+                            <select class="form-select form-control-touch row-satuan">
                                 ${satuanOptions}
                             </select>
                         </div>
-                        <div class="col-6 col-md-3 col-lg-1">
-                            <label class="form-label">Qty Beli</label>
-                            <input type="number" min="0.01" step="0.01" class="form-control form-control-sm text-end row-qty" value="${row.qty_beli}">
+                        <div>
+                            <label class="input-label-compact"><i class="ti ti-numbers"></i> Qty Beli</label>
+                            <input type="number" inputmode="decimal" min="0.01" step="any" class="form-control form-control-touch text-end fw-bold row-qty" value="${row.qty_beli}">
                         </div>
-                        <div class="col-6 col-md-3 col-lg-2">
-                            <label class="form-label">Price</label>
-                            <input type="text" class="form-control form-control-sm money text-end row-price" value="${row.price}" data-last="price">
+                        <div>
+                            <label class="input-label-compact"><i class="ti ti-coin"></i> Harga Satuan</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light" style="font-size: 0.75rem;">Rp</span>
+                                <input type="text" inputmode="numeric" class="form-control form-control-touch money text-end row-price" value="${row.price}" data-last="price">
+                            </div>
                         </div>
-                        <div class="col-6 col-md-3 col-lg-2">
-                            <label class="form-label">Gross</label>
-                            <input type="text" class="form-control form-control-sm money text-end row-gross" value="${row.gross}" data-last="gross">
+                        <div>
+                            <label class="input-label-compact text-primary"><i class="ti ti-cash"></i> Gross Subtotal</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-primary" style="font-size: 0.75rem;">Rp</span>
+                                <input type="text" inputmode="numeric" class="form-control form-control-touch money text-end fw-bolder text-primary row-gross" value="${row.gross}" data-last="gross">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -534,48 +957,89 @@
         updateSummary();
     });
 
-    function renderPaymentTable() {
-        const $tbody = $('#payment-table tbody');
-        $tbody.empty();
+    function renderPaymentCards() {
+        const $wrapper = $('#payment-list');
+        $wrapper.empty();
+
         if (!paymentRows.length) {
-            $tbody.append('<tr><td colspan="5" class="text-center text-muted">Belum ada pembayaran awal</td></tr>');
+            $wrapper.append(`
+                <div class="text-center text-muted py-3 border rounded-3 bg-light-subtle">
+                    <small>Belum ada metode pembayaran yang ditambahkan.</small>
+                </div>
+            `);
             updateSummary();
             return;
         }
-        paymentRows.forEach((row, idx) => {
-            const transferBox = row.cara_bayar === 'TRANSFER' ? `
-                <input type="text" class="form-control form-control-sm mb-1 pay-bank" placeholder="Nama bank" value="${row.bank_nama || ''}">
-                <input type="text" class="form-control form-control-sm pay-rekening" placeholder="No rekening" value="${row.rekening_no || ''}">
-            ` : '<small class="text-muted">Tidak diperlukan untuk tunai</small>';
 
-            $tbody.append(`
-                <tr data-idx="${idx}">
-                    <td>
-                        <select class="form-select form-select-sm pay-method">
-                            <option value="TUNAI" ${row.cara_bayar === 'TUNAI' ? 'selected' : ''}>TUNAI</option>
-                            <option value="TRANSFER" ${row.cara_bayar === 'TRANSFER' ? 'selected' : ''}>TRANSFER</option>
-                        </select>
-                    </td>
-                    <td><input type="datetime-local" class="form-control form-control-sm pay-date" value="${toDatetimeLocal(row.tanggal_bayar)}"></td>
-                    <td><input type="text" class="form-control form-control-sm money pay-amount"  value="${row.jumlah_bayar}"></td>
-                    <td>${transferBox}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger pay-delete"><i class="ti ti-trash"></i></button>
-                    </td>
-                </tr>
+        paymentRows.forEach((row, idx) => {
+            // Ensure timestamp is auto-generated
+            if (!row.tanggal_bayar) {
+                row.tanggal_bayar = nowLocalValue();
+            }
+
+            const isTransfer = row.cara_bayar === 'TRANSFER';
+            const cardClass = isTransfer ? 'pay-card-item is-transfer' : 'pay-card-item is-tunai';
+
+            $wrapper.append(`
+                <div class="${cardClass}" data-idx="${idx}">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge ${isTransfer ? 'bg-primary' : 'bg-success'} rounded-pill px-2 py-1">
+                                <i class="ti ${isTransfer ? 'ti-building-bank' : 'ti-cash'} me-1"></i>${row.cara_bayar}
+                            </span>
+                            <small class="text-muted font-monospace" style="font-size: 0.72rem;">
+                                <i class="ti ti-clock"></i> Auto: ${toDatetimeDisplay(row.tanggal_bayar)}
+                            </small>
+                        </div>
+                        <button type="button" class="btn-delete-pay pay-delete" title="Hapus Pembayaran">
+                            <i class="ti ti-trash fs-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-sm-5">
+                            <label class="input-label-compact"><i class="ti ti-wallet"></i> Metode Bayar</label>
+                            <select class="form-select form-control-touch pay-method">
+                                <option value="TUNAI" ${row.cara_bayar === 'TUNAI' ? 'selected' : ''}>TUNAI (Cash)</option>
+                                <option value="TRANSFER" ${row.cara_bayar === 'TRANSFER' ? 'selected' : ''}>TRANSFER BANK</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-7">
+                            <label class="input-label-compact text-success"><i class="ti ti-coin"></i> Nominal Bayar (Rp) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-success fw-bold" style="font-size: 0.8rem;">Rp</span>
+                                <input type="text" inputmode="numeric" class="form-control form-control-touch money text-end fw-bold text-success pay-amount" value="${row.jumlah_bayar}" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conditional Transfer Box: Only shows when TRANSFER is selected -->
+                    <div class="transfer-info-box mt-2 pt-2 border-top ${isTransfer ? '' : 'd-none'}">
+                        <div class="row g-2">
+                            <div class="col-12 col-sm-5">
+                                <label class="input-label-compact"><i class="ti ti-building-bank"></i> Nama Bank <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-touch pay-bank" placeholder="BCA / Mandiri / BRI" value="${row.bank_nama || ''}">
+                            </div>
+                            <div class="col-12 col-sm-7">
+                                <label class="input-label-compact"><i class="ti ti-credit-card"></i> Nomor Rekening <span class="text-danger">*</span></label>
+                                <input type="text" inputmode="numeric" class="form-control form-control-touch font-monospace pay-rekening" placeholder="Contoh: 1234567890" value="${row.rekening_no || ''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `);
         });
 
-        applyMoneyMask('#payment-table');
+        applyMoneyMask('#payment-list');
         bindPaymentEvents();
         updateSummary();
     }
 
-    function renderExistingPaymentTable() {
+    function renderExistingPaymentCards() {
         const $wrapper = $('#existing-payment-wrapper');
-        const $tbody = $('#existing-payment-table tbody');
+        const $container = $('#existing-payment-list');
         const rows = existingPaymentRows.filter(row => !row.deleted);
-        $tbody.empty();
+        $container.empty();
 
         if (!rows.length) {
             $wrapper.addClass('d-none');
@@ -584,67 +1048,76 @@
 
         $wrapper.removeClass('d-none');
         rows.forEach((row) => {
-            const bankText = row.cara_bayar === 'TRANSFER' ? `${row.bank_nama || '-'} / ${row.rekening_no || '-'}` : 'Tunai';
-            $tbody.append(`
-                <tr data-bayar-id="${row.bayar_id}">
-                    <td><input type="text" class="form-control form-control-sm" readonly value="${row.cara_bayar}"></td>
-                    <td><input type="text" class="form-control form-control-sm" readonly value="${String(row.tanggal_bayar).replace('T', ' ')}"></td>
-                    <td><input type="text" class="form-control form-control-sm money" readonly value="${row.jumlah_bayar}"></td>
-                    <td><input type="text" class="form-control form-control-sm" readonly value="${bankText}"></td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger existing-pay-delete" data-bayar-id="${row.bayar_id}"><i class="ti ti-trash"></i></button>
-                    </td>
-                </tr>
+            const isTransfer = row.cara_bayar === 'TRANSFER';
+            const bankText = isTransfer ? `${row.bank_nama || '-'} (${row.rekening_no || '-'})` : 'Tunai / Kasir';
+
+            $container.append(`
+                <div class="existing-pay-card d-flex align-items-center justify-content-between gap-2" data-bayar-id="${row.bayar_id}">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge ${isTransfer ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success'} rounded-pill" style="font-size: 0.72rem;">
+                                ${row.cara_bayar}
+                            </span>
+                            <span class="fw-bold text-dark" style="font-size: 0.95rem;">Rp ${formatMoneyValue(row.jumlah_bayar)}</span>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">
+                            <i class="ti ti-calendar"></i> ${String(row.tanggal_bayar).replace('T', ' ')} &bull; <i class="ti ti-building-bank"></i> ${bankText}
+                        </small>
+                    </div>
+                    <button type="button" class="btn-delete-pay existing-pay-delete" data-bayar-id="${row.bayar_id}" title="Hapus histori pembayaran">
+                        <i class="ti ti-trash fs-5"></i>
+                    </button>
+                </div>
             `);
         });
 
-        applyMoneyMask('#existing-payment-table');
-        $('#existing-payment-table .existing-pay-delete').off('click').on('click', function() {
+        $('#existing-payment-list .existing-pay-delete').off('click').on('click', function() {
             const bayarId = Number($(this).data('bayar-id'));
             const target = existingPaymentRows.find(row => row.bayar_id === bayarId);
             if (!target) return;
             target.deleted = true;
-            renderExistingPaymentTable();
+            renderExistingPaymentCards();
             updateSummary();
         });
     }
 
     function bindPaymentEvents() {
-        $('#payment-table .pay-method').off('change').on('change', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            paymentRows[idx].cara_bayar = $(this).val();
-            if (paymentRows[idx].cara_bayar === 'TUNAI') {
+        $('#payment-list .pay-method').off('change').on('change', function() {
+            const card = $(this).closest('[data-idx]');
+            const idx = Number(card.data('idx'));
+            const method = $(this).val();
+            paymentRows[idx].cara_bayar = method;
+            if (method === 'TUNAI') {
                 paymentRows[idx].bank_nama = '';
                 paymentRows[idx].rekening_no = '';
             }
-            renderPaymentTable();
+            renderPaymentCards();
         });
 
-        $('#payment-table .pay-date').off('change').on('change', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
-            paymentRows[idx].tanggal_bayar = $(this).val();
-        });
-
-        $('#payment-table .pay-amount').on('input blur', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
+        $('#payment-list .pay-amount').on('input blur', function() {
+            const card = $(this).closest('[data-idx]');
+            const idx = Number(card.data('idx'));
             paymentRows[idx].jumlah_bayar = Number(normalizeMoneyValue($(this).val() || 0));
             updateSummary();
         });
 
-        $('#payment-table .pay-bank').off('input').on('input', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
+        $('#payment-list .pay-bank').off('input').on('input', function() {
+            const card = $(this).closest('[data-idx]');
+            const idx = Number(card.data('idx'));
             paymentRows[idx].bank_nama = $(this).val();
         });
 
-        $('#payment-table .pay-rekening').off('input').on('input', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
+        $('#payment-list .pay-rekening').off('input').on('input', function() {
+            const card = $(this).closest('[data-idx]');
+            const idx = Number(card.data('idx'));
             paymentRows[idx].rekening_no = $(this).val();
         });
 
-        $('#payment-table .pay-delete').off('click').on('click', function() {
-            const idx = Number($(this).closest('tr').data('idx'));
+        $('#payment-list .pay-delete').off('click').on('click', function() {
+            const card = $(this).closest('[data-idx]');
+            const idx = Number(card.data('idx'));
             paymentRows.splice(idx, 1);
-            renderPaymentTable();
+            renderPaymentCards();
         });
     }
 
@@ -655,7 +1128,8 @@
         const activeExistingPaid = existingPaymentRows
             .filter(row => !row.deleted)
             .reduce((sum, row) => sum + Number(row.jumlah_bayar || 0), 0);
-        const remaining = Math.max(totalGross - activeExistingPaid - formPaid, 0);
+        const totalPaidAll = activeExistingPaid + formPaid;
+        const remaining = Math.max(totalGross - totalPaidAll, 0);
         const isTerima = $('#status_nota').val() === 'TERIMA';
         const isKredit = isTerima && remaining > 0;
 
@@ -665,6 +1139,15 @@
         $('#summary-existing-paid').text(`Rp ${formatMoneyValue(activeExistingPaid)}`);
         $('#summary-form-paid').text(`Rp ${formatMoneyValue(formPaid)}`);
         $('#summary-sisa').text(`Rp ${formatMoneyValue(remaining)}`);
+
+        // Mobile elements sync
+        $('#mobile-summary-gross').text(`Rp ${formatMoneyValue(totalGross)}`);
+        $('#m-modal-item').text(detailRows.length.toLocaleString('id-ID'));
+        $('#m-modal-qty').text(totalQty.toLocaleString('id-ID'));
+        $('#m-modal-gross').text(`Rp ${formatMoneyValue(totalGross)}`);
+        $('#m-modal-paid').text(`Rp ${formatMoneyValue(totalPaidAll)}`);
+        $('#m-modal-sisa').text(`Rp ${formatMoneyValue(remaining)}`);
+
         $('#credit-box').toggleClass('d-none', !isKredit || !isTerima);
         $('#modal-total-gross').text(`Rp ${formatMoneyValue(totalGross)}`);
         $('#modal-existing-paid').text(`Rp ${formatMoneyValue(activeExistingPaid)}`);
@@ -767,7 +1250,7 @@
             }];
         }
         updateSummary();
-        renderPaymentTable();
+        renderPaymentCards();
         $("#payment-modal").modal('show');
 
     }
@@ -894,6 +1377,17 @@
         if (Number.isNaN(dt.getTime())) return nowLocalValue();
         const tzOffset = dt.getTimezoneOffset() * 60000;
         return new Date(dt - tzOffset).toISOString().slice(0, 16);
+    }
+
+    function toDatetimeDisplay(value) {
+        if (!value) return '';
+        try {
+            const dt = new Date(value.replace(' ', 'T'));
+            if (Number.isNaN(dt.getTime())) return value;
+            return dt.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+        } catch (e) {
+            return value;
+        }
     }
 
     function normalizeDateTime(value) {

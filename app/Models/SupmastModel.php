@@ -35,7 +35,7 @@ class SupmastModel extends Model
     public function GetLastID()
     {
         $maxNow =  $this->db->query("SELECT MAX(CAST(MID(supco,3,10) AS DECIMAL)) as kodex FROM supmast;")->getRow();
-        $nourut = (int) substr($maxNow->kodex, 3);
+        $nourut = (int) ($maxNow->kodex ?? 0);
         $nourut++;
         $output = "SP" . sprintf("%03s", $nourut);
         return $output;

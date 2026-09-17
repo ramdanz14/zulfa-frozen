@@ -2,47 +2,36 @@
 <header class="topbar">
     <div class="with-vertical">
         <nav class="navbar navbar-expand-lg p-0">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
                 <li class="nav-item nav-icon-hover-bg rounded-circle ms-n2">
-                    <a class="nav-link sidebartoggler" id="headerCollapse" href="javascript:void(0)">
+                    <a class="nav-link sidebartoggler" id="headerCollapse" href="javascript:void(0)" aria-label="Toggle Sidebar">
                         <i class="ti ti-menu-2"></i>
                     </a>
                 </li>
                 <li class="nav-item nav-icon-hover-bg rounded-circle d-none d-lg-flex">
-                    <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#menuSearchModal">
+                    <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#menuSearchModal" aria-label="Cari Menu">
                         <i class="ti ti-search"></i>
                     </a>
                 </li>
             </ul>
-            <div class="d-block d-lg-none py-4 d-flex align-items-center justify-content-center">
-                <img src="<?= base_url(APP_LOGO_PATH); ?>" style="height: 40px;" alt="<?= esc(APP_NAME); ?>" />
-                <h2 class="m-1 text-primary fw-bolder"><?= session("toko_nama") ?></h2>
+            <div class="d-flex d-md-none align-items-center me-auto ms-2">
+                <img src="<?= base_url(APP_LOGO_PATH); ?>" style="height: 28px; width: auto;" alt="<?= esc(APP_NAME); ?>" />
+                <span class="ms-2 text-primary fw-bold fs-4 text-truncate" style="max-width: 180px;"><?= esc(session("toko_nama")) ?></span>
             </div>
-            <a class="navbar-toggler nav-icon-hover-bg rounded-circle p-0 mx-0 border-0" href="javascript:void(0)" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="ti ti-dots fs-7"></i>
-            </a>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <div class="d-flex align-items-center justify-content-end">
-                    <ul class="navbar-nav flex-row  align-items-center justify-content-center">
-                        <li class="nav-item nav-icon-hover-bg rounded-circle d-block d-lg-none d-flex">
-                            <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#menuSearchModal">
-                                <i class="ti ti-search"></i>
-                            </a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-center">
-                        <!-- ------------------------------- -->
-                        <!-- start profile Dropdown -->
-                        <!-- ------------------------------- -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" aria-expanded="false">
-                                <div class="d-flex align-items-center">
-                                    <div class="user-profile-img">
-                                        <img src="<?= base_url('/assets/images/profile/' . $sessionAvatar) ?>" class="rounded-circle topbar-avatar" width="35" height="35" alt="modernize-img" />
-                                    </div>
+            <div class="d-flex align-items-center ms-auto">
+                <ul class="navbar-nav flex-row align-items-center">
+                    <!-- ------------------------------- -->
+                    <!-- start profile Dropdown -->
+                    <!-- ------------------------------- -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User Profile">
+                            <div class="d-flex align-items-center">
+                                <div class="user-profile-img">
+                                    <img src="<?= base_url('/assets/images/profile/' . $sessionAvatar) ?>" class="rounded-circle topbar-avatar" width="35" height="35" alt="modernize-img" />
                                 </div>
-                            </a>
-                            <div class="dropdown-menu content-dd dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop1">
+                            </div>
+                        </a>
+                        <div class="dropdown-menu content-dd dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop1">
                                 <div class="profile-dropdown position-relative" data-simplebar>
                                     <div class="py-3 px-7 pb-0">
                                         <h5 class="mb-0 fs-5 fw-semibold">User Profile</h5>

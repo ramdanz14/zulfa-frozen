@@ -37,7 +37,7 @@ class So extends BaseController
         $soAktif = $this->soModel->getActiveSo((string) session('toko_id'));
         if ($tanggal === '' && !$soAktif) {
             session()->setFlashdata('so_error', 'Tidak ada SO aktif');
-            return redirect()->to('/so');
+            return redirect()->to('/opname');
         }
 
         $data['title'] = 'Hasil SO';

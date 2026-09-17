@@ -88,7 +88,7 @@ class ItemModel extends Model
     {
         $toko_id = session('toko_id');
         $prodmast = $this->db->query("SELECT * FROM prodmast WHERE kode_item=:kode_item:", ['kode_item' => $kode_item])->getRowArray();
-        $satuan = $this->db->query("SELECT * FROM prodmast_satuan WHERE kode_item=:kode_item: ORDER BY qty_konversi,sat_id", ['kode_item' => $kode_item])->getResultArray();
+        $satuan = $this->db->query("SELECT *,(SELECT qty FROM stmast WHERE kode_item=:kode_item: and toko_id=:toko_id:)/qty_konversi AS stok  from prodmast_satuan WHERE kode_item=:kode_item: ORDER BY qty_konversi,sat_id", ['kode_item' => $kode_item, 'toko_id' => $toko_id])->getResultArray();
         $store = $this->db->query("SELECT * FROM prodmast_store WHERE kode_item=:kode_item: and toko_id=:toko_id: ORDER BY toko_id,sat_id", ['kode_item' => $kode_item, 'toko_id' => $toko_id])->getResultArray();
         return [
             'prodmast' => $prodmast,

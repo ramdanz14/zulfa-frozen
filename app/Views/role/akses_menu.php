@@ -100,7 +100,7 @@
         newestOnTop: true,
         progressBar: true,
         timeOut: 3000,
-        positionClass: 'toast-top-right'
+        positionClass: 'toast-top-center'
       });
     }
 

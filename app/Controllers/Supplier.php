@@ -54,7 +54,7 @@ class Supplier extends BaseController
         } else {
             $hasil  = array("tipe" => "error", "data" => "Gagal Tambah data!!!!");
         }
-        tracelog('CREATE', 'Create supplier dengan ID : ' . $this->request->getVar('supco'));
+        tracelog('CREATE', 'Create supplier dengan ID : ' . ($input['supco'] ?? '') . json_encode($input));
         return json_encode($hasil);
     }
 
@@ -72,7 +72,7 @@ class Supplier extends BaseController
         } else {
             $hasil  = array("tipe" => "error", "data" => "Gagal Tambah data!!!!");
         }
-        tracelog('Update', "Update supplier dengan ID : $primarykey  ");
+        tracelog('Update', "Update supplier dengan ID : $primarykey  " . json_encode($input));
         return json_encode($hasil);
     }
 

@@ -5,23 +5,186 @@
 /**
  * @var string $mode
  * @var array $supplierOptions
+ * @var array $formData
  */
 $header = $formData['header'] ?? [];
 $supplier = $formData['supplier'] ?? null;
 $debtOptions = $formData['debt_options'] ?? [];
 $detailRows = $formData['details'] ?? [];
 ?>
+<style>
+/* =========================================================
+   RETUR BELI WORKSPACE STYLING (Optimized for Mobile & Tablet)
+   ========================================================= */
+.returbeli-container {
+    padding-bottom: 90px; /* Space for mobile sticky action bar */
+}
+
+/* Compact Collapsible Header */
+.retur-header-card {
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+.header-tag-pill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Item Workspace (Dominant Area) */
+.item-workspace-card {
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+.item-search-wrapper .select2-container--default .select2-selection--single {
+    height: 46px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    border: 2px solid #cbd5e1;
+    transition: border-color 0.2s;
+}
+.item-search-wrapper .select2-container--default .select2-selection--single:focus,
+.item-search-wrapper .select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--bs-primary);
+}
+.item-search-wrapper .select2-selection__rendered {
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding-left: 12px !important;
+}
+
+/* Detail Item Cards */
+.detail-item-card {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    position: relative;
+    padding: 0.85rem;
+}
+.detail-item-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.detail-item-card .item-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.3;
+}
+.detail-item-card .item-code {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-family: var(--bs-font-monospace);
+    background: #f8fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+.detail-item-card .row-stock-hint {
+    font-size: 0.75rem;
+    color: #059669;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.detail-input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+@media (min-width: 768px) {
+    .detail-input-grid {
+        grid-template-columns: 140px 110px 1fr 1fr;
+    }
+}
+.input-label-compact {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.form-control-touch {
+    height: 40px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+/* Delete item button */
+.btn-delete-item {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    transition: all 0.15s;
+}
+.btn-delete-item:hover, .btn-delete-item:active {
+    background: #dc3545;
+    color: #ffffff;
+    border-color: #dc3545;
+}
+
+/* Mobile Sticky Action Bar */
+.mobile-sticky-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    z-index: 1040;
+}
+
+/* Desktop summary sidebar sticky */
+@media (min-width: 1200px) {
+    .sticky-summary {
+        position: sticky;
+        top: 80px;
+    }
+}
+</style>
+
 <div class="body-wrapper">
-    <div class="container-fluid p-0">
-        <div class="card bg-danger-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2"><?= $mode === 'edit' ? 'Edit Retur Pembelian' : 'Tambah Retur Pembelian' ?></h4>
-                        <p class="mb-0">Pilih supplier untuk settlement, lalu tambahkan item aktif satu per satu seperti di pembelian. Stok hanya dipotong saat status `SELESAI`.</p>
+    <div class="container-fluid p-0 returbeli-container">
+        <!-- Breadcrumb / Header Banner -->
+        <div class="card bg-danger-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-2 px-md-4 py-md-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+                            <i class="ti ti-arrow-back-up fs-6 text-white"></i>
+                        </span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark"><?= $mode === 'edit' ? 'Edit' : 'Tambah' ?> Retur Pembelian</h5>
+                            <small class="text-muted d-none d-sm-inline">Pengembalian barang ke supplier, potong hutang atau cashback</small>
+                        </div>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/returbeli') ?>" class="btn btn-outline-secondary btn-sm">Kembali ke List</a>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="<?= base_url('/returbeli') ?>" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1">
+                            <i class="ti ti-arrow-left"></i> Kembali ke List
+                        </a>
                     </div>
                 </div>
             </div>
@@ -32,121 +195,203 @@ $detailRows = $formData['details'] ?? [];
             <input type="hidden" name="retur_id" id="retur_id" value="<?= esc($header['retur_id'] ?? '') ?>">
             <input type="hidden" name="detail_json" id="detail_json">
 
-            <div class="card mb-3">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Header Retur</h5>
+            <div class="row g-3">
+                <!-- MAIN WORKSPACE: Item Area & Compact Header -->
+                <div class="col-xl-8">
+                    
+                    <!-- COMPACT INFO RETUR (Collapsible on Mobile, streamlined on Tablet/Desktop) -->
+                    <div class="card retur-header-card mb-3">
+                        <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#collapseHeaderInfo" aria-expanded="true">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-bold text-dark fs-3"><i class="ti ti-file-text text-danger me-1"></i> Data Transaksi & Supplier</span>
+                                <span class="header-tag-pill" id="header-chip-sup">
+                                    <i class="ti ti-building-store"></i> <span id="chip-sup-text">Pilih Supplier</span>
+                                </span>
+                                <span class="header-tag-pill" id="header-chip-settle">
+                                    <i class="ti ti-receipt-2"></i> <span id="chip-settle-text">POTONG HUTANG</span>
+                                </span>
+                                <span class="badge bg-light-warning text-warning fw-semibold" id="chip-status-text">DRAFT</span>
+                            </div>
+                            <div class="text-muted small d-flex align-items-center gap-1">
+                                <span class="d-none d-sm-inline">Ubah Info</span>
+                                <i class="ti ti-chevron-down fs-4 transition-all" id="header-collapse-icon"></i>
+                            </div>
+                        </div>
+                        <div class="collapse show" id="collapseHeaderInfo">
+                            <div class="card-body p-3 bg-light-subtle border-top">
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">ID Retur</label>
+                                        <input type="text" class="form-control form-control-sm font-monospace bg-white" value="<?= esc($header['retur_id'] ?? '') ?>" readonly placeholder="(Auto)">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">Tanggal Retur <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control form-control-sm bg-white" name="tanggal" id="tanggal" value="<?= esc($header['tanggal'] ?? date('Y-m-d')) ?>" required>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">Status Retur <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm bg-white fw-semibold" name="status_retur" id="status_retur">
+                                            <option value="DRAFT" <?= ($header['status_retur'] ?? 'DRAFT') === 'DRAFT' ? 'selected' : '' ?>>DRAFT (Draft PO)</option>
+                                            <option value="SELESAI" <?= ($header['status_retur'] ?? '') === 'SELESAI' ? 'selected' : '' ?>>SELESAI (Potong Stok)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="input-label-compact">Penyelesaian Retur <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm bg-white fw-semibold" name="settlement_mode" id="settlement_mode">
+                                            <option value="POTONG_HUTANG" <?= ($header['settlement_mode'] ?? 'POTONG_HUTANG') === 'POTONG_HUTANG' ? 'selected' : '' ?>>POTONG HUTANG</option>
+                                            <option value="CASHBACK" <?= ($header['settlement_mode'] ?? '') === 'CASHBACK' ? 'selected' : '' ?>>CASHBACK SUPPLIER</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="input-label-compact">Supplier <span class="text-danger">*</span></label>
+                                        <select class="form-select select2" name="supco" id="supco" required>
+                                            <option value="">Pilih Supplier</option>
+                                            <?php foreach ($supplierOptions as $option) : ?>
+                                                <option value="<?= esc($option['supco']) ?>" <?= ($header['supco'] ?? '') === $option['supco'] ? 'selected' : '' ?>>
+                                                    <?= esc($option['supplier_nama'] ?? $option['supco']) ?> (<?= esc($option['supco']) ?>)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6" id="debt-select-wrapper">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="input-label-compact">Faktur Hutang Target <span class="text-danger">*</span></label>
+                                            <small class="text-muted" style="font-size: 0.68rem;">Untuk POTONG HUTANG</small>
+                                        </div>
+                                        <select class="form-select select2" name="beli_id" id="beli_id">
+                                            <option value="">Pilih faktur hutang supplier</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="input-label-compact">Keterangan / Alasan Retur</label>
+                                        <input type="text" class="form-control form-control-sm bg-white" name="keterangan" id="keterangan" value="<?= esc($header['keterangan'] ?? '') ?>" placeholder="Alasan retur (barang rusak, expired, salah kirim, dll)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUPPLIER & DEBT INFO SUMMARY (Appears dynamically) -->
+                    <div id="supplier-info" class="<?= $supplier ? '' : 'd-none' ?> mb-3">
+                        <div class="card border-0 shadow-sm" style="border-radius: 10px; background: #fff5f5; border: 1px solid #fed7d7;">
+                            <div class="card-body p-2 px-3" id="supplier-summary"></div>
+                        </div>
+                    </div>
+
+                    <div id="debt-info" class="d-none mb-3">
+                        <div class="card border-0 shadow-sm" style="border-radius: 10px; background: #f0fdf4; border: 1px solid #bbf7d0;">
+                            <div class="card-body p-2 px-3" id="debt-summary"></div>
+                        </div>
+                    </div>
+
+                    <!-- PRIMARY ITEM WORKSPACE (Dominant Focus Area) -->
+                    <div class="card item-workspace-card">
+                        <div class="card-header bg-white py-3 px-3 border-bottom">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-12 col-md-5">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-danger-subtle text-danger p-2 rounded-3"><i class="ti ti-arrow-back-up fs-5"></i></span>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">Daftar Item Diretur</h6>
+                                            <small class="text-muted" id="item-count-badge">0 item dipilih</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-7">
+                                    <div class="item-search-wrapper position-relative">
+                                        <select class="form-select" id="item-search" style="width: 100%;"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-2 p-md-3">
+                            <div id="detail-list" class="d-flex flex-column gap-2"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-3">
-                            <label class="form-label">ID Retur</label>
-                            <input type="text" class="form-control" value="<?= esc($header['retur_id'] ?? '') ?>" readonly>
-                        </div>
-                        <div class="col-lg-3">
-                            <label class="form-label">Tanggal Retur</label>
-                            <input type="date" class="form-control" name="tanggal" id="tanggal" value="<?= esc($header['tanggal'] ?? date('Y-m-d')) ?>" required>
-                        </div>
-                        <div class="col-lg-3">
-                            <label class="form-label">Status Retur</label>
-                            <select class="form-select" name="status_retur" id="status_retur">
-                                <option value="DRAFT" <?= ($header['status_retur'] ?? 'DRAFT') === 'DRAFT' ? 'selected' : '' ?>>DRAFT</option>
-                                <option value="SELESAI" <?= ($header['status_retur'] ?? '') === 'SELESAI' ? 'selected' : '' ?>>SELESAI</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-3">
-                            <label class="form-label">Supplier</label>
-                            <select class="form-select select2" name="supco" id="supco" required>
-                                <option value="">Pilih supplier</option>
-                                <?php foreach ($supplierOptions as $option) : ?>
-                                    <option value="<?= esc($option['supco']) ?>" <?= ($header['supco'] ?? '') === $option['supco'] ? 'selected' : '' ?>>
-                                        <?= esc($option['supplier_nama'] ?? $option['supco']) ?> (<?= esc($option['supco']) ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-lg-4">
-                            <label class="form-label">Penyelesaian Retur</label>
-                            <select class="form-select" name="settlement_mode" id="settlement_mode">
-                                <option value="POTONG_HUTANG" <?= ($header['settlement_mode'] ?? 'POTONG_HUTANG') === 'POTONG_HUTANG' ? 'selected' : '' ?>>POTONG HUTANG</option>
-                                <option value="CASHBACK" <?= ($header['settlement_mode'] ?? '') === 'CASHBACK' ? 'selected' : '' ?>>CASHBACK SUPPLIER</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-8" id="debt-select-wrapper">
-                            <label class="form-label">Faktur Hutang Target</label>
-                            <select class="form-select select2" name="beli_id" id="beli_id">
-                                <option value="">Pilih faktur hutang supplier</option>
-                            </select>
-                            <small class="text-muted">Dipakai hanya saat penyelesaian `POTONG HUTANG`.</small>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Keterangan</label>
-                            <textarea class="form-control" rows="2" name="keterangan" id="keterangan"><?= esc($header['keterangan'] ?? '') ?></textarea>
+
+                <!-- SIDEBAR / SUMMARY COLUMN -->
+                <div class="col-xl-4">
+                    <div class="sticky-summary d-flex flex-column gap-3">
+                        <!-- Ringkasan Nilai -->
+                        <div class="card shadow-sm border-0" id="summary-card" style="border-radius: 12px; background: #ffffff;">
+                            <div class="card-header bg-white py-3 px-3 border-bottom d-flex align-items-center justify-content-between">
+                                <h6 class="fw-bold mb-0 text-dark"><i class="ti ti-calculator text-danger me-1"></i> Ringkasan Retur</h6>
+                                <span class="badge bg-warning-subtle text-warning fs-2" id="summary-nota-badge">DRAFT</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Total Jenis Item</span>
+                                    <span class="fw-bold" id="sum-items">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Total Kuantitas (Qty)</span>
+                                    <span class="fw-bold" id="sum-qty">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-danger-subtle rounded-3">
+                                    <span class="fw-semibold text-danger">Total Nilai Retur</span>
+                                    <span class="fw-bolder fs-4 text-danger font-monospace" id="display-sum-total">Rp 0</span>
+                                    <input type="hidden" id="sum-total" value="0">
+                                </div>
+
+                                <div id="retur-warning" class="mb-2"></div>
+
+                                <!-- Desktop Action Button -->
+                                <div class="d-none d-xl-grid gap-2 mt-3 pt-2 border-top">
+                                    <button type="submit" class="btn btn-danger btn-lg fw-bold d-flex align-items-center justify-content-center gap-2" id="btn-save">
+                                        <i class="ti ti-device-floppy fs-5"></i> Simpan Retur
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="supplier-info" class="<?= $supplier ? '' : 'd-none' ?>">
-                <div class="card mb-3">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Informasi Supplier Retur</h5>
-                    </div>
-                    <div class="card-body" id="supplier-summary"></div>
-                </div>
-            </div>
-
-            <div id="debt-info" class="d-none">
-                <div class="card mb-3">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Informasi Faktur Potong Hutang</h5>
-                    </div>
-                    <div class="card-body" id="debt-summary"></div>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center">
+            <!-- MOBILE STICKY ACTION BAR -->
+            <div class="mobile-sticky-action-bar d-xl-none">
+                <div class="d-flex align-items-center justify-content-between gap-2">
                     <div>
-                        <h5 class="mb-1">Detail Item Retur</h5>
-                        <small class="text-muted">Cari item aktif lalu tambahkan ke list retur.</small>
+                        <div class="small text-muted" style="font-size: 0.72rem; line-height: 1;">Total Retur</div>
+                        <div class="fw-bolder fs-4 text-danger" id="mobile-summary-gross">Rp 0</div>
                     </div>
-                    <div class="w-100" style="max-width: 420px;">
-                        <select class="form-select" id="item-search"></select>
-                    </div>
-                </div>
-                <div class="card-body p-2">
-                    <div id="detail-list" class="d-grid gap-2"></div>
-                </div>
-            </div>
-
-            <div class="row g-3 mb-3">
-                <div class="col-lg-4">
-                    <div class="border rounded p-3 h-100">
-                        <small class="text-muted">Jumlah Item Diretur</small>
-                        <div class="fw-semibold fs-5" id="sum-items">0</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#summary-modal-mobile" title="Detail Ringkasan">
+                            <i class="ti ti-info-circle fs-5"></i>
+                        </button>
+                        <button type="submit" class="btn btn-danger px-3 fw-bold d-flex align-items-center gap-1" id="mobile-btn-save">
+                            <i class="ti ti-device-floppy fs-5"></i> Simpan
+                        </button>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="border rounded p-3 h-100">
-                        <small class="text-muted">Total Qty Retur</small>
-                        <div class="fw-semibold fs-5" id="sum-qty">0</div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="border rounded p-3 h-100">
-                        <small class="text-muted">Total Nilai Retur</small>
-                        <input type="text" class="form-control form-control-lg money text-end fw-semibold border-0 p-0 bg-transparent" id="sum-total" value="0" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div id="retur-warning"></div>
-
-            <div class="d-flex gap-2 justify-content-end pb-4">
-                <button type="button" class="btn btn-light" onclick="window.location.href='<?= base_url('/returbeli') ?>'">Batal</button>
-                <button type="submit" class="btn btn-danger">Simpan Retur</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL SUMMARY UNTUK MOBILE -->
+<div class="modal fade" id="summary-modal-mobile" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-bold">Detail Ringkasan Retur</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Jenis Item:</span>
+                    <span class="fw-bold" id="m-modal-item">0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Total Qty:</span>
+                    <span class="fw-bold" id="m-modal-qty">0</span>
+                </div>
+                <div class="d-flex justify-content-between p-2 rounded bg-danger-subtle">
+                    <span class="text-danger small fw-semibold">Nilai Retur:</span>
+                    <span class="fw-bold text-danger" id="m-modal-total">Rp 0</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?= $this->endSection('content') ?>
@@ -194,9 +439,49 @@ $detailRows = $formData['details'] ?? [];
         renderDetailList();
         recalcSummary();
         toggleSettlementFields();
+        syncHeaderChips();
+
+        // Auto toggle chevron icon on collapse
+        $('#collapseHeaderInfo').on('show.bs.collapse', function () {
+            $('#header-toggle-icon').removeClass('ti-chevron-down').addClass('ti-chevron-up');
+        }).on('hide.bs.collapse', function () {
+            $('#header-toggle-icon').removeClass('ti-chevron-up').addClass('ti-chevron-down');
+        });
     });
 
+    function syncHeaderChips() {
+        // Supplier Chip
+        const supText = $('#supco option:selected').text();
+        const supVal = $('#supco').val();
+        if (supVal && supText) {
+            $('#header-chip-sup').text(supText.trim()).removeClass('d-none');
+        } else {
+            $('#header-chip-sup').addClass('d-none');
+        }
+
+        // Settlement Mode Chip
+        const mode = $('#settlement_mode').val();
+        if (mode === 'POTONG_HUTANG') {
+            $('#header-chip-settle').html('<i class="ti ti-receipt-tax"></i> POTONG HUTANG').removeClass('bg-info-subtle text-info').addClass('bg-primary-subtle text-primary');
+        } else {
+            $('#header-chip-settle').html('<i class="ti ti-cash"></i> CASHBACK').removeClass('bg-primary-subtle text-primary').addClass('bg-info-subtle text-info');
+        }
+
+        // Status Retur Chip
+        const status = $('#status_retur').val();
+        $('#chip-status-text').text(status);
+        $('#summary-nota-badge').text(status);
+        if (status === 'SELESAI') {
+            $('#header-chip-status').removeClass('bg-warning-subtle text-warning').addClass('bg-success-subtle text-success');
+            $('#summary-nota-badge').removeClass('bg-warning-subtle text-warning').addClass('bg-success-subtle text-success');
+        } else {
+            $('#header-chip-status').removeClass('bg-success-subtle text-success').addClass('bg-warning-subtle text-warning');
+            $('#summary-nota-badge').removeClass('bg-success-subtle text-success').addClass('bg-warning-subtle text-warning');
+        }
+    }
+
     $('#supco').on('change', function() {
+        syncHeaderChips();
         const supco = $(this).val();
         if (!supco) {
             supplierData = null;
@@ -223,12 +508,14 @@ $detailRows = $formData['details'] ?? [];
             renderSupplierSummary();
             renderDebtSummary();
             recalcSummary();
+            syncHeaderChips();
         }).fail(function(xhr) {
             toastr.error(extractErrorMessage(xhr, 'Gagal memuat data supplier retur'));
         });
     });
 
     $('#status_retur, #settlement_mode').on('change', function() {
+        syncHeaderChips();
         toggleSettlementFields();
         renderDebtSummary();
         renderWarning();
@@ -314,9 +601,15 @@ $detailRows = $formData['details'] ?? [];
 
         $('#supplier-info').removeClass('d-none');
         $('#supplier-summary').html(`
-            <div class="row g-3">
-                <div class="col-lg-6"><div class="border rounded p-3 h-100"><small class="text-muted">Supplier</small><div class="fw-semibold">${supplierData.supplier_nama || supplierData.supco}</div></div></div>
-                <div class="col-lg-6"><div class="border rounded p-3 h-100"><small class="text-muted">Total Hutang Supplier Tersedia</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(supplierData.total_outstanding_debt || 0)}</div></div></div>
+            <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-6">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Supplier Terpilih</small>
+                    <div class="fw-bold text-dark fs-3">${supplierData.supplier_nama || supplierData.supco}</div>
+                </div>
+                <div class="col-12 col-md-6 text-md-end">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Total Hutang Supplier Tersedia</small>
+                    <div class="fw-bold text-danger fs-4 font-monospace">Rp ${formatMoneyValue(supplierData.total_outstanding_debt || 0)}</div>
+                </div>
             </div>
         `);
     }
@@ -337,11 +630,11 @@ $detailRows = $formData['details'] ?? [];
 
         $('#debt-info').removeClass('d-none');
         $('#debt-summary').html(`
-            <div class="row g-3">
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Beli ID</small><div class="fw-semibold">${debt.beli_id}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Invoice</small><div class="fw-semibold">${debt.invoice || '-'}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Status Bayar</small><div class="fw-semibold">${debt.status_bayar || '-'}</div></div></div>
-                <div class="col-lg-3"><div class="border rounded p-3 h-100"><small class="text-muted">Sisa Hutang</small><div class="fw-semibold text-danger">Rp ${formatMoneyValue(debt.sisa_bayar_form || 0)}</div></div></div>
+            <div class="row g-2">
+                <div class="col-6 col-md-3"><small class="text-muted d-block" style="font-size: 0.72rem;">Beli ID</small><span class="fw-semibold font-monospace">${debt.beli_id}</span></div>
+                <div class="col-6 col-md-3"><small class="text-muted d-block" style="font-size: 0.72rem;">Invoice</small><span class="fw-semibold">${debt.invoice || '-'}</span></div>
+                <div class="col-6 col-md-3"><small class="text-muted d-block" style="font-size: 0.72rem;">Status Bayar</small><span class="badge bg-warning-subtle text-warning">${debt.status_bayar || '-'}</span></div>
+                <div class="col-6 col-md-3"><small class="text-muted d-block" style="font-size: 0.72rem;">Sisa Hutang</small><span class="fw-bold text-danger font-monospace">Rp ${formatMoneyValue(debt.sisa_bayar_form || 0)}</span></div>
             </div>
         `);
     }
@@ -350,47 +643,64 @@ $detailRows = $formData['details'] ?? [];
         const wrapper = $('#detail-list');
         wrapper.empty();
 
-        if (!detailRows.length) {
-            wrapper.html('<div class="text-center text-muted py-4">Cari item aktif untuk menambahkan ke retur.</div>');
+        const count = detailRows.length;
+        $('#item-count-badge').text(`${count} item dipilih`);
+
+        if (!count) {
+            wrapper.html(`
+                <div class="text-center py-5 text-muted">
+                    <i class="ti ti-basket-cancel fs-8 text-secondary opacity-50 mb-2 d-block"></i>
+                    <h6 class="fw-semibold mb-1">Belum Ada Item Diretur</h6>
+                    <p class="small mb-0">Cari item di atas dengan mengetik nama atau barcode produk.</p>
+                </div>
+            `);
             return;
         }
 
         detailRows.forEach((row, idx) => {
             const satOptions = (row.satuan_options || []).map((opt) => `<option value="${opt.sat_id}" data-konversi="${opt.qty_konversi}" data-hpp="${opt.harga_pokok || 0}" ${String(row.sat_id || row.source_sat_id) === String(opt.sat_id) ? 'selected' : ''}>${opt.sat_id}</option>`).join('');
             const maxSelected = getMaxSelectedQty(row);
-            wrapper.append(`
-                <div class="border rounded p-1" data-index="${idx}">
-                    <div class="row align-items-center">
-                        <div class="col-10 col-md-3">
-                            <div class="fw-semibold">${row.nama_item || row.kode_item}</div>
-                            <small class="text-muted">${row.kode_item} || Stok dasar tersedia: ${Number(row.stok_aktual || 0).toLocaleString('id-ID')}</small></br>
-                            <small class="text-muted">Maks retur sesuai stok saat ini: ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id || row.source_sat_id}. </small>
+            const isOver = (Number(row.qty_retur || 0) - maxSelected) > 0.0001;
 
+            wrapper.append(`
+                <div class="detail-item-card position-relative" data-index="${idx}">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark fs-3">${row.nama_item || row.kode_item}</div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center mt-1">
+                                <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem;">${row.kode_item}</span>
+                                <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.72rem;">
+                                    <i class="ti ti-box"></i> Stok: ${Number(row.stok_aktual || 0).toLocaleString('id-ID')}
+                                </span>
+                                <span class="badge ${isOver ? 'bg-danger-subtle text-danger' : 'bg-light text-muted border'}" style="font-size: 0.72rem;">
+                                    Maks: ${Number(maxSelected).toLocaleString('id-ID')} ${row.sat_id || row.source_sat_id}
+                                </span>
+                            </div>
                         </div>
-                         <div class="col-1 col-md-1 text-end order-md-last">
-                            <button type="button" class="btn btn-sm btn-outline-danger row-delete"><i class="ti ti-trash fs-5"></i></button>
-                        </div>
-                        <div class="col-6 col-md-2 col-lg-2">
-                            <label class="form-label">Satuan</label>
-                            <select class="form-select form-select-sm row-sat">${satOptions}</select>
-                        </div>
-                       <div class="col-6 col-md-2 col-lg-2">
-                            <label class="form-label">Qty Retur</label>
-                            <input type="number" min="0" step="1" class="form-control form-control-sm text-end row-qty" value="${row.qty_retur || 0}">
-                        </div>
-                       
-                        <div class="col-6 col-md-2 col-lg-2">
-                            <label class="form-label">Price</label>
-                            <input type="text" class="form-control form-control-sm money text-end row-price" value="${row.price || 0}" readonly>
-                        </div>
-                       <div class="col-6 col-md-2 col-lg-2">
-                        <label class="form-label">Gross</label>
-                            <input type="text" class="form-control form-control-sm money text-end row-gross" value="${row.gross_retur || 0}" readonly>
-                        </div>
-                        <input type="hidden" class="form-control form-control-sm text-end row-qty-stock" value="${Number(row.qty_stok || 0).toLocaleString('id-ID')}" readonly>
-                       
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-item row-delete" title="Hapus item">
+                            <i class="ti ti-trash fs-5"></i>
+                        </button>
                     </div>
-                    
+
+                    <div class="detail-input-grid">
+                        <div>
+                            <label class="form-label mb-1">Satuan</label>
+                            <select class="form-select form-select-sm row-sat bg-white">${satOptions}</select>
+                        </div>
+                        <div>
+                            <label class="form-label mb-1">Qty Retur</label>
+                            <input type="number" inputmode="decimal" min="0" step="any" class="form-control form-control-sm text-end row-qty fw-bold ${isOver ? 'is-invalid border-danger text-danger' : ''}" value="${row.qty_retur || 0}">
+                        </div>
+                        <div>
+                            <label class="form-label mb-1">Harga Satuan</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-price bg-light" value="${row.price || 0}" readonly tabindex="-1">
+                        </div>
+                        <div>
+                            <label class="form-label mb-1 text-danger">Subtotal Gross</label>
+                            <input type="text" class="form-control form-control-sm money text-end row-gross fw-bold text-danger bg-danger-subtle border-0" value="${row.gross_retur || 0}" readonly tabindex="-1">
+                        </div>
+                        <input type="hidden" class="row-qty-stock" value="${Number(row.qty_stok || 0).toLocaleString('id-ID')}">
+                    </div>
                 </div>
             `);
         });
@@ -466,9 +776,19 @@ $detailRows = $formData['details'] ?? [];
             }
         });
 
+        const formattedTotal = 'Rp ' + formatMoneyValue(totalRetur);
+
         $('#sum-items').text(totalItems.toLocaleString('id-ID'));
         $('#sum-qty').text(totalQty.toLocaleString('id-ID'));
+        $('#display-sum-total').text(formattedTotal);
         $('#sum-total').val(totalRetur);
+
+        // Mobile summary sync
+        $('#mobile-summary-gross').text(formattedTotal);
+        $('#m-modal-item').text(totalItems.toLocaleString('id-ID'));
+        $('#m-modal-qty').text(totalQty.toLocaleString('id-ID'));
+        $('#m-modal-total').text(formattedTotal);
+
         applyMoneyMask('#sum-total');
         renderWarning();
     }
@@ -487,13 +807,13 @@ $detailRows = $formData['details'] ?? [];
 
         if (settlementMode === 'POTONG_HUTANG') {
             if (!debt) {
-                warningBox.html('<div class="alert alert-warning border-warning-subtle">Pilih faktur hutang supplier terlebih dulu untuk menyelesaikan retur dengan potong hutang.</div>');
+                warningBox.html('<div class="alert alert-warning border-warning-subtle mb-0">Pilih faktur hutang supplier terlebih dulu untuk menyelesaikan retur dengan potong hutang.</div>');
                 return;
             }
 
             if (totalRetur - Number(debt.sisa_bayar_form || 0) > 0.0001) {
                 warningBox.html(`
-                    <div class="alert customize-alert alert-dismissible alert-light-danger bg-danger-subtle text-danger fade show remove-close-icon" role="alert">
+                    <div class="alert customize-alert alert-dismissible alert-light-danger bg-danger-subtle text-danger fade show remove-close-icon mb-0" role="alert">
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         <div class="d-flex align-items-center me-3 me-md-0">
                             <i class="ti ti-cancel fs-5 me-2 text-danger"></i>
@@ -504,11 +824,11 @@ $detailRows = $formData['details'] ?? [];
                 return;
             }
 
-            warningBox.html(`<div class="alert alert-warning border-warning-subtle">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>POTONGAN RETUR</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> ke faktur <strong>${debt.beli_id}</strong>.</div>`);
+            warningBox.html(`<div class="alert alert-warning border-warning-subtle mb-0">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>POTONGAN RETUR</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> ke faktur <strong>${debt.beli_id}</strong>.</div>`);
             return;
         }
 
-        warningBox.html(`<div class="alert alert-info border-info-subtle">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>kas masuk</strong> akun <strong>RETUR PEMBELIAN</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> dengan keterangan nomor retur ini.</div>`);
+        warningBox.html(`<div class="alert alert-info border-info-subtle mb-0">Saat retur diselesaikan, stok akan dikurangi dan sistem akan mencatat <strong>kas masuk</strong> akun <strong>RETUR PEMBELIAN</strong> sebesar <strong class="font-monospace">Rp ${formatMoneyValue(totalRetur)}</strong> dengan keterangan nomor retur ini.</div>`);
     }
 
     function getCurrentTotalRetur() {

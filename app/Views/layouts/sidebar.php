@@ -44,9 +44,18 @@ foreach ($sortedMenu as $item) {
                 <img src="<?= base_url(APP_LOGO_PATH); ?>" style="height: 40px;" alt="<?= esc(APP_NAME); ?>" />
                 <h5 class="m-1 text-primary fw-bolder"><?= session("toko_nama") ?></h5>
             </div>
-            <a href="javascript:void(0)" class="sidebartoggler ms-auto text-decoration-none fs-5 d-block d-xl-none">
+            <a href="javascript:void(0)" class="sidebartoggler ms-auto text-decoration-none fs-5 d-block d-xl-none" aria-label="Tutup Sidebar">
                 <i class="ti ti-x"></i>
             </a>
+        </div>
+        <div class="px-4 py-2 sidebar-search-box">
+            <button type="button" class="btn btn-light w-100 text-start d-flex align-items-center justify-content-between text-muted border py-2 px-3 rounded-2" data-bs-toggle="modal" data-bs-target="#menuSearchModal" style="min-height: 44px;">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="ti ti-search fs-4 text-primary"></i>
+                    <span class="fs-3">Cari Menu...</span>
+                </span>
+                <span class="badge bg-primary-subtle text-primary d-none d-xl-inline-block">/</span>
+            </button>
         </div>
         <nav class="sidebar-nav scroll-sidebar" data-simplebar>
             <ul id="sidebarnav">

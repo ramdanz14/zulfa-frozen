@@ -12,6 +12,209 @@
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
     <title><?= esc(APP_NAME); ?> | <?= esc($title ?? 'Dashboard'); ?></title>
+    <style>
+        /* Styling & Anti-Slop Layout Mobile / Human Optimizations */
+        :root {
+            --color-focus-ring: #0284c7;
+            --color-profit: #15803d;
+            --color-loss: #b91c1c;
+        }
+
+        .form-control:focus,
+        .btn:focus-visible,
+        .form-select:focus {
+            outline: 2px solid var(--color-focus-ring) !important;
+            outline-offset: 1px !important;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2) !important;
+        }
+
+        .dt-container .dt-search input[type="search"],
+        .dt-container .dt-search input.form-control {
+            /* display: block !important; */
+            width: 300px !important;
+            height: 42px !important;
+            margin-top: 6px !important;
+            margin-left: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            background-color: #fff !important;
+            box-sizing: border-box !important;
+        }
+
+
+        /* Mobile Breakpoint (< 768px) */
+        @media (max-width: 767.98px) {
+
+            /* Atur container search agar mengambil lebar penuh layar */
+            .dt-container .dt-search {
+                width: 100% !important;
+                text-align: left !important;
+                /* margin-top: 10px !important; */
+            }
+
+            /* Ubah label agar menjadi block (membuat input turun ke baris baru di bawah teks Cari) */
+            .dt-container .dt-search label {
+                /* display: block !important; */
+                /* width: 10% !important; */
+                font-weight: 600;
+                color: #475569;
+                font-size: 0.9rem;
+                padding-right: 4px;
+            }
+
+            /* Paksa kotak input teks search memiliki lebar 100% penuh */
+            .dt-container .dt-search input[type="search"],
+            .dt-container .dt-search input.form-control {
+                /* display: block !important; */
+                width: 80% !important;
+                height: 42px !important;
+                margin-top: 6px !important;
+                margin-left: 0 !important;
+                padding: 6px 12px !important;
+                font-size: 14px !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 6px !important;
+                background-color: #fff !important;
+                box-sizing: border-box !important;
+            }
+
+            .topbar {
+                padding: 0 12px !important;
+            }
+
+
+
+            .topbar .navbar {
+                min-height: 56px !important;
+            }
+
+            .topbar .navbar .navbar-nav .nav-item .nav-link {
+                height: 44px !important;
+                line-height: 44px !important;
+                padding: 0 8px !important;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .body-wrapper {
+                padding-top: calc(56px + 12px) !important;
+            }
+
+            .body-wrapper>.container-fluid {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .body-wrapper>.container-fluid {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+        }
+
+        /* Desktop Breakpoint (>= 768px) - Ensure content clears fixed sidebar */
+        @media (min-width: 768px) {
+
+            .body-wrapper {
+                margin-left: 270px;
+            }
+
+            body[data-sidebartype="full"] .page-wrapper,
+            [data-layout="vertical"] body:not([data-sidebartype="mini-sidebar"]) .page-wrapper,
+            .page-wrapper {
+                margin-left: 270px;
+                transition: all 0.2s ease-in-out;
+            }
+
+            body[data-sidebartype="mini-sidebar"] .page-wrapper,
+            [data-layout="vertical"] body[data-sidebartype="mini-sidebar"] .page-wrapper {
+                margin-left: 87px !important;
+            }
+
+            body[data-sidebartype="full"] .topbar,
+            [data-layout="vertical"] body:not([data-sidebartype="mini-sidebar"]) .topbar,
+            .topbar {
+                width: calc(100% - 270px);
+                left: auto !important;
+                right: 0 !important;
+                transition: all 0.2s ease-in-out;
+            }
+
+            body[data-sidebartype="mini-sidebar"] .topbar,
+            [data-layout="vertical"] body[data-sidebartype="mini-sidebar"] .topbar {
+                width: calc(100% - 87px) !important;
+                left: auto !important;
+                right: 0 !important;
+            }
+        }
+
+        /* Mobile Breakpoint (< 768px) */
+        @media (max-width: 767.98px) {
+            .page-wrapper {
+                margin-left: 0 !important;
+            }
+
+            .topbar {
+                width: 100% !important;
+                left: 0 !important;
+                right: 0 !important;
+            }
+        }
+
+        /* Mini sidebar and sidebar search styling */
+        body[data-sidebartype="mini-sidebar"] .sidebar-search-box {
+            display: none !important;
+        }
+
+        .left-sidebar .scroll-sidebar {
+            height: calc(100vh - 220px) !important;
+        }
+
+        /* Toastr Centered Screen Notification (Exact Center Screen) */
+        #toast-container,
+        #toast-container.toast-center-center,
+        #toast-container.toast-top-center,
+        #toast-container.toast-top-right,
+        .toast-center-center,
+        .toast-top-center {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: translate(-50%, -50%) !important;
+            width: 90% !important;
+            max-width: 440px !important;
+            margin: 0 !important;
+            z-index: 999999 !important;
+            pointer-events: none;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        #toast-container > .toast,
+        .toast-center-center > .toast {
+            pointer-events: auto;
+            width: 100% !important;
+            margin: 0 0 12px 0 !important;
+            box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.35), 0 10px 15px -5px rgba(0, 0, 0, 0.25) !important;
+            border-radius: 12px !important;
+            font-size: 0.95rem !important;
+            text-align: center !important;
+        }
+
+        #toast-container > .toast .toast-message {
+            font-size: 0.92rem !important;
+            line-height: 1.45;
+        }
+    </style>
 </head>
 
 <body class="link-sidebar">
@@ -87,8 +290,27 @@
             });
         }
 
+        if (typeof toastr !== 'undefined') {
+            toastr.options = Object.assign({}, toastr.options || {}, {
+                positionClass: 'toast-center-center',
+                closeButton: true,
+                newestOnTop: true,
+                progressBar: true,
+                timeOut: 4000
+            });
+        }
+
         $(function() {
             applyMoneyMask();
+            if (typeof toastr !== 'undefined') {
+                toastr.options = Object.assign({}, toastr.options || {}, {
+                    positionClass: 'toast-center-center',
+                    closeButton: true,
+                    newestOnTop: true,
+                    progressBar: true,
+                    timeOut: 4000
+                });
+            }
         });
 
         function showToastr(type, message) {

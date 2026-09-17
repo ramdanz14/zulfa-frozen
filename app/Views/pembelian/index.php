@@ -6,17 +6,128 @@
  * @var string $akses_menu
  */
 ?>
+<style>
+    /* =========================================================
+       PEMBELIAN INDEX MOBILE & DESKTOP STYLING
+       ========================================================= */
+    .faktur-main-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    .faktur-sup-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.25;
+    }
+    .faktur-meta-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    .faktur-date-badge {
+        font-size: 0.775rem;
+        font-weight: 600;
+        color: #0f172a;
+        background: #f1f5f9;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .faktur-id-badge {
+        font-family: var(--bs-font-monospace);
+        font-size: 0.75rem;
+        color: #475569;
+        background: #f8fafc;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+    }
+    .faktur-gross-amount {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #0d6efd;
+    }
+
+    @media (max-width: 767.98px) {
+        /* Full width search bar for mobile */
+        .dt-container .dt-search {
+            width: 100% !important;
+            text-align: left !important;
+            margin-bottom: 0.5rem;
+        }
+        .dt-container .dt-search label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+        .dt-container .dt-search input[type="search"],
+        .dt-container .dt-search input.form-control {
+            width: 100% !important;
+            height: 42px !important;
+            margin-top: 4px !important;
+            margin-left: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Sembunyikan kolom desktop individual agar tidak sesak di HP */
+        #table-data .col-desktop-only {
+            display: none !important;
+        }
+
+        #table-data th,
+        #table-data td {
+            padding: 0.65rem 0.5rem !important;
+            vertical-align: middle;
+        }
+
+        /* Compact modal detail on mobile */
+        .modal-body-compact {
+            padding: 0.75rem !important;
+        }
+        .detail-card-metric {
+            padding: 0.5rem 0.75rem !important;
+        }
+    }
+
+    /* Styling for detail modal cards & items */
+    .detail-card-metric {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+    .detail-item-pill {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+        background: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
+        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-2 px-md-4 py-md-3">
                 <div class="row align-items-center">
                     <div class="col-9">
-                        <h4 class="fw-semibold mb-2">Pembelian Supplier</h4>
-                        <p class="mb-0"><span class="page-pretitle">Total</span> | Daftar transaksi pembelian yang pernah dibuat.</p>
-                        <small class="text-muted d-block mt-1">Closing aktif: <?= esc($closingDate ?? '-') ?>. Transaksi `TERIMA` sebelum tanggal ini dikunci dari edit dan hapus.</small>
+                        <h4 class="fw-bold mb-1 text-dark">Pembelian Supplier</h4>
+                        <p class="mb-0 text-muted small"><span class="page-pretitle fw-semibold">Total Data : 0</span> | Daftar transaksi pembelian & PO.</p>
+                        <small class="text-secondary d-block mt-1" style="font-size: 0.75rem;">
+                            <i class="ti ti-lock me-1"></i>Closing aktif: <strong><?= esc($closingDate ?? '-') ?></strong> (TERIMA sebelum tanggal ini terkunci).
+                        </small>
                     </div>
-                    <div class="col-3">
+                    <div class="col-3 text-end d-none d-sm-block">
                         <div class="text-center mb-n5">
                             <img src="<?= base_url(); ?>/assets/images/breadcrumb/ChatBc.png" alt="modernize-img" class="img-fluid mb-n4" />
                         </div>
@@ -25,10 +136,10 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle">
-                    <thead></thead>
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100 mb-0">
+                    <thead class="table-light"></thead>
                     <tbody>
                         <tr>
                             <td>No data to show</td>
@@ -40,15 +151,27 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL PEMBELIAN (Compact & Ergonomic for Mobile & Desktop) -->
 <div class="modal fade" id="modal-detail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog  modal-fullscreen modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail Pembelian</h5>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light py-2 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary-subtle text-primary p-2 rounded-circle">
+                        <i class="ti ti-file-text fs-5"></i>
+                    </span>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0 text-dark">Detail Faktur Pembelian</h6>
+                        <small class="text-muted" id="detail-modal-sub">-</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-compact p-3">
                 <div id="detail-content"></div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-3">
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -68,7 +191,8 @@
         layout: {
             topStart: {
                 buttons: [{
-                    text: '<i class="ti ti-plus"></i> Tambah',
+                    text: '<i class="ti ti-plus"></i> Tambah Pembelian',
+                    className: 'btn btn-primary btn-sm px-3 fw-semibold',
                     action: function() {
                         if (akses_menu?.akses_create === 'Y') {
                             window.location.href = '<?= base_url('/pembelian/add') ?>';
@@ -79,11 +203,25 @@
                 }, 'pageLength']
             }
         },
+        language: {
+            search: "Cari Faktur / Supplier:",
+            searchPlaceholder: "Ketik No ID, Supplier, Invoice...",
+            lengthMenu: "Tampilkan _MENU_ data",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ faktur",
+            infoEmpty: "Tidak ada data faktur",
+            zeroRecords: "Data faktur tidak ditemukan",
+            paginate: {
+                first: "Awal",
+                last: "Akhir",
+                next: ">>",
+                previous: "<<"
+            }
+        },
         lengthMenu: [
             [25, 50, 100, -1],
             ['25 rows', '50 rows', '100 rows', 'Show all']
         ],
-        responsive: true,
+        responsive: false, // Tidak menggunakan child row accordion bawaan datatables
         lengthChange: false,
         autoWidth: false,
         processing: true,
@@ -93,44 +231,99 @@
             url: '<?= base_url('/pembelian/ajax') ?>',
             type: 'post'
         },
-        columns: [{
+        columns: [
+            {
                 data: 'tanggal',
                 title: 'Tanggal',
-                render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
+                className: 'col-desktop-only',
+                render: data => data ? `<span class="faktur-date-badge"><i class="ti ti-calendar"></i> ${new Date(data).toLocaleDateString('id-ID')}</span>` : '-'
             },
             {
                 data: 'beli_id',
-                title: 'ID'
+                title: 'ID Beli',
+                className: 'col-desktop-only font-monospace'
             },
             {
                 data: 'supplier_nama',
-                title: 'Supplier',
+                title: 'Informasi Faktur & Supplier',
                 render: function(data, type, row) {
-                    return `<div class="fw-semibold">${data || row.supco}</div><small class="text-muted">${row.invoice || '-'}</small>`;
+                    const supNama = data || row.supco || '-';
+                    const tglFormat = row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-';
+                    const beliId = row.beli_id || '-';
+                    const invoice = row.invoice || '-';
+                    const grossText = 'Rp ' + formatMoneyValue(row.total_gross);
+                    const jmlItem = row.jml_item || 0;
+
+                    // Badge status nota
+                    const notaBadge = row.status_nota === 'TERIMA' ?
+                        '<span class="badge bg-success-subtle text-success">TERIMA</span>' :
+                        '<span class="badge bg-warning-subtle text-warning">PO</span>';
+
+                    // Badge status bayar
+                    let bayarBadge = '<span class="badge bg-danger-subtle text-danger">BELUM</span>';
+                    if (row.status_nota === 'PO') {
+                        bayarBadge = '<span class="badge bg-secondary-subtle text-secondary">DRAFT</span>';
+                    } else if (row.status_bayar === 'LUNAS') {
+                        bayarBadge = '<span class="badge bg-success-subtle text-success">LUNAS</span>';
+                    } else if (row.status_bayar === 'CICIL') {
+                        bayarBadge = '<span class="badge bg-info-subtle text-info">CICIL</span>';
+                    }
+
+                    return `
+                        <div class="faktur-main-cell">
+                            <!-- BARIS 1: TANGGAL & NAMA SUPPLIER (Utama untuk layar HP & Desktop) -->
+                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <div class="faktur-sup-name">
+                                    <i class="ti ti-building-store text-primary d-inline d-md-none me-1"></i>${supNama}
+                                </div>
+                                <span class="faktur-date-badge d-inline-flex d-md-none">
+                                    <i class="ti ti-calendar"></i> ${tglFormat}
+                                </span>
+                            </div>
+
+                            <!-- BARIS 2 KHUSUS MOBILE: ID, INVOICE, QTY ITEM, GROSS & STATUS -->
+                            <div class="d-flex align-items-center gap-1 flex-wrap d-md-none mt-1" style="font-size: 0.775rem;">
+                                <span class="faktur-id-badge"><i class="ti ti-hash"></i>${beliId}</span>
+                                <span class="badge bg-light text-muted border font-monospace"><i class="ti ti-file-invoice"></i> ${invoice}</span>
+                                <span class="badge bg-light-primary text-primary"><i class="ti ti-package"></i> ${jmlItem} item</span>
+                                <span class="faktur-gross-amount ms-auto">${grossText}</span>
+                            </div>
+
+                            <!-- BADGE STATUS PADA BARIS KEDUA MOBILE -->
+                            <div class="d-flex align-items-center gap-1 d-md-none mt-1">
+                                <span class="small text-muted me-1" style="font-size: 0.7rem;">Status:</span>
+                                ${notaBadge}
+                                ${bayarBadge}
+                            </div>
+
+                            <!-- SUBTITLE PADA DESKTOP (INVOICE ONLY) -->
+                            <small class="text-muted d-none d-md-block font-monospace"><i class="ti ti-file-invoice me-1"></i>${invoice}</small>
+                        </div>
+                    `;
                 }
             },
             {
                 data: 'jml_item',
                 title: 'Item',
-                className: 'text-center'
+                className: 'text-center col-desktop-only'
             },
             {
                 data: 'total_gross',
                 title: 'Gross',
-                className: 'text-end',
+                className: 'text-end col-desktop-only fw-bold text-primary',
                 render: data => 'Rp ' + formatMoneyValue(data)
             },
             {
                 data: 'status_nota',
                 title: 'Nota',
-                className: 'text-center',
+                className: 'text-center col-desktop-only',
                 render: data => data === 'TERIMA' ?
                     '<span class="badge bg-success-subtle text-success">TERIMA</span>' : '<span class="badge bg-warning-subtle text-warning">PO</span>'
             },
             {
                 data: 'status_bayar',
                 title: 'Bayar',
-                className: 'text-center',
+                className: 'text-center col-desktop-only',
                 render: function(data, type, row) {
                     if (row.status_nota === 'PO') {
                         return '<span class="badge bg-secondary-subtle text-secondary">DRAFT</span>';
@@ -148,27 +341,40 @@
                 title: 'Action',
                 data: null,
                 className: 'text-center',
-                responsivePriority: 1,
                 render: function(data) {
                     const isLocked = data.can_edit === false;
                     const editBtn = akses_menu?.akses_update === 'Y' ?
                         (isLocked ?
-                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockedNotice('${data.closing_date}','edit')"><i class="ti ti-lock text-danger"></i> Edit Terkunci</a>` :
-                            `<a class="dropdown-item" href="<?= base_url('/pembelian/edit') ?>/${data.beli_id}"><i class="ti ti-pencil text-warning"></i> Edit</a>`) :
+                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockedNotice('${data.closing_date}','edit')"><i class="ti ti-lock text-danger me-1"></i> Edit Terkunci</a>` :
+                            `<a class="dropdown-item" href="<?= base_url('/pembelian/edit') ?>/${data.beli_id}"><i class="ti ti-pencil text-warning me-1"></i> Edit Faktur</a>`) :
                         '';
+                    
+                    // Passing info faktur into deletePembelian
+                    const deletePayload = JSON.stringify({
+                        beli_id: data.beli_id,
+                        invoice: data.invoice || '-',
+                        supplier: data.supplier_nama || data.supco || '-',
+                        tanggal: data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID') : '-',
+                        total_gross: formatMoneyValue(data.total_gross)
+                    }).replace(/"/g, '&quot;');
+
                     const deleteBtn = akses_menu?.akses_delete === 'Y' ?
                         (isLocked ?
-                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockedNotice('${data.closing_date}','hapus')"><i class="ti ti-lock text-danger"></i> Hapus Terkunci</a>` :
-                            `<a class="dropdown-item" href="javascript:void(0)" onclick="deletePembelian('${data.beli_id}')"><i class="ti ti-trash text-danger"></i> Hapus</a>`) :
+                            `<a class="dropdown-item text-muted" href="javascript:void(0)" onclick="showLockedNotice('${data.closing_date}','hapus')"><i class="ti ti-lock text-danger me-1"></i> Hapus Terkunci</a>` :
+                            `<a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deletePembelian(${deletePayload})"><i class="ti ti-trash me-1"></i> Hapus Faktur</a>`) :
                         '';
-                    return `<span class="dropdown">
-                        <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-toggle="dropdown">Actions</button>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="showDetail('${data.beli_id}')"><i class="ti ti-eye text-info"></i> Detail</a>
-                            ${editBtn}
-                            ${deleteBtn}
+                    return `
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle btn-sm px-2 py-1" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 36px; min-width: 40px;">
+                                <i class="ti ti-dots-vertical fs-4"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="showDetail('${data.beli_id}')"><i class="ti ti-eye text-info me-1"></i> Lihat Detail</a>
+                                ${editBtn}
+                                ${deleteBtn}
+                            </div>
                         </div>
-                    </span>`;
+                    `;
                 }
             }
         ]
@@ -179,7 +385,13 @@
     });
 
     function showDetail(beliId) {
-        $('#detail-content').html('<div class="text-center py-5 text-muted">Memuat detail...</div>');
+        $('#detail-modal-sub').text(`Memuat Faktur ${beliId}...`);
+        $('#detail-content').html(`
+            <div class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-1" role="status"></div>
+                Memuat detail faktur...
+            </div>
+        `);
         detailModal.show();
         $.getJSON(`<?= base_url('/pembelian/show') ?>/${beliId}`, function(res) {
             if (res.tipe !== 'success') {
@@ -187,71 +399,134 @@
                 return;
             }
             const data = res.data;
-            const detailRows = (data.details || []).map((row, idx) => `
-                <tr>
-                    <td class="text-center">${idx + 1}</td>
-                    <td>${row.nama_item}<br><small class="text-muted">${row.kode_item || '-'}</small></td>
-                    <td class="text-end">${Number(row.qty_beli || 0).toLocaleString('id-ID')}</td>
-                    <td>${row.sat_id}</td>
-                    <td class="text-end">Rp ${formatMoneyValue(row.price)}</td>
-                    <td class="text-end">Rp ${formatMoneyValue(row.gross)}</td>
-                </tr>
+            $('#detail-modal-sub').text(`${data.beli_id} &bull; ${data.invoice || '-'}`);
+
+            const detailItems = data.details || [];
+            const paymentItems = data.payments || [];
+
+            // Card item list untuk mobile & table clean untuk desktop
+            const detailCardsHtml = detailItems.map((row, idx) => `
+                <div class="detail-item-pill">
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">${idx + 1}. ${row.nama_item}</div>
+                            <small class="text-muted font-monospace">${row.kode_item || '-'}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bolder text-primary" style="font-size: 0.9rem;">Rp ${formatMoneyValue(row.gross)}</div>
+                            <small class="text-muted">${Number(row.qty_beli || 0).toLocaleString('id-ID')} ${row.sat_id} &times; Rp ${formatMoneyValue(row.price)}</small>
+                        </div>
+                    </div>
+                </div>
             `).join('');
 
-            const payRows = (data.payments || []).length ? (data.payments || []).map((row, idx) => `
-                <tr>
-                    <td class="text-center">${idx + 1}</td>
-                    <td>${new Date(row.tanggal_bayar).toLocaleString('id-ID')}</td>
-                    <td>${row.cara_bayar}</td>
-                    <td>${row.bank_nama || '-'}</td>
-                    <td>${row.rekening_no || '-'}</td>
-                    <td class="text-end">Rp ${formatMoneyValue(row.jumlah_bayar)}</td>
-                </tr>
-            `).join('') : '<tr><td colspan="6" class="text-center text-muted">Belum ada pembayaran</td></tr>';
+            // Histori pembayaran card
+            const paymentsHtml = paymentItems.length ? paymentItems.map((row, idx) => {
+                const isTransfer = row.cara_bayar === 'TRANSFER';
+                const bankInfo = isTransfer ? `${row.bank_nama || '-'} (${row.rekening_no || '-'})` : 'Tunai / Kasir';
+                return `
+                    <div class="p-2 border rounded bg-white mb-2 d-flex align-items-center justify-content-between gap-2" style="font-size: 0.82rem;">
+                        <div>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge ${isTransfer ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success'} rounded-pill" style="font-size: 0.7rem;">
+                                    ${row.cara_bayar}
+                                </span>
+                                <span class="fw-bold text-dark">Rp ${formatMoneyValue(row.jumlah_bayar)}</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <i class="ti ti-clock"></i> ${new Date(row.tanggal_bayar).toLocaleString('id-ID')} &bull; ${bankInfo}
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="text-muted text-center py-2 bg-light rounded small">Belum ada pembayaran yang tercatat.</div>';
+
+            const notaBadge = data.status_nota === 'TERIMA' ?
+                '<span class="badge bg-success text-white">TERIMA (Barang Masuk)</span>' :
+                '<span class="badge bg-warning text-dark">PO (Draft Pesanan)</span>';
+
+            let bayarBadge = '<span class="badge bg-danger text-white">BELUM LUNAS</span>';
+            if (data.status_nota === 'PO') {
+                bayarBadge = '<span class="badge bg-secondary text-white">DRAFT</span>';
+            } else if (data.status_bayar === 'LUNAS') {
+                bayarBadge = '<span class="badge bg-success text-white">LUNAS</span>';
+            } else if (data.status_bayar === 'CICIL') {
+                bayarBadge = '<span class="badge bg-info text-white">CICIL</span>';
+            }
 
             $('#detail-content').html(`
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">ID Pembelian</small><div class="fw-semibold">${data.beli_id}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Tanggal</small><div class="fw-semibold">${new Date(data.tanggal).toLocaleDateString('id-ID')}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Supplier</small><div class="fw-semibold">${data.supplier_nama || data.supco}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Invoice</small><div class="fw-semibold">${data.invoice}</div></div></div>
+                <!-- Ringkasan Header Faktur -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6 col-sm-3">
+                        <div class="detail-card-metric">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Tanggal Faktur</small>
+                            <div class="fw-bold text-dark" style="font-size: 0.88rem;">${new Date(data.tanggal).toLocaleDateString('id-ID')}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="detail-card-metric">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">ID Pembelian</small>
+                            <div class="fw-bold font-monospace text-dark" style="font-size: 0.88rem;">${data.beli_id}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="detail-card-metric">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Supplier & Invoice</small>
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;">
+                                ${data.supplier_nama || data.supco}
+                            </div>
+                            <small class="text-secondary font-monospace" style="font-size: 0.75rem;">Inv: ${data.invoice || '-'}</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Total Gross</small><div class="fw-semibold">Rp ${formatMoneyValue(data.total_gross)}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Total Bayar</small><div class="fw-semibold">Rp ${formatMoneyValue(data.total_bayar)}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Sisa Bayar</small><div class="fw-semibold">Rp ${formatMoneyValue(data.sisa_bayar)}</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3 h-100"><small class="text-muted">Status</small><div class="fw-semibold">${data.status_nota} / ${data.status_bayar}</div></div></div>
+
+                <!-- Financial Metric Grid (Compact) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Total Tagihan</small>
+                            <div class="fw-bold text-primary font-monospace" style="font-size: 0.95rem;">Rp ${formatMoneyValue(data.total_gross)}</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Total Terbayar</small>
+                            <div class="fw-semibold text-success font-monospace" style="font-size: 0.95rem;">Rp ${formatMoneyValue(data.total_bayar)}</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border rounded p-2 text-center bg-danger-subtle border-danger-subtle">
+                            <small class="text-danger d-block fw-semibold" style="font-size: 0.72rem;">Sisa Bayar</small>
+                            <div class="fw-bolder text-danger font-monospace" style="font-size: 0.95rem;">Rp ${formatMoneyValue(data.sisa_bayar)}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="table-responsive mb-3">
-                    <table class="table table-sm table-bordered align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Satuan</th>
-                                <th>Price</th>
-                                <th>Gross</th>
-                            </tr>
-                        </thead>
-                        <tbody>${detailRows}</tbody>
-                    </table>
+
+                <!-- Status Badges Bar -->
+                <div class="d-flex align-items-center justify-content-between p-2 mb-3 rounded bg-light border">
+                    <span class="small text-muted fw-semibold">Status Transaksi:</span>
+                    <div class="d-flex gap-1">
+                        ${notaBadge}
+                        ${bayarBadge}
+                    </div>
                 </div>
-                <h6 class="mb-2">Histori Pembayaran</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Tanggal</th>
-                                <th>Metode</th>
-                                <th>Bank</th>
-                                <th>No Rekening</th>
-                                <th>Jumlah</th>
-                            </tr>
-                        </thead>
-                        <tbody>${payRows}</tbody>
-                    </table>
+
+                <!-- Daftar Item Barang -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0 text-dark small"><i class="ti ti-packages text-primary me-1"></i> Rincian Barang (${detailItems.length})</h6>
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${detailCardsHtml}
+                    </div>
+                </div>
+
+                <!-- Histori Pembayaran -->
+                <div>
+                    <h6 class="fw-bold mb-2 text-dark small"><i class="ti ti-receipt-2 text-secondary me-1"></i> Histori Pembayaran (${paymentItems.length})</h6>
+                    <div class="d-flex flex-column">
+                        ${paymentsHtml}
+                    </div>
                 </div>
             `);
         }).fail(function(xhr) {
@@ -259,14 +534,50 @@
         });
     }
 
-    function deletePembelian(beliId) {
+    function deletePembelian(info) {
+        // Mendukung argumen berupa string beliId langsung maupun object info
+        const beliId = typeof info === 'object' ? info.beli_id : info;
+        const invoice = typeof info === 'object' ? info.invoice : '-';
+        const supplier = typeof info === 'object' ? info.supplier : '-';
+        const tanggal = typeof info === 'object' ? info.tanggal : '-';
+        const totalGross = typeof info === 'object' ? info.total_gross : '-';
+
         Swal.fire({
-            title: 'Hapus transaksi ini?',
-            text: 'Data header, detail, dan histori pembayaran terkait akan ikut terhapus.',
+            title: 'Hapus Transaksi Faktur?',
+            html: `
+                <div class="text-start mt-2 p-3 bg-light border rounded" style="font-size: 0.88rem;">
+                    <div class="mb-1 text-danger fw-bold"><i class="ti ti-alert-triangle me-1"></i> Anda akan menghapus transaksi berikut:</div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">ID Pembelian:</span>
+                        <strong class="font-monospace text-dark">${beliId}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Invoice:</span>
+                        <strong class="font-monospace text-dark">${invoice}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Supplier:</span>
+                        <span class="fw-semibold text-dark text-truncate text-end" style="max-width: 180px;">${supplier}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tanggal:</span>
+                        <span class="text-dark">${tanggal}</span>
+                    </div>
+                    <div class="d-flex justify-content-between pt-1 border-top">
+                        <span class="text-muted">Total Tagihan:</span>
+                        <strong class="text-primary">Rp ${totalGross}</strong>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2 text-start">Perhatian: Seluruh detail barang dan histori cicilan/pembayaran faktur ini akan ikut terhapus.</small>
+            `,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Ya, hapus',
-            cancelButtonText: 'Batal'
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="ti ti-trash me-1"></i> Ya, Hapus Faktur',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
         }).then((result) => {
             if (!result.isConfirmed) return;
             $.ajax({
@@ -279,7 +590,7 @@
                 },
                 success: function(res) {
                     if (res.tipe === 'success') {
-                        toastr.success(res.data || 'Berhasil');
+                        toastr.success(res.data || 'Berhasil menghapus faktur');
                         table.ajax.reload(null, false);
                         return;
                     }
