@@ -171,9 +171,9 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
     .checkerboard-bg {
         background-color: #f8fafc;
         background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
-                          linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
-                          linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
-                          linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+            linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
         background-size: 16px 16px;
         background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
         border: 1px dashed #cbd5e1;
@@ -344,7 +344,7 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
 
                         <!-- Guardrail Alert jika ada input error -->
                         <div class="guardrail-alert guardrail-danger d-none" id="setting-error-alert">
-                            <i class="ti ti-alert-circle fs-5 flex-shrink-0 mt-1"></i>
+                            <i class="ti ti-alert-circle fs-5 shrink-0 mt-1"></i>
                             <div>
                                 <strong>Peringatan Kesalahan Input:</strong>
                                 <div id="setting-error-msg" class="mt-1"></div>
@@ -395,14 +395,14 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
                                                         <?php endif; ?>
 
                                                         <input type="<?= $isNumber ? 'number' : 'text' ?>"
-                                                               class="form-control form-control-lg setting-input <?= $isNumber ? 'setting-number' : '' ?>"
-                                                               id="input-<?= esc($rkey) ?>"
-                                                               name="<?= esc($rkey) ?>"
-                                                               data-key="<?= esc($rkey) ?>"
-                                                               value="<?= esc($val) ?>"
-                                                               <?= $isNumber ? 'min="0" step="any" inputmode="decimal"' : '' ?>
-                                                               required
-                                                               placeholder="Ketik nilai...">
+                                                            class="form-control form-control-lg setting-input <?= $isNumber ? 'setting-number' : '' ?>"
+                                                            id="input-<?= esc($rkey) ?>"
+                                                            name="<?= esc($rkey) ?>"
+                                                            data-key="<?= esc($rkey) ?>"
+                                                            value="<?= esc($val) ?>"
+                                                            <?= $isNumber ? 'min="0" step="any" inputmode="decimal"' : '' ?>
+                                                            required
+                                                            placeholder="Ketik nilai...">
 
                                                         <span class="input-group-text fw-semibold text-secondary">
                                                             <?= esc($setting['suffix'] ?? '') ?>
@@ -575,7 +575,7 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
                                     <!-- Live Preview Color -->
                                     <div id="preview-color-box" class="file-preview-box d-none">
                                         <img src="" alt="Preview Color" class="preview-img" style="max-height: 50px; max-width: 80px; object-fit: contain;">
-                                        <div class="flex-grow-1 small">
+                                        <div class="grow small">
                                             <strong class="file-name d-block text-truncate"></strong>
                                             <span class="file-info text-muted"></span>
                                         </div>
@@ -597,7 +597,7 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
                                     <!-- Live Preview BW -->
                                     <div id="preview-bw-box" class="file-preview-box d-none">
                                         <img src="" alt="Preview BW" class="preview-img" style="max-height: 50px; max-width: 80px; object-fit: contain;">
-                                        <div class="flex-grow-1 small">
+                                        <div class="grow small">
                                             <strong class="file-name d-block text-truncate"></strong>
                                             <span class="file-info text-muted"></span>
                                         </div>
@@ -653,7 +653,10 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
             $('.tab-section-content').removeClass('active-mobile-section');
             $(target).addClass('active-mobile-section');
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         });
 
         // Live File Upload Preview & Jegatan Format File
@@ -766,7 +769,11 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
                 $card.removeClass('has-error has-warning');
                 const targetDate = new Date();
                 targetDate.setDate(targetDate.getDate() - days);
-                const tglStr = targetDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const tglStr = targetDate.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
                 $box.html(`
                     <i class="ti ti-calendar text-danger me-1"></i>
                     <strong>Simulasi Transaksi Hari Ini:</strong> Struk pembelian paling lama yang masih bisa diretur adalah tanggal 

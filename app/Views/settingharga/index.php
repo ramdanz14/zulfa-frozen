@@ -11,21 +11,6 @@ $canUpdateUser = (!empty($aksesMenuParsed['akses_update']) && $aksesMenuParsed['
 ?>
 
 <style>
-    /* Styling & Anti-Slop Layout Mobile / Human Optimizations */
-    :root {
-        --color-focus-ring: #0284c7;
-        --color-profit: #15803d;
-        --color-loss: #b91c1c;
-    }
-
-    .form-control:focus,
-    .btn:focus-visible,
-    .form-select:focus {
-        outline: 2px solid var(--color-focus-ring) !important;
-        outline-offset: 1px !important;
-        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2) !important;
-    }
-
     /* Desktop input size */
     @media (min-width: 768px) {
         .btn-save-row {
