@@ -7,32 +7,169 @@
  * @var array $tokoOptions
  */
 ?>
+<style>
+    /* =========================================================
+       LAPORAN HUTANG SUPPLIER MOBILE & DESKTOP STYLING
+       ========================================================= */
+    .laphutang-main-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    .laphutang-sup-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.25;
+    }
+    .laphutang-code-badge {
+        font-family: var(--bs-font-monospace);
+        font-size: 0.75rem;
+        color: #475569;
+        background: #f8fafc;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+    }
+    .laphutang-sisa-amount {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #dc3545;
+    }
+
+    /* Metric Cards Styling */
+    .metric-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .metric-card .metric-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .metric-card .metric-val {
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .metric-card .metric-sub {
+        font-size: 0.725rem;
+        color: #64748b;
+    }
+
+    @media (max-width: 767.98px) {
+        /* Search bar full width pada mobile */
+        .dt-container .dt-search {
+            width: 100% !important;
+            text-align: left !important;
+            margin-bottom: 0.5rem;
+        }
+        .dt-container .dt-search label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+        .dt-container .dt-search input[type="search"],
+        .dt-container .dt-search input.form-control {
+            width: 100% !important;
+            height: 42px !important;
+            margin-top: 4px !important;
+            margin-left: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Buttons export stack on mobile */
+        .dt-container .dt-buttons {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* Sembunyikan kolom desktop-only di HP */
+        #table-data .col-desktop-only,
+        .dt-container #table-data .col-desktop-only,
+        #table-data th.col-desktop-only,
+        #table-data td.col-desktop-only,
+        table.dataTable th.col-desktop-only,
+        table.dataTable td.col-desktop-only {
+            display: none !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Hapus space kosong dari colgroup DataTables di HP */
+        #table-data colgroup {
+            display: none !important;
+        }
+
+        #table-data {
+            table-layout: auto !important;
+            width: 100% !important;
+        }
+
+        #table-data th,
+        #table-data td {
+            padding: 0.65rem 0.5rem !important;
+            vertical-align: middle;
+        }
+
+        /* Metric card padding compact di HP */
+        .metric-card {
+            padding: 0.6rem 0.75rem !important;
+        }
+        .metric-card .metric-val {
+            font-size: 0.98rem !important;
+        }
+    }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-danger-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Laporan Hutang Supplier</h4>
-                        <p class="mb-0"><span id="period-label">Periode aktif</span> | Rekap pembelian kredit TERIMA per supplier.</p>
+        <!-- Header Banner -->
+        <div class="card bg-danger-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-2 px-md-4 py-md-3">
+                <div class="row align-items-center g-2">
+                    <div class="col-12 col-md-7">
+                        <h4 class="fw-bold mb-1 text-dark">Laporan Hutang Supplier</h4>
+                        <p class="mb-0 text-muted small"><span id="period-label" class="fw-semibold">Periode aktif</span> | Rekap pembelian kredit TERIMA per supplier.</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <div id="selected-store-info" class="text-muted small"></div>
+                    <div class="col-12 col-md-5 text-md-end">
+                        <div id="selected-store-info" class="badge bg-white text-dark border px-2 py-1 font-monospace"></div>
+                        <a href="<?= base_url('/hutang') ?>" class="btn btn-outline-danger btn-sm ms-md-2 mt-1 mt-md-0 fw-semibold">
+                            <i class="ti ti-credit-card me-1"></i>Kelola Hutang
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-4">
-                        <label class="form-label">Range Tanggal Faktur</label>
-                        <input type="text" class="form-control" id="filter-range" readonly>
+        <!-- Filter Card -->
+        <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold text-muted mb-1"><i class="ti ti-calendar me-1"></i>Range Tanggal Faktur</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="ti ti-calendar-event"></i></span>
+                            <input type="text" class="form-control" id="filter-range" readonly style="background-color: #fff; cursor: pointer;">
+                        </div>
                     </div>
-                    <div class="col-lg-4" id="filter-toko-wrapper" style="display:none;">
-                        <label class="form-label">Filter Toko</label>
-                        <select class="form-select select2" id="filter-toko">
+                    <div class="col-12 col-md-4" id="filter-toko-wrapper" style="display:none;">
+                        <label class="form-label small fw-semibold text-muted mb-1"><i class="ti ti-building-store me-1"></i>Filter Toko</label>
+                        <select class="form-select form-select-sm select2" id="filter-toko">
                             <?php foreach ($tokoOptions as $row) : ?>
                                 <option value="<?= esc($row['toko_id']) ?>" <?= (string) ($row['toko_id'] ?? '') === (string) session('toko_id') ? 'selected' : '' ?>>
                                     <?= esc($row['toko_id']) ?> - <?= esc($row['toko_nama'] ?? $row['toko_id']) ?>
@@ -40,101 +177,122 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-<?= !empty($tokoOptions) ? '4' : '8' ?> d-grid d-lg-flex gap-2">
-                        <button type="button" class="btn btn-primary w-100" id="btn-filter"><i class="ti ti-search"></i> Tampilkan</button>
-                        <button type="button" class="btn btn-light w-100" id="btn-reset">Reset</button>
+                    <div class="col-12 col-md-<?= !empty($tokoOptions) ? '4' : '8' ?>">
+                        <div class="row g-1">
+                            <div class="col-7">
+                                <button type="button" class="btn btn-primary btn-sm w-100 py-2 fw-semibold" id="btn-filter">
+                                    <i class="ti ti-search me-1"></i>Tampilkan
+                                </button>
+                            </div>
+                            <div class="col-5">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-2" id="btn-reset">
+                                    <i class="ti ti-refresh me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Supplier</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-supplier">0</div>
+        <!-- Primary Summary Metrics (Ringkasan Utama) -->
+        <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label">Supplier</span>
+                        <i class="ti ti-building-store text-muted fs-4"></i>
                     </div>
+                    <div class="metric-val text-dark font-monospace" id="summary-supplier">0</div>
+                    <div class="metric-sub">Pemasok kredit</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Total Invoice</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-invoice">0</div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label">Total Invoice</span>
+                        <i class="ti ti-file-invoice text-muted fs-4"></i>
                     </div>
+                    <div class="metric-val text-dark font-monospace" id="summary-invoice">0</div>
+                    <div class="metric-sub">Faktur tercatat</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Total Nominal</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-nominal">Rp 0</div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label">Total Tagihan</span>
+                        <i class="ti ti-wallet text-primary fs-4"></i>
                     </div>
+                    <div class="metric-val text-primary font-monospace" id="summary-nominal">Rp 0</div>
+                    <div class="metric-sub">Gross pembelian kredit</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Sisa Hutang</div>
-                        <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-sisa">Rp 0</div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100 bg-danger-subtle border-danger-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label text-danger fw-bold">Sisa Hutang</span>
+                        <i class="ti ti-alert-triangle text-danger fs-4"></i>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">BELUM</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-belum">0 invoice / Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">CICIL</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-cicil">0 invoice / Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">LUNAS</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-lunas">0 invoice / Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Rata-rata Pelunasan</div>
-                        <div class="fs-6 fw-semibold mt-2 text-primary" id="summary-durasi">-</div>
-                    </div>
+                    <div class="metric-val text-danger font-monospace" id="summary-sisa">Rp 0</div>
+                    <div class="metric-sub text-danger-emphasis">Belum dilunasi</div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100">
-                    <thead>
+        <!-- Secondary Breakdown Metrics (Status & Rata-rata Durasi) -->
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label text-danger">Status BELUM</span>
+                        <span class="badge bg-danger-subtle text-danger" style="font-size:0.65rem;">0% BAYAR</span>
+                    </div>
+                    <div class="metric-val text-danger font-monospace" id="summary-belum-nom">Rp 0</div>
+                    <div class="metric-sub font-monospace" id="summary-belum-inv">0 invoice</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label text-warning-emphasis">Status CICIL</span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:0.65rem;">SEBAGIAN</span>
+                    </div>
+                    <div class="metric-val text-warning-emphasis font-monospace" id="summary-cicil-nom">Rp 0</div>
+                    <div class="metric-sub font-monospace" id="summary-cicil-inv">0 invoice</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label text-success">Status LUNAS</span>
+                        <span class="badge bg-success-subtle text-success" style="font-size:0.65rem;">LUNAS</span>
+                    </div>
+                    <div class="metric-val text-success font-monospace" id="summary-lunas-nom">Rp 0</div>
+                    <div class="metric-sub font-monospace" id="summary-lunas-inv">0 invoice</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="metric-label text-primary">Rata-rata Lunas</span>
+                        <i class="ti ti-clock text-primary fs-4"></i>
+                    </div>
+                    <div class="metric-val text-primary font-monospace" id="summary-durasi">-</div>
+                    <div class="metric-sub">Waktu pelunasan faktur</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100 mb-0">
+                    <thead class="table-light"></thead>
+                    <tbody>
                         <tr>
-                            <th>Supplier</th>
-                            <th>Total Invoice</th>
-                            <th>Total Nominal</th>
-                            <th>BELUM</th>
-                            <th>CICIL</th>
-                            <th>LUNAS</th>
-                            <th>Total Bayar</th>
-                            <th>Sisa Hutang</th>
-                            <th>Rata-rata Pelunasan</th>
+                            <td>No data to show</td>
                         </tr>
-                    </thead>
-                    <tbody></tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -219,11 +377,11 @@
     }
 
     function updateStoreInfo() {
-        $('#selected-store-info').text(`Toko aktif: ${selectedStore()}`);
+        $('#selected-store-info').text(`Toko: ${selectedStore()}`);
     }
 
     function initTable() {
-        DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
+        DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary btn-sm';
         table = $('#table-data').DataTable({
             layout: {
                 topStart: {
@@ -237,13 +395,13 @@
                         }
                     }, {
                         extend: 'pdfHtml5',
-                        text: 'PDF',
+                        text: '<i class="ti ti-file-type-pdf"></i> PDF',
                         title: 'Laporan Hutang Supplier',
                         orientation: 'landscape',
                         pageSize: 'A4'
                     }, {
                         extend: 'print',
-                        text: 'Print',
+                        text: '<i class="ti ti-printer"></i> Print',
                         title: 'Laporan Hutang Supplier'
                     }, 'pageLength']
                 }
@@ -253,61 +411,121 @@
             order: [
                 [7, 'desc']
             ],
-            responsive: true,
+            responsive: false,
             pageLength: 25,
             lengthMenu: [
                 [25, 50, 100, -1],
                 ['25 rows', '50 rows', '100 rows', 'Show all']
             ],
-            columns: [{
+            columns: [
+                {
                     data: 'supplier_nama',
+                    title: 'Supplier & Rincian',
                     render: function(data, type, row) {
                         if (type === 'export' || type === 'sort') {
                             return data || row.supco || '-';
                         }
-                        return `<div class="fw-semibold">${escapeHtml(data || row.supco || '-')}</div><small class="text-muted">${escapeHtml(row.supco || '-')}</small>`;
+                        const supNama = data || row.supco || '-';
+                        const supCode = row.supco || '-';
+                        const totalInv = Number(row.total_invoice || 0).toLocaleString('id-ID');
+                        const totalGross = 'Rp ' + formatMoneyValue(row.total_nominal || 0);
+                        const sisaHutang = 'Rp ' + formatMoneyValue(row.sisa_hutang || 0);
+                        const totalBayar = 'Rp ' + formatMoneyValue(row.total_bayar || 0);
+
+                        return `
+                            <div class="laphutang-main-cell">
+                                <!-- BARIS 1: NAMA SUPPLIER & KODE -->
+                                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                    <div class="laphutang-sup-name">
+                                        <i class="ti ti-building-store text-primary d-inline d-md-none me-1"></i>${escapeHtml(supNama)}
+                                    </div>
+                                    <span class="laphutang-code-badge">
+                                        <i class="ti ti-hash"></i>${escapeHtml(supCode)}
+                                    </span>
+                                </div>
+
+                                <!-- BARIS 2 KHUSUS MOBILE: TOTAL INVOICE & SISA HUTANG -->
+                                <div class="d-flex align-items-center gap-1 flex-wrap d-md-none mt-1" style="font-size: 0.775rem;">
+                                    <span class="badge bg-light text-muted border"><i class="ti ti-file-invoice me-1"></i>${totalInv} inv</span>
+                                    <span class="badge bg-light text-secondary border">Tagihan: ${totalGross}</span>
+                                    <span class="laphutang-sisa-amount ms-auto">${sisaHutang}</span>
+                                </div>
+
+                                <!-- BARIS 3 KHUSUS MOBILE: BREAKDOWN STATUS PILLS -->
+                                <div class="d-flex align-items-center gap-1 flex-wrap d-md-none mt-1">
+                                    ${row.invoice_belum > 0 ? `<span class="badge bg-danger-subtle text-danger" style="font-size:0.7rem;">Belum: ${row.invoice_belum}</span>` : ''}
+                                    ${row.invoice_cicil > 0 ? `<span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:0.7rem;">Cicil: ${row.invoice_cicil}</span>` : ''}
+                                    ${row.invoice_lunas > 0 ? `<span class="badge bg-success-subtle text-success" style="font-size:0.7rem;">Lunas: ${row.invoice_lunas}</span>` : ''}
+                                    ${row.avg_durasi_lunas_hari ? `<span class="badge bg-primary-subtle text-primary ms-auto" style="font-size:0.7rem;"><i class="ti ti-clock me-1"></i>${Math.round(row.avg_durasi_lunas_hari)} hr</span>` : ''}
+                                </div>
+
+                                <!-- DESKTOP SUBTITLE -->
+                                <small class="text-muted d-none d-md-block font-monospace">
+                                    <i class="ti ti-id me-1"></i>Kode: ${escapeHtml(supCode)}
+                                </small>
+                            </div>
+                        `;
                     }
                 },
                 {
                     data: 'total_invoice',
-                    className: 'text-center'
+                    title: 'Total Invoice',
+                    className: 'text-center col-desktop-only font-monospace'
                 },
                 {
                     data: 'total_nominal',
-                    className: 'text-end',
+                    title: 'Total Tagihan',
+                    className: 'text-end col-desktop-only font-monospace',
                     render: moneyRender
                 },
                 {
                     data: null,
-                    className: 'text-end',
+                    title: 'BELUM',
+                    className: 'text-end col-desktop-only',
                     render: (_, type, row) => statusRender(row.invoice_belum, row.nominal_belum, type)
                 },
                 {
                     data: null,
-                    className: 'text-end',
+                    title: 'CICIL',
+                    className: 'text-end col-desktop-only',
                     render: (_, type, row) => statusRender(row.invoice_cicil, row.nominal_cicil, type)
                 },
                 {
                     data: null,
-                    className: 'text-end',
+                    title: 'LUNAS',
+                    className: 'text-end col-desktop-only',
                     render: (_, type, row) => statusRender(row.invoice_lunas, row.nominal_lunas, type)
                 },
                 {
                     data: 'total_bayar',
-                    className: 'text-end',
+                    title: 'Total Bayar',
+                    className: 'text-end col-desktop-only font-monospace text-success',
                     render: moneyRender
                 },
                 {
                     data: 'sisa_hutang',
-                    className: 'text-end text-danger',
+                    title: 'Sisa Hutang',
+                    className: 'text-end text-danger fw-bold font-monospace',
                     render: moneyRender
                 },
                 {
                     data: 'avg_durasi_lunas_hari',
-                    className: 'text-center',
+                    title: 'Rata-rata Lunas',
+                    className: 'text-center col-desktop-only',
                     render: durationRender
                 }
-            ]
+            ],
+            autoWidth: false,
+            drawCallback: function() {
+                if (window.innerWidth < 768) {
+                    $('#table-data colgroup col').each(function() {
+                        const colIdx = $(this).attr('data-dt-column');
+                        if (colIdx !== undefined && colIdx !== '0' && colIdx !== '7') {
+                            $(this).remove();
+                        }
+                    });
+                }
+            }
         });
     }
 
@@ -335,15 +553,26 @@
         const summary = report.summary || {};
         const periodText = `${filterStart.format('DD/MM/YYYY')} - ${filterEnd.format('DD/MM/YYYY')}`;
         $('#period-label').text(`Periode: ${periodText}`);
-        $('#selected-store-info').text(`Toko aktif: ${report?.toko?.toko_id || selectedStore()} - ${report?.toko?.toko_nama || selectedStore()}`);
+        $('#selected-store-info').text(`Toko: ${report?.toko?.toko_id || selectedStore()} - ${report?.toko?.toko_nama || selectedStore()}`);
+        
+        // Primary metrics
         $('#summary-supplier').text(Number(summary.supplier_count || 0).toLocaleString('id-ID'));
         $('#summary-invoice').text(Number(summary.total_invoice || 0).toLocaleString('id-ID'));
         $('#summary-nominal').text(rp(summary.total_nominal || 0));
         $('#summary-sisa').text(rp(summary.sisa_hutang || 0));
-        $('#summary-belum').text(`${Number(summary.invoice_belum || 0).toLocaleString('id-ID')} invoice / ${rp(summary.nominal_belum || 0)}`);
-        $('#summary-cicil').text(`${Number(summary.invoice_cicil || 0).toLocaleString('id-ID')} invoice / ${rp(summary.nominal_cicil || 0)}`);
-        $('#summary-lunas').text(`${Number(summary.invoice_lunas || 0).toLocaleString('id-ID')} invoice / ${rp(summary.nominal_lunas || 0)}`);
+        
+        // Secondary status metrics
+        $('#summary-belum-nom').text(rp(summary.nominal_belum || 0));
+        $('#summary-belum-inv').text(`${Number(summary.invoice_belum || 0).toLocaleString('id-ID')} invoice`);
+        
+        $('#summary-cicil-nom').text(rp(summary.nominal_cicil || 0));
+        $('#summary-cicil-inv').text(`${Number(summary.invoice_cicil || 0).toLocaleString('id-ID')} invoice`);
+        
+        $('#summary-lunas-nom').text(rp(summary.nominal_lunas || 0));
+        $('#summary-lunas-inv').text(`${Number(summary.invoice_lunas || 0).toLocaleString('id-ID')} invoice`);
+        
         $('#summary-durasi').text(durationLabel(summary.avg_durasi_lunas_hari || 0));
+        
         table.clear().rows.add(report.rows || []).draw();
     }
 
@@ -353,7 +582,7 @@
         if (type === 'export' || type === 'sort') {
             return `Rp ${nominalText}/${invoiceText} invoice`;
         }
-        return `<div class="fw-semibold">Rp ${nominalText}</div><small class="text-muted">${invoiceText} invoice</small>`;
+        return `<div class="fw-semibold">Rp ${nominalText}</div><small class="text-muted font-monospace">${invoiceText} inv</small>`;
     }
 
     function moneyRender(data, type) {
@@ -378,7 +607,7 @@
         const roundedDays = Math.round(days);
         const weeks = Math.round(roundedDays / 7);
         if (weeks >= 1) {
-            return `${roundedDays} hari (${weeks} minggu)`;
+            return `${roundedDays} hari (${weeks} mgg)`;
         }
         return `${roundedDays} hari`;
     }

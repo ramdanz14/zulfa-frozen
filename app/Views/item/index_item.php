@@ -7,7 +7,19 @@
  */
 ?>
 <style>
-    /* Styling responsif mobile untuk table data item */
+    /* Styling responsif mobile untuk table data item & CardView */
+    .item-card-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .item-card-box:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
     .item-code-badge {
         font-family: var(--bs-font-monospace);
         font-size: 0.775rem;
@@ -18,42 +30,35 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        margin-top: 0.25rem;
         border: 1px solid var(--bs-border-color);
     }
 
     .item-name-title {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--bs-heading-color);
         line-height: 1.35;
+        font-size: 0.95rem;
     }
 
     @media (max-width: 767.98px) {
-
         /* Atur container search agar mengambil lebar penuh layar */
         .dt-container .dt-search {
             width: 100% !important;
             text-align: left !important;
-            /* margin-top: 10px !important; */
         }
 
-        /* Ubah label agar menjadi block (membuat input turun ke baris baru di bawah teks Cari) */
         .dt-container .dt-search label {
-            /* display: block !important; */
-            /* width: 10% !important; */
             font-weight: 600;
             color: #475569;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             padding-right: 4px;
         }
 
-        /* Paksa kotak input teks search memiliki lebar 100% penuh */
         .dt-container .dt-search input[type="search"],
         .dt-container .dt-search input.form-control {
-            /* display: block !important; */
-            width: 80% !important;
+            width: 100% !important;
             height: 42px !important;
-            margin-top: 6px !important;
+            margin-top: 4px !important;
             margin-left: 0 !important;
             padding: 6px 12px !important;
             font-size: 14px !important;
@@ -61,20 +66,6 @@
             border-radius: 6px !important;
             background-color: #fff !important;
             box-sizing: border-box !important;
-        }
-
-        /* Sembunyikan kolom desktop-only di layar HP */
-        #table-data .col-desktop-only {
-            display: none !important;
-        }
-
-        #table-data th,
-        #table-data td {
-            padding: 0.6rem 0.4rem;
-        }
-
-        .item-nama-col {
-            word-break: break-word;
         }
     }
 </style>
@@ -86,7 +77,7 @@
                 <div class="row align-items-center">
                     <div class="col-8 col-md-9">
                         <h4 class="fw-semibold mb-1">Data Barang</h4>
-                        <p class="mb-0"><span class="page-pretitle">Total Data : 0</span> | Manajemen Data Barang.</p>
+                        <p class="mb-0"><span class="page-pretitle">Total Data : 0</span> | Manajemen Data Barang & Master Item.</p>
                     </div>
                     <div class="col-4 col-md-3 text-end">
                         <div class="text-center mb-n5 d-none d-sm-block">
@@ -106,10 +97,34 @@
                                     <thead></thead>
                                     <tbody>
                                         <tr>
-                                            <td>No data to show</td>
+                                            <td>Memuat data...</td>
                                         </tr>
                                     </tbody>
                                 </table>
+
+                                <!-- CardView Template for Item (Mobile Reflow) -->
+                                <template id="card-item-template">
+                                    <div class="item-card-box mb-2">
+                                        <!-- Baris 1: Nama Item & Action Button -->
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="item-name-title text-truncate" data-dtcv-field="1"></div>
+                                                <div class="d-flex align-items-center gap-1 mt-1">
+                                                    <span class="item-code-badge"><i class="ti ti-barcode"></i><span data-dtcv-field="0"></span></span>
+                                                    <span data-dtcv-field="2"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0" data-dtcv-field="4"></div>
+                                        </div>
+
+                                        <!-- Baris 2: Status Item -->
+                                        <div class="d-flex justify-content-between align-items-center pt-2 border-top small">
+                                            <span class="text-muted">Status Barang</span>
+                                            <span data-dtcv-field="3"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
                             </div>
                         </div>
                     </div>
@@ -183,7 +198,6 @@
                 }, "pageLength"]
             }
         },
-        // --- TAMBAHKAN KODE INI UNTUK CUSTOM LABEL & PLACEHOLDER ---
         language: {
             search: "Cari:",
             searchPlaceholder: "Ketik nama barang/kode...",
@@ -213,35 +227,31 @@
             type: 'post',
             data: {}
         },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-item-template',
+            gridClass: 'col-12 col-sm-6 mb-2',
+            onCardRender: function($card) {
+                $card.find('.dropdown-item').addClass('py-2');
+            }
+        },
         columns: [{
                 data: 'kode_item',
                 title: 'Kode Item',
-                className: 'col-desktop-only font-monospace'
+                className: 'font-monospace'
             },
             {
                 data: 'nama_item',
                 title: 'Nama Item',
                 className: 'item-nama-col',
-                render: function(data, type, row) {
-                    if (type !== 'display') {
-                        return data;
-                    }
-                    const nama = escapeHtml(data || '-');
-                    const kode = escapeHtml(row.kode_item || '');
-                    const kat = row.kat_id ? `<span class="badge bg-light-subtle text-muted border ms-1 d-inline-block d-md-none" style="font-size:0.7rem;">${escapeHtml(row.kat_id)}</span>` : '';
-                    return `<div>
-                        <div class="item-name-title">${nama}</div>
-                        <div class="d-block d-md-none mt-1">
-                            <span class="item-code-badge"><i class="ti ti-barcode"></i>${kode}</span>
-                            ${kat}
-                        </div>
-                    </div>`;
+                render: function(data) {
+                    return `<span class="item-name-title">${escapeHtml(data || '-')}</span>`;
                 }
             },
             {
                 data: 'kat_id',
                 title: 'Kategori',
-                className: 'col-desktop-only',
                 render: function(data, type) {
                     return type === 'display' ? `<span class="badge bg-secondary-subtle text-secondary">${escapeHtml(data || '-')}</span>` : data;
                 }
@@ -250,10 +260,8 @@
                 data: 'status_item',
                 title: 'Status',
                 className: 'text-center align-middle',
-                render: function(data, type, row) {
-                    if (type !== 'display') {
-                        return data;
-                    }
+                render: function(data, type) {
+                    if (type !== 'display') return data;
                     const isAktif = data === 'Y';
                     return isAktif ?
                         '<span class="badge bg-success-subtle text-success fw-bold">Aktif</span>' :

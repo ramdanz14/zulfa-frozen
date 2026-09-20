@@ -7,111 +7,239 @@
  * @var array $tokoOptions
  */
 ?>
+<style>
+    /* Compact, ergonomic styles for Laporan Penjualan Per Tanggal */
+    .metric-card-summary {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 0.75rem 1rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .metric-card-summary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .metric-card-summary .metric-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .metric-card-summary .metric-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    /* Mobile CardView Styling for LapJual */
+    .lapjual-date-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .lapjual-date-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+    /* Collapsible Chart Toolbar for mobile viewport */
+    .chart-collapse-toggle {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    @media (max-width: 767.98px) {
+        .metric-card-summary {
+            padding: 0.6rem 0.75rem;
+        }
+        .metric-card-summary .metric-value {
+            font-size: 1rem;
+        }
+        .metric-card-summary .metric-title {
+            font-size: 0.7rem;
+        }
+        .btn-filter-touch {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+</style>
+
 <div class="body-wrapper">
-    <div class="container-fluid p-0">
-        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Laporan Penjualan Per Tanggal</h4>
-                        <p class="mb-0"><span class="page-pretitle">Periode aktif</span> | Analisis customer, transaksi, omset, dan margin penjualan per tanggal.</p>
+    <div class="container-fluid p-2 p-md-3">
+        <!-- Page Title & Store Header -->
+        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-3">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">Laporan Penjualan Per Tanggal</h4>
+                        <p class="mb-0 small text-muted"><span class="page-pretitle">Periode aktif</span> &bull; Analisis customer, transaksi, omset, dan margin.</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <div id="selected-store-info" class="text-muted small"></div>
+                    <div>
+                        <div id="selected-store-info" class="badge bg-white text-dark border px-2 py-1 small"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-4">
-                        <label class="form-label">Range Tanggal Transaksi</label>
-                        <input type="text" class="form-control" id="filter-range" readonly>
+        <!-- Filter Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Range Tanggal Transaksi</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="ti ti-calendar text-primary"></i></span>
+                            <input type="text" class="form-control" id="filter-range" readonly>
+                        </div>
                     </div>
-                    <div class="col-lg-5" id="filter-toko-wrapper" style="display:none;">
-                        <label class="form-label">Filter Toko</label>
+                    <div class="col-12 col-md-4" id="filter-toko-wrapper" style="display:none;">
+                        <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Filter Toko</label>
                         <select class="form-select select2" id="filter-toko" multiple>
                             <?php foreach ($tokoOptions as $row) : ?>
                                 <option value="<?= esc($row['toko_id']) ?>"><?= esc($row['toko_id']) ?> - <?= esc($row['toko_nama'] ?? $row['toko_id']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-<?= !empty($tokoOptions) ? '3' : '8' ?> d-grid d-lg-flex gap-2">
-                        <button type="button" class="btn btn-primary w-100" id="btn-filter">Terapkan Filter</button>
-                        <button type="button" class="btn btn-light w-100" id="btn-reset">Reset</button>
+                    <div class="col-12 col-md-<?= !empty($tokoOptions) ? '3' : '7' ?> d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-sm flex-fill btn-filter-touch" id="btn-filter">
+                            <i class="ti ti-search me-1"></i> Terapkan
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm flex-fill btn-filter-touch border" id="btn-reset">
+                            <i class="ti ti-refresh me-1"></i> Reset
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Jumlah Customer</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-customer">0</div>
-                    </div>
+        <!-- Compact KPI Metric Cards (2x2 di Mobile, 1x4 di Desktop) -->
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-users text-info me-1"></i>Customer</div>
+                    <div class="metric-value text-dark" id="summary-customer">0</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Jumlah Transaksi</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-transaksi">0</div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-receipt text-primary me-1"></i>Transaksi</div>
+                    <div class="metric-value text-dark" id="summary-transaksi">0</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Total Omset</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-omset">Rp 0</div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-wallet text-success me-1"></i>Total Omset</div>
+                    <div class="metric-value text-success" id="summary-omset">Rp 0</div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Total Margin Bruto</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-margin">Rp 0</div>
-                    </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-chart-line text-warning me-1"></i>Margin Bruto</div>
+                    <div class="metric-value text-primary" id="summary-margin">Rp 0</div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="<?= !empty($tokoOptions) ? 'col-lg-9' : 'col-12' ?>">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Laporan Penjualan Per Tanggal</div>
-                        <div id="chart-penjualan" style="min-height: 320px;"></div>
-                    </div>
+        <!-- Collapsible Graphic Section (Default Collapse di Mobile untuk Menghemat Layar) -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between chart-collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseAnalyticsCharts">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="ti ti-chart-bar fs-5 text-primary"></i>
+                    <span class="fw-bold text-dark small text-uppercase">Grafik Trend Penjualan & Margin</span>
+                </div>
+                <div class="small text-muted d-flex align-items-center gap-1">
+                    <span class="d-none d-sm-inline">Tampilkan / Sembunyikan</span>
+                    <i class="ti ti-chevron-down"></i>
                 </div>
             </div>
-            <?php if (!empty($tokoOptions)) : ?>
-                <div class="col-lg-3">
-                    <div class="card h-100 mb-0">
-                        <div class="card-body">
-                            <div class="fw-semibold mb-3">Trend Margin</div>
-                            <div id="chart-margin" style="min-height: 320px;"></div>
+            <div class="collapse show" id="collapseAnalyticsCharts">
+                <div class="card-body p-2 p-md-3">
+                    <div class="row g-3">
+                        <div class="<?= !empty($tokoOptions) ? 'col-lg-8' : 'col-12' ?>">
+                            <div class="fw-semibold small text-muted mb-2">Trend Omset Harian</div>
+                            <div id="chart-penjualan" style="min-height: 280px;"></div>
                         </div>
+                        <?php if (!empty($tokoOptions)) : ?>
+                            <div class="col-lg-4">
+                                <div class="fw-semibold small text-muted mb-2">Trend Margin Harian</div>
+                                <div id="chart-margin" style="min-height: 280px;"></div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle">
+        <!-- Data Table / Mobile CardView -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="ti ti-list-details fs-5 text-primary"></i>
+                    <h6 class="mb-0 fw-bold">Rincian Penjualan Harian</h6>
+                </div>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100">
                     <thead></thead>
                     <tbody>
                         <tr>
-                            <td>No data to show</td>
+                            <td>Memuat data...</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- CardView Template for Mobile (< 768px) -->
+                <template id="card-lapjual-template">
+                    <div class="lapjual-date-card mb-2">
+                        <!-- Baris 1: Tanggal Transaksi & Toko -->
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="ti ti-calendar text-primary"></i>
+                                <span class="fw-bold text-dark fs-6" data-dtcv-field="0"></span>
+                            </div>
+                            <span class="badge bg-light text-secondary border small px-2 py-1" data-dtcv-field="1"></span>
+                        </div>
+
+                        <!-- Baris 2: Omset & Margin Bruto (Key Metrics) -->
+                        <div class="d-flex justify-content-between align-items-center my-2 p-2 bg-light-subtle rounded border">
+                            <div>
+                                <small class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Omset Penjualan</small>
+                                <span class="fw-bold text-success fs-6" data-dtcv-field="5"></span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Margin Bruto</small>
+                                <span class="fw-bold text-primary fs-6" data-dtcv-field="6"></span>
+                            </div>
+                        </div>
+
+                        <!-- Baris 3: Info Ringkas Volume: Customer, Transaksi, Total Qty -->
+                        <div class="d-flex justify-content-between align-items-center pt-1 text-muted small" style="font-size: 0.78rem;">
+                            <div>
+                                <span><i class="ti ti-users me-1"></i><span data-dtcv-field="2"></span> cust</span>
+                                <span class="mx-1">&bull;</span>
+                                <span><i class="ti ti-receipt me-1"></i><span data-dtcv-field="3"></span> trx</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                    <i class="ti ti-package me-1"></i><span data-dtcv-field="4"></span> Qty
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
             </div>
         </div>
     </div>
@@ -130,6 +258,11 @@
     let chartMargin = null;
 
     $(function() {
+        // Otomatis collapse grafik di HP (< 768px) agar layar langsung memperlihatkan data ringkas
+        if ($(window).width() < 768) {
+            $('#collapseAnalyticsCharts').removeClass('show');
+        }
+
         if (canMultiStore) {
             $('#filter-toko-wrapper').show();
             $('#filter-toko').select2({
@@ -187,21 +320,21 @@
     function updateStoreInfo() {
         const selected = getSelectedStoreIds();
         if (!canMultiStore) {
-            $('#selected-store-info').text(`Toko aktif: ${sessionTokoId}`);
+            $('#selected-store-info').text(`Toko: ${sessionTokoId}`);
             return;
         }
         if (!selected.length) {
-            $('#selected-store-info').text('Toko: semua toko yang diizinkan');
+            $('#selected-store-info').text('Toko: Semua toko');
             return;
         }
-        $('#selected-store-info').text(`Toko dipilih: ${selected.join(', ')}`);
+        $('#selected-store-info').text(`Toko: ${selected.join(', ')}`);
     }
 
     function initCharts() {
         chartPenjualan = new ApexCharts(document.querySelector('#chart-penjualan'), {
             chart: {
                 type: 'line',
-                height: 320,
+                height: 280,
                 toolbar: {
                     show: false
                 }
@@ -214,9 +347,9 @@
                 }
             },
             markers: {
-                size: 4,
+                size: 3,
                 hover: {
-                    size: 6
+                    size: 5
                 }
             },
             stroke: {
@@ -237,19 +370,13 @@
                 shared: false,
                 intersect: true,
                 x: {
-                    formatter: function(value, {
-                        dataPointIndex,
-                        w
-                    }) {
+                    formatter: function(value, { dataPointIndex, w }) {
                         const rawDate = w.config.series?.[0]?.metaDates?.[dataPointIndex] || value;
                         return formatTooltipDate(rawDate);
                     }
                 },
                 y: {
-                    formatter: function(value, {
-                        seriesIndex,
-                        w
-                    }) {
+                    formatter: function(value, { seriesIndex, w }) {
                         const tokoId = w.config.series?.[seriesIndex]?.name || '-';
                         return `${tokoId} : Rp ${formatMoneyValue(value || 0)}`;
                     }
@@ -265,7 +392,7 @@
             chartMargin = new ApexCharts(document.querySelector('#chart-margin'), {
                 chart: {
                     type: 'line',
-                    height: 320,
+                    height: 280,
                     toolbar: {
                         show: false
                     }
@@ -278,9 +405,9 @@
                     }
                 },
                 markers: {
-                    size: 4,
+                    size: 3,
                     hover: {
-                        size: 6
+                        size: 5
                     }
                 },
                 stroke: {
@@ -301,19 +428,13 @@
                     shared: false,
                     intersect: true,
                     x: {
-                        formatter: function(value, {
-                            dataPointIndex,
-                            w
-                        }) {
+                        formatter: function(value, { dataPointIndex, w }) {
                             const rawDate = w.config.series?.[0]?.metaDates?.[dataPointIndex] || value;
                             return formatTooltipDate(rawDate);
                         }
                     },
                     y: {
-                        formatter: function(value, {
-                            seriesIndex,
-                            w
-                        }) {
+                        formatter: function(value, { seriesIndex, w }) {
                             const tokoId = w.config.series?.[seriesIndex]?.name || '-';
                             return `${tokoId} : Rp ${formatMoneyValue(value || 0)}`;
                         }
@@ -350,9 +471,7 @@
     }
 
     function formatTooltipDate(rawDate) {
-        if (!rawDate) {
-            return '-';
-        }
+        if (!rawDate) return '-';
         return moment(rawDate, 'YYYY-MM-DD').format('DD/MM/YYYY');
     }
 
@@ -366,9 +485,7 @@
         rawRows.forEach((row) => {
             const tokoId = String(row.toko_id || '-');
             const tanggal = String(row.tanggal || '');
-            if (!tanggal) {
-                return;
-            }
+            if (!tanggal) return;
             if (!seriesMap[tokoId]) {
                 seriesMap[tokoId] = {};
             }
@@ -389,10 +506,7 @@
     }
 
     function updateChartInstance(chart, rows, valueKey) {
-        if (!chart) {
-            return;
-        }
-
+        if (!chart) return;
         const chartData = buildSeriesByStore(rows, valueKey);
         const hasData = chartData.series.some(item => item.data.some(point => point !== null));
 
@@ -410,7 +524,7 @@
         chart.updateSeries(hasData ? chartData.series : [], true);
     }
 
-    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
+    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary btn-sm';
     const table = $('#table-data').DataTable({
         layout: {
             topStart: {
@@ -443,6 +557,12 @@
                 d.toko_ids = getSelectedStoreIds();
             }
         },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-lapjual-template',
+            gridClass: 'col-12 col-sm-6 mb-2'
+        },
         columns: [{
                 data: 'tanggal',
                 title: 'Tanggal',
@@ -455,12 +575,12 @@
             },
             {
                 data: 'jumlah_customer',
-                title: 'Jumlah Customer',
+                title: 'Customer',
                 className: 'text-center'
             },
             {
                 data: 'jumlah_transaksi',
-                title: 'Jumlah Transaksi',
+                title: 'Transaksi',
                 className: 'text-center'
             },
             {

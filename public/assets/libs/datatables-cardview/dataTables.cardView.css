@@ -1,0 +1,121 @@
+/**
+ * DataTables CardView Plugin CSS
+ * Custom extension for responsive card layouts in DataTables
+ */
+
+.dt-cardview-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dt-cardview-container.dt-cardview-hidden {
+  display: none !important;
+}
+
+.dt-cardview-container.row {
+  margin-left: -7.5px;
+  margin-right: -7.5px;
+  width: auto; /* Membiarkan row menghitung lebar berdasarkan margin negatifnya */
+}
+
+/* Pastikan kolom menggunakan padding yang konsisten */
+.dt-cardview-container > [class*="col-"] {
+  padding-left: 7.5px;
+  padding-right: 7.5px;
+}
+
+/* Pastikan kartu yang memiliki dropdown terbuka berada di atas kartu lainnya */
+.dt-cardview-container .col-12:focus-within,
+.dt-cardview-container .col-12:hover {
+  z-index: 10;
+}
+
+/* Jika menggunakan Bootstrap dropdown, biasanya ada kelas 'show' atau 'open' */
+.dt-cardview-container .col-12.show,
+.dt-cardview-container .col-12:has(.dropdown.show) {
+  z-index: 1050; /* Nilai z-index yang lebih tinggi dari elemen sekitarnya */
+}
+
+/* Card item container */
+.dt-cardview-card {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  overflow: visible !important;
+}
+
+.dt-cardview-container .card {
+  overflow: visible !important;
+}
+
+.dt-cardview-container .dropdown-menu {
+  z-index: 1020;
+}
+
+.dt-cardview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Default built-in template style */
+.dt-cardview-default-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e3e6f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+  padding: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dt-cardview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed #f0f2f5;
+  font-size: 0.9rem;
+}
+
+.dt-cardview-row:last-child {
+  border-bottom: none;
+}
+
+.dt-cardview-label {
+  font-weight: 600;
+  color: #6c757d;
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.dt-cardview-value {
+  color: #212529;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Toggle button styling */
+.btn-dt-cardview-active {
+  background-color: #007bff !important;
+  color: #ffffff !important;
+  border-color: #007bff !important;
+}
+
+/* Empty state */
+.dt-cardview-empty {
+  width: 100%;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #6c757d;
+  background: #fdfdfe;
+  border-radius: 8px;
+  border: 1px dashed #dee2e6;
+  margin: 0.5rem 0;
+}

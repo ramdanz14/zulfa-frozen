@@ -146,6 +146,53 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- CardView Template for Pembelian (Mobile Reflow) -->
+                <template id="card-pembelian-template">
+                    <div class="card h-100 border shadow-sm p-3 position-relative mb-2" style="border-radius: 10px; background: #fff;">
+                        <!-- Baris Atas: Supplier & Action Dropdown -->
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="fw-bold text-dark fs-3 text-truncate">
+                                    <i class="ti ti-building-store text-primary me-1"></i><span data-dtcv-field="2_sup"></span>
+                                </div>
+                                <div class="mt-1 d-flex flex-wrap align-items-center gap-1">
+                                    <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.75rem;">
+                                        <i class="ti ti-hash"></i><span data-dtcv-field="1"></span>
+                                    </span>
+                                    <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.75rem;">
+                                        <i class="ti ti-file-invoice"></i> <span data-dtcv-field="2_inv"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0" data-dtcv-field="7"></div>
+                        </div>
+
+                        <!-- Baris Tengah: Tanggal & Jumlah Item -->
+                        <div class="row g-2 text-muted small mb-2 align-items-center">
+                            <div class="col-6 text-truncate" style="font-size: 0.775rem;">
+                                <i class="ti ti-calendar me-1"></i><span data-dtcv-field="0"></span>
+                            </div>
+                            <div class="col-6 text-end text-truncate" style="font-size: 0.775rem;">
+                                <span class="badge bg-light-primary text-primary"><i class="ti ti-package me-1"></i><span data-dtcv-field="3"></span> item</span>
+                            </div>
+                        </div>
+
+                        <!-- Baris Bawah: Total Gross & Status Badges -->
+                        <div class="p-2 px-3 rounded-2 bg-light-subtle border mb-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Total Gross</small>
+                                    <span class="fw-bold text-primary fs-5" data-dtcv-field="4"></span>
+                                </div>
+                                <div class="text-end d-flex align-items-center gap-1">
+                                    <span data-dtcv-field="5"></span>
+                                    <span data-dtcv-field="2_bayar"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -227,6 +274,30 @@
         processing: true,
         serverSide: true,
         ordering: false,
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-pembelian-template',
+            gridClass: 'col-12 col-sm-6 mb-2',
+            onCardRender: function($card, rowData) {
+                const supNama = rowData.supplier_nama || rowData.supco || '-';
+                const invoice = rowData.invoice || '-';
+                $card.find('[data-dtcv-field="2_sup"]').text(supNama);
+                $card.find('[data-dtcv-field="2_inv"]').text(invoice);
+
+                // Badge status bayar
+                let bayarBadge = '<span class="badge bg-danger-subtle text-danger">BELUM</span>';
+                if (rowData.status_nota === 'PO') {
+                    bayarBadge = '<span class="badge bg-secondary-subtle text-secondary">DRAFT</span>';
+                } else if (rowData.status_bayar === 'LUNAS') {
+                    bayarBadge = '<span class="badge bg-success-subtle text-success">LUNAS</span>';
+                } else if (rowData.status_bayar === 'CICIL') {
+                    bayarBadge = '<span class="badge bg-info-subtle text-info">CICIL</span>';
+                }
+                $card.find('[data-dtcv-field="2_bayar"]').html(bayarBadge);
+                $card.find('.dropdown-item').addClass('py-2');
+            }
+        },
         ajax: {
             url: '<?= base_url('/pembelian/ajax') ?>',
             type: 'post'
@@ -235,69 +306,23 @@
             {
                 data: 'tanggal',
                 title: 'Tanggal',
-                className: 'col-desktop-only',
                 render: data => data ? `<span class="faktur-date-badge"><i class="ti ti-calendar"></i> ${new Date(data).toLocaleDateString('id-ID')}</span>` : '-'
             },
             {
                 data: 'beli_id',
                 title: 'ID Beli',
-                className: 'col-desktop-only font-monospace'
+                className: 'font-monospace'
             },
             {
                 data: 'supplier_nama',
-                title: 'Informasi Faktur & Supplier',
+                title: 'Supplier & Invoice',
                 render: function(data, type, row) {
                     const supNama = data || row.supco || '-';
-                    const tglFormat = row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-';
-                    const beliId = row.beli_id || '-';
                     const invoice = row.invoice || '-';
-                    const grossText = 'Rp ' + formatMoneyValue(row.total_gross);
-                    const jmlItem = row.jml_item || 0;
-
-                    // Badge status nota
-                    const notaBadge = row.status_nota === 'TERIMA' ?
-                        '<span class="badge bg-success-subtle text-success">TERIMA</span>' :
-                        '<span class="badge bg-warning-subtle text-warning">PO</span>';
-
-                    // Badge status bayar
-                    let bayarBadge = '<span class="badge bg-danger-subtle text-danger">BELUM</span>';
-                    if (row.status_nota === 'PO') {
-                        bayarBadge = '<span class="badge bg-secondary-subtle text-secondary">DRAFT</span>';
-                    } else if (row.status_bayar === 'LUNAS') {
-                        bayarBadge = '<span class="badge bg-success-subtle text-success">LUNAS</span>';
-                    } else if (row.status_bayar === 'CICIL') {
-                        bayarBadge = '<span class="badge bg-info-subtle text-info">CICIL</span>';
-                    }
-
                     return `
-                        <div class="faktur-main-cell">
-                            <!-- BARIS 1: TANGGAL & NAMA SUPPLIER (Utama untuk layar HP & Desktop) -->
-                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                                <div class="faktur-sup-name">
-                                    <i class="ti ti-building-store text-primary d-inline d-md-none me-1"></i>${supNama}
-                                </div>
-                                <span class="faktur-date-badge d-inline-flex d-md-none">
-                                    <i class="ti ti-calendar"></i> ${tglFormat}
-                                </span>
-                            </div>
-
-                            <!-- BARIS 2 KHUSUS MOBILE: ID, INVOICE, QTY ITEM, GROSS & STATUS -->
-                            <div class="d-flex align-items-center gap-1 flex-wrap d-md-none mt-1" style="font-size: 0.775rem;">
-                                <span class="faktur-id-badge"><i class="ti ti-hash"></i>${beliId}</span>
-                                <span class="badge bg-light text-muted border font-monospace"><i class="ti ti-file-invoice"></i> ${invoice}</span>
-                                <span class="badge bg-light-primary text-primary"><i class="ti ti-package"></i> ${jmlItem} item</span>
-                                <span class="faktur-gross-amount ms-auto">${grossText}</span>
-                            </div>
-
-                            <!-- BADGE STATUS PADA BARIS KEDUA MOBILE -->
-                            <div class="d-flex align-items-center gap-1 d-md-none mt-1">
-                                <span class="small text-muted me-1" style="font-size: 0.7rem;">Status:</span>
-                                ${notaBadge}
-                                ${bayarBadge}
-                            </div>
-
-                            <!-- SUBTITLE PADA DESKTOP (INVOICE ONLY) -->
-                            <small class="text-muted d-none d-md-block font-monospace"><i class="ti ti-file-invoice me-1"></i>${invoice}</small>
+                        <div>
+                            <div class="fw-bold text-dark fs-3">${supNama}</div>
+                            <small class="text-muted font-monospace"><i class="ti ti-file-invoice me-1"></i>${invoice}</small>
                         </div>
                     `;
                 }
@@ -305,25 +330,25 @@
             {
                 data: 'jml_item',
                 title: 'Item',
-                className: 'text-center col-desktop-only'
+                className: 'text-center'
             },
             {
                 data: 'total_gross',
                 title: 'Gross',
-                className: 'text-end col-desktop-only fw-bold text-primary',
+                className: 'text-end fw-bold text-primary',
                 render: data => 'Rp ' + formatMoneyValue(data)
             },
             {
                 data: 'status_nota',
                 title: 'Nota',
-                className: 'text-center col-desktop-only',
+                className: 'text-center',
                 render: data => data === 'TERIMA' ?
                     '<span class="badge bg-success-subtle text-success">TERIMA</span>' : '<span class="badge bg-warning-subtle text-warning">PO</span>'
             },
             {
                 data: 'status_bayar',
                 title: 'Bayar',
-                className: 'text-center col-desktop-only',
+                className: 'text-center',
                 render: function(data, type, row) {
                     if (row.status_nota === 'PO') {
                         return '<span class="badge bg-secondary-subtle text-secondary">DRAFT</span>';

@@ -98,7 +98,25 @@ class JualModel extends Model
                      CASE
                          WHEN COALESCE(base.qty_konversi, 0) <= 0 THEN 0
                          ELSE COALESCE(st.qty, 0) / base.qty_konversi
-                     END AS stok
+                     END AS stok,
+                     (
+                         SELECT COUNT(*)
+                         FROM prodmast_satuan ps2
+                         INNER JOIN prodmast_store s2
+                             ON s2.kode_item = ps2.kode_item
+                             AND s2.toko_id  = :toko_id:
+                             AND s2.status_item = 'Y'
+                         WHERE ps2.kode_item = p.kode_item
+                     ) AS satuan_count,
+                     (
+                         SELECT GROUP_CONCAT(ps2.sat_id ORDER BY ps2.qty_konversi SEPARATOR ', ')
+                         FROM prodmast_satuan ps2
+                         INNER JOIN prodmast_store s2
+                             ON s2.kode_item = ps2.kode_item
+                             AND s2.toko_id  = :toko_id:
+                             AND s2.status_item = 'Y'
+                         WHERE ps2.kode_item = p.kode_item
+                     ) AS satuan_list
               FROM prodmast p
               LEFT JOIN (
                  SELECT ps1.kode_item, ps1.sat_id, ps1.qty_konversi
@@ -130,8 +148,8 @@ class JualModel extends Model
                  p.nama_item
               LIMIT 30",
             [
-                'toko_id' => $toko_id,
-                'search' => $search,
+                'toko_id'    => $toko_id,
+                'search'     => $search,
                 'exact_term' => trim($term),
             ]
         )->getResultArray();

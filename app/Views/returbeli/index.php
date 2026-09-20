@@ -147,6 +147,51 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- CardView Template for Retur Beli (Mobile Reflow) -->
+                <template id="card-returbeli-template">
+                    <div class="card h-100 border shadow-sm p-3 position-relative mb-2" style="border-radius: 10px; background: #fff;">
+                        <!-- Baris Atas: Supplier & Action Dropdown -->
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="fw-bold text-dark fs-3 text-truncate">
+                                    <i class="ti ti-building-store text-danger me-1"></i><span data-dtcv-field="2_sup"></span>
+                                </div>
+                                <div class="mt-1 d-flex flex-wrap align-items-center gap-1">
+                                    <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.75rem;">
+                                        <i class="ti ti-hash"></i><span data-dtcv-field="1"></span>
+                                    </span>
+                                    <span data-dtcv-field="2_target"></span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0" data-dtcv-field="6"></div>
+                        </div>
+
+                        <!-- Baris Tengah: Tanggal & Mode Penyelesaian -->
+                        <div class="row g-2 text-muted small mb-2 align-items-center">
+                            <div class="col-6 text-truncate" style="font-size: 0.775rem;">
+                                <i class="ti ti-calendar me-1"></i><span data-dtcv-field="0"></span>
+                            </div>
+                            <div class="col-6 text-end text-truncate" style="font-size: 0.775rem;">
+                                <span class="badge bg-light-danger text-danger"><i class="ti ti-package me-1"></i><span data-dtcv-field="3"></span> item</span>
+                            </div>
+                        </div>
+
+                        <!-- Baris Bawah: Total Retur & Status Badges -->
+                        <div class="p-2 px-3 rounded-2 bg-danger-subtle border border-danger-subtle mb-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-danger fw-semibold d-block" style="font-size: 0.72rem; text-transform: uppercase;">Total Retur</small>
+                                    <span class="fw-bold text-danger fs-5" data-dtcv-field="4"></span>
+                                </div>
+                                <div class="text-end d-flex align-items-center gap-1">
+                                    <span data-dtcv-field="5"></span>
+                                    <span data-dtcv-field="2_mode"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -229,6 +274,30 @@
         processing: true,
         serverSide: true,
         ordering: false,
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-returbeli-template',
+            gridClass: 'col-12 col-sm-6 mb-2',
+            onCardRender: function($card, rowData) {
+                const supNama = rowData.supplier_nama || rowData.supco || '-';
+                $card.find('[data-dtcv-field="2_sup"]').text(supNama);
+                $card.find('[data-dtcv-field="2_item"]').text(rowData.jml_item || 0);
+
+                const isCashback = rowData.settlement_mode === 'CASHBACK';
+                const modeBadge = isCashback
+                    ? '<span class="badge bg-info-subtle text-info"><i class="ti ti-cash"></i> CASHBACK</span>'
+                    : '<span class="badge bg-primary-subtle text-primary"><i class="ti ti-receipt-tax"></i> POTONG HUTANG</span>';
+                $card.find('[data-dtcv-field="2_mode"]').html(modeBadge);
+
+                const debtTarget = !isCashback && (rowData.beli_id || rowData.invoice)
+                    ? `<span class="badge bg-light text-secondary border font-monospace" style="font-size:0.75rem;"><i class="ti ti-file-invoice"></i> ${rowData.beli_id || '-'}${rowData.invoice ? ' (' + rowData.invoice + ')' : ''}</span>`
+                    : '';
+                $card.find('[data-dtcv-field="2_target"]').html(debtTarget);
+
+                $card.find('.dropdown-item').addClass('py-2');
+            }
+        },
         ajax: {
             url: '<?= base_url('/returbeli/ajax') ?>',
             type: 'post'
@@ -237,72 +306,27 @@
             {
                 data: 'tanggal',
                 title: 'Tanggal',
-                className: 'col-desktop-only',
                 render: data => data ? `<span class="retur-date-badge"><i class="ti ti-calendar"></i> ${new Date(data).toLocaleDateString('id-ID')}</span>` : '-'
             },
             {
                 data: 'retur_id',
                 title: 'ID Retur',
-                className: 'col-desktop-only font-monospace'
+                className: 'font-monospace'
             },
             {
                 data: 'supplier_nama',
-                title: 'Informasi Retur & Supplier',
+                title: 'Supplier & Ref',
                 render: function(data, type, row) {
                     const supNama = data || row.supco || '-';
-                    const tglFormat = row.tanggal ? new Date(row.tanggal).toLocaleDateString('id-ID') : '-';
-                    const returId = row.retur_id || '-';
-                    const totalReturText = 'Rp ' + formatMoneyValue(row.total_retur);
-                    const jmlItem = row.jml_item || 0;
-
-                    // Mode Penyelesaian
                     const isCashback = row.settlement_mode === 'CASHBACK';
                     const modeText = isCashback ? 'CASHBACK' : 'POTONG HUTANG';
-                    const modeBadge = isCashback
-                        ? '<span class="badge bg-info-subtle text-info"><i class="ti ti-cash"></i> CASHBACK</span>'
-                        : '<span class="badge bg-primary-subtle text-primary"><i class="ti ti-receipt-tax"></i> POTONG HUTANG</span>';
-
-                    // Info Faktur Hutang Target
                     const debtTarget = !isCashback && (row.beli_id || row.invoice)
-                        ? `<span class="badge bg-light text-secondary border font-monospace"><i class="ti ti-file-invoice"></i> ${row.beli_id || '-'}${row.invoice ? ' (' + row.invoice + ')' : ''}</span>`
+                        ? `&bull; ${row.beli_id || '-'}${row.invoice ? ' (' + row.invoice + ')' : ''}`
                         : '';
-
-                    // Status Retur
-                    const statusBadge = row.status_retur === 'SELESAI'
-                        ? '<span class="badge bg-success-subtle text-success">SELESAI</span>'
-                        : '<span class="badge bg-warning-subtle text-warning">DRAFT</span>';
-
                     return `
-                        <div class="retur-main-cell">
-                            <!-- BARIS 1: NAMA SUPPLIER & TANGGAL (Utama untuk layar HP & Desktop) -->
-                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                                <div class="retur-sup-name">
-                                    <i class="ti ti-building-store text-danger d-inline d-md-none me-1"></i>${supNama}
-                                </div>
-                                <span class="retur-date-badge d-inline-flex d-md-none">
-                                    <i class="ti ti-calendar"></i> ${tglFormat}
-                                </span>
-                            </div>
-
-                            <!-- BARIS 2 KHUSUS MOBILE: ID RETUR, ITEM, TOTAL RETUR -->
-                            <div class="d-flex align-items-center gap-1 flex-wrap d-md-none mt-1" style="font-size: 0.775rem;">
-                                <span class="retur-id-badge"><i class="ti ti-hash"></i>${returId}</span>
-                                <span class="badge bg-light-danger text-danger"><i class="ti ti-package"></i> ${jmlItem} item</span>
-                                ${debtTarget}
-                                <span class="retur-total-amount ms-auto">${totalReturText}</span>
-                            </div>
-
-                            <!-- BADGE STATUS & SETTLEMENT PADA BARIS KEDUA MOBILE -->
-                            <div class="d-flex align-items-center gap-1 d-md-none mt-1">
-                                <span class="small text-muted me-1" style="font-size: 0.7rem;">Status:</span>
-                                ${statusBadge}
-                                ${modeBadge}
-                            </div>
-
-                            <!-- SUBTITLE PADA DESKTOP -->
-                            <small class="text-muted d-none d-md-block">
-                                <i class="ti ti-receipt-2 me-1"></i>${modeText} ${debtTarget ? '&bull; ' + (row.beli_id || '') + ' ' + (row.invoice ? '(' + row.invoice + ')' : '') : ''}
-                            </small>
+                        <div>
+                            <div class="fw-bold text-dark fs-3">${supNama}</div>
+                            <small class="text-muted"><i class="ti ti-receipt-2 me-1"></i>${modeText} ${debtTarget}</small>
                         </div>
                     `;
                 }
@@ -310,18 +334,18 @@
             {
                 data: 'jml_item',
                 title: 'Item',
-                className: 'text-center col-desktop-only'
+                className: 'text-center'
             },
             {
                 data: 'total_retur',
                 title: 'Total Retur',
-                className: 'text-end col-desktop-only fw-bold text-danger',
+                className: 'text-end fw-bold text-danger',
                 render: data => 'Rp ' + formatMoneyValue(data)
             },
             {
                 data: 'status_retur',
                 title: 'Status',
-                className: 'text-center col-desktop-only',
+                className: 'text-center',
                 render: data => data === 'SELESAI' ?
                     '<span class="badge bg-success-subtle text-success">SELESAI</span>' :
                     '<span class="badge bg-warning-subtle text-warning">DRAFT</span>'

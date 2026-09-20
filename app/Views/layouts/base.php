@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/css/styles.css" />
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/sweetalert2/dist/sweetalert2.min.css">
     <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.8/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/r-3.0.8/sp-2.3.5/datatables.min.css" rel="stylesheet" integrity="sha384-Ardp6FCkpCmEUMnE5/KjGBWG2nRUVIRu9FC/rX34QDRbJ+ebmGFWYRrv2DGEtRtc" crossorigin="anonymous">
+    <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/datatables-cardview/dataTables.cardView.css">
     <link rel="stylesheet" href="<?= base_url(); ?>/assets/libs/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
     <title><?= esc(APP_NAME); ?> | <?= esc($title ?? 'Dashboard'); ?></title>
@@ -175,7 +176,7 @@
             height: calc(100vh - 220px) !important;
         }
 
-        /* Toastr Centered Screen Notification (Exact Center Screen) */
+        /* Toastr Centered Screen Notification (Exact Center Screen)
         #toast-container,
         #toast-container.toast-center-center,
         #toast-container.toast-top-center,
@@ -199,8 +200,8 @@
             justify-content: center !important;
         }
 
-        #toast-container > .toast,
-        .toast-center-center > .toast {
+        #toast-container>.toast,
+        .toast-center-center>.toast {
             pointer-events: auto;
             width: 100% !important;
             margin: 0 0 12px 0 !important;
@@ -210,10 +211,10 @@
             text-align: center !important;
         }
 
-        #toast-container > .toast .toast-message {
+        #toast-container>.toast .toast-message {
             font-size: 0.92rem !important;
             line-height: 1.45;
-        }
+        } */
     </style>
 </head>
 
@@ -239,6 +240,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.8/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/r-3.0.8/sp-2.3.5/datatables.min.js" integrity="sha384-Lo4Q6eTHry7JUodG9B4/XYYSYOP8lFCvm3oSCs1dk9wQ+ZswNONRRo7glE454e4Y" crossorigin="anonymous"></script>
+    <script src="<?= base_url(); ?>/assets/libs/datatables-cardview/dataTables.cardView.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<?= base_url(); ?>/assets/js/plugins/toastr-init.js"></script>
@@ -292,7 +294,7 @@
 
         if (typeof toastr !== 'undefined') {
             toastr.options = Object.assign({}, toastr.options || {}, {
-                positionClass: 'toast-center-center',
+                positionClass: 'toast-top-center',
                 closeButton: true,
                 newestOnTop: true,
                 progressBar: true,
@@ -304,7 +306,7 @@
             applyMoneyMask();
             if (typeof toastr !== 'undefined') {
                 toastr.options = Object.assign({}, toastr.options || {}, {
-                    positionClass: 'toast-center-center',
+                    positionClass: 'toast-top-center',
                     closeButton: true,
                     newestOnTop: true,
                     progressBar: true,
