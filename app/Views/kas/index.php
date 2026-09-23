@@ -12,17 +12,25 @@
 $aksesMenuData = json_decode((string) ($akses_menu ?? '{}'), true) ?: [];
 $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 ?>
+<style>
+.kas-saldo-tile { border-radius: .5rem; }
+.kas-saldo-tile .s-label { font-size: .72rem; color: #6c757d; }
+.kas-saldo-tile .s-value { font-size: 1rem; font-weight: 700; }
+.kas-card-akun { font-size: .78rem; }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
+        <!-- Header banner -->
         <div class="card bg-warning-subtle shadow-none position-relative overflow-hidden mb-4">
             <div class="card-body px-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-9">
+                    <div class="col-12 col-lg-8">
                         <h4 class="fw-semibold mb-2">Kas Masuk / Keluar</h4>
                         <p class="mb-0"><span class="page-pretitle">Total</span> | Pencatatan kas kecil operasional harian untuk toko aktif.</p>
                         <small class="text-muted d-block mt-1">Input, edit, dan hapus hanya diizinkan pada Hari H.</small>
                     </div>
-                    <div class="col-3">
+                    <div class="col-12 col-lg-4 text-start text-lg-end mt-2 mt-lg-0 d-none d-lg-block">
                         <div class="text-center mb-n5">
                             <img src="<?= base_url(); ?>/assets/images/breadcrumb/ChatBc.png" alt="modernize-img" class="img-fluid mb-n4" />
                         </div>
@@ -31,145 +39,183 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-primary">
-                    <div class="card-body py-3">
+        <!-- Saldo tiles — 2×2 on mobile, 4 in a row on lg -->
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-primary kas-saldo-tile">
+                    <div class="card-body py-3 px-3">
                         <div class="d-flex align-items-center mb-1">
                             <i class="ti ti-building-store text-primary fs-5 me-2"></i>
-                            <span class="text-muted small">Saldo Toko (Cash)</span>
+                            <span class="s-label">Saldo Toko (Cash)</span>
                         </div>
-                        <div class="fs-5 fw-bold text-primary" id="saldo-toko"><?= 'Rp ' . number_format($cashBalances['saldo_toko'] ?? 0, 0, ',', '.') ?></div>
+                        <div class="s-value text-primary" id="saldo-toko"><?= 'Rp ' . number_format($cashBalances['saldo_toko'] ?? 0, 0, ',', '.') ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-info">
-                    <div class="card-body py-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-info kas-saldo-tile">
+                    <div class="card-body py-3 px-3">
                         <div class="d-flex align-items-center mb-1">
                             <i class="ti ti-user-circle text-info fs-5 me-2"></i>
-                            <span class="text-muted small">Saldo Pemilik (Cash)</span>
+                            <span class="s-label">Saldo Pemilik (Cash)</span>
                         </div>
-                        <div class="fs-5 fw-bold text-info" id="saldo-pemilik"><?= 'Rp ' . number_format($cashBalances['saldo_pemilik'] ?? 0, 0, ',', '.') ?></div>
+                        <div class="s-value text-info" id="saldo-pemilik"><?= 'Rp ' . number_format($cashBalances['saldo_pemilik'] ?? 0, 0, ',', '.') ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-success">
-                    <div class="card-body py-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-success kas-saldo-tile">
+                    <div class="card-body py-3 px-3">
                         <div class="d-flex align-items-center mb-1">
                             <i class="ti ti-wallet text-success fs-5 me-2"></i>
-                            <span class="text-muted small">Total Cash</span>
+                            <span class="s-label">Total Cash</span>
                         </div>
-                        <div class="fs-5 fw-bold text-success" id="saldo-total-cash"><?= 'Rp ' . number_format($cashBalances['total_cash'] ?? 0, 0, ',', '.') ?></div>
+                        <div class="s-value text-success" id="saldo-total-cash"><?= 'Rp ' . number_format($cashBalances['total_cash'] ?? 0, 0, ',', '.') ?></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-dark">
-                    <div class="card-body py-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-dark kas-saldo-tile">
+                    <div class="card-body py-3 px-3">
                         <div class="d-flex align-items-center mb-1">
                             <i class="ti ti-credit-card fs-5 me-2"></i>
-                            <span class="text-muted small">Saldo Non Tunai</span>
+                            <span class="s-label">Saldo Non Tunai</span>
                         </div>
-                        <div class="fs-5 fw-bold" id="saldo-noncash"><?= 'Rp ' . number_format($cashBalances['saldo_noncash'] ?? 0, 0, ',', '.') ?></div>
+                        <div class="s-value" id="saldo-noncash"><?= 'Rp ' . number_format($cashBalances['saldo_noncash'] ?? 0, 0, ',', '.') ?></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle">
+        <!-- DataTable -->
+        <div class="card border">
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100 mb-0 table-light thead">
                     <thead></thead>
                     <tbody><tr><td>No data to show</td></tr></tbody>
                 </table>
+
+                <!-- CardView template for kas list -->
+                <template id="card-kas-template">
+                    <div class="card border mb-2 shadow-sm">
+                        <div class="card-body p-3">
+                            <!-- Row 1: tanggal + action -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="text-muted kas-card-akun"><i class="ti ti-calendar me-1"></i><span data-dtcv-field="0"></span></div>
+                                    <!-- akun + badge — already rendered by DT render() -->
+                                    <div class="mt-1" data-dtcv-field="1"></div>
+                                </div>
+                                <div class="ms-2 flex-shrink-0" data-dtcv-field="5"></div>
+                            </div>
+                            <!-- Row 2: nominal + karyawan -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.02em;">Nominal</div>
+                                    <div class="fw-bold text-success" data-dtcv-field="2"></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.02em;">Karyawan</div>
+                                    <div class="kas-card-akun" data-dtcv-field="3"></div>
+                                </div>
+                            </div>
+                            <!-- Row 3: keterangan -->
+                            <div class="border-top pt-2">
+                                <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.02em;">Keterangan</div>
+                                <div class="kas-card-akun" data-dtcv-field="4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Kas Masuk/Keluar -->
 <div class="modal fade" id="modal-kas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Kas Masuk / Keluar</h5>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light py-2 px-3">
+                <h5 class="modal-title fw-semibold"><i class="ti ti-cash me-2 text-warning"></i>Kas Masuk / Keluar</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="form-kas">
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <input type="hidden" id="kas_id">
-                    <div class="mb-2">
-                        <label class="form-label">Tanggal / Jam</label>
-                        <input type="datetime-local" class="form-control" id="tanggal" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Jenis Transaksi</label>
-                        <select class="form-select" id="tipe_mutasi" required>
-                            <option value="OPERASIONAL">Operasional</option>
-                            <option value="PINDAH_SALDO">Mutasi Saldo</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 operational-field">
-                        <label class="form-label">Akun Kas</label>
-                        <select class="form-select" id="nama_akun" required>
-                            <option value="">Pilih akun kas</option>
-                            <?php foreach ($akunOptions as $row) : ?>
-                                <option value="<?= esc($row['nama_akun']) ?>"><?= esc($row['jenis_akun']) ?> - <?= esc($row['nama_akun']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-2 operational-field">
-                        <label class="form-label">Saldo</label>
-                        <select class="form-select" id="saldo_channel">
-                            <option value="CASH">Tunai</option>
-                            <option value="NONCASH">Non Tunai</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 operational-field" id="saldo-target-wrapper">
-                        <label class="form-label">Saldo Tunai Dari</label>
-                        <select class="form-select" id="saldo_target">
-                            <option value="TOKO">Saldo Toko</option>
-                            <option value="PEMILIK" <?= ($canDeleteAkses ? '' : 'disabled') ?>>Saldo Pemilik</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 transfer-field d-none">
-                        <label class="form-label">Arah Mutasi Saldo</label>
-                        <select class="form-select" id="arah_saldo" <?= ($canMutateSaldo ? '' : 'disabled') ?>>
-                            <option value="CASH_TOKO_TO_PEMILIK">Tunai Toko ke Tunai Pemilik (Setor)</option>
-                            <option value="CASH_PEMILIK_TO_TOKO">Tunai Pemilik ke Tunai Toko</option>
-                            <option value="CASH_TO_NONCASH">Tunai ke Non Tunai</option>
-                            <option value="NONCASH_TO_CASH">Non Tunai ke Tunai</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 transfer-field d-none" id="tujuan-target-wrapper">
-                        <label class="form-label">Saldo Tunai Tujuan</label>
-                        <select class="form-select" id="tujuan_target">
-                            <option value="TOKO">Saldo Toko</option>
-                            <option value="PEMILIK">Saldo Pemilik</option>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Nominal</label>
-                        <input type="text" class="form-control money" id="nominal" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Karyawan Penanggung Jawab</label>
-                        <select class="form-select" id="karyawan_id" required>
-                            <option value="">Pilih karyawan</option>
-                            <?php foreach ($karyawanOptions as $row) : ?>
-                                <option value="<?= esc($row['karyawan_id']) ?>"><?= esc($row['karyawan_id']) ?> - <?= esc($row['fullname']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Keterangan</label>
-                        <input type="text" class="form-control" id="keterangan" maxlength="150">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Tanggal / Jam</label>
+                            <input type="datetime-local" class="form-control form-control-sm" id="tanggal" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Jenis Transaksi</label>
+                            <select class="form-select form-select-sm" id="tipe_mutasi" required>
+                                <option value="OPERASIONAL">Operasional</option>
+                                <option value="PINDAH_SALDO">Mutasi Saldo</option>
+                            </select>
+                        </div>
+                        <div class="col-12 operational-field">
+                            <label class="form-label small fw-semibold">Akun Kas</label>
+                            <select class="form-select form-select-sm" id="nama_akun" required>
+                                <option value="">Pilih akun kas</option>
+                                <?php foreach ($akunOptions as $row) : ?>
+                                    <option value="<?= esc($row['nama_akun']) ?>"><?= esc($row['jenis_akun']) ?> - <?= esc($row['nama_akun']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 operational-field">
+                            <label class="form-label small fw-semibold">Saldo</label>
+                            <select class="form-select form-select-sm" id="saldo_channel">
+                                <option value="CASH">Tunai</option>
+                                <option value="NONCASH">Non Tunai</option>
+                            </select>
+                        </div>
+                        <div class="col-6 operational-field" id="saldo-target-wrapper">
+                            <label class="form-label small fw-semibold">Saldo Tunai Dari</label>
+                            <select class="form-select form-select-sm" id="saldo_target">
+                                <option value="TOKO">Saldo Toko</option>
+                                <option value="PEMILIK" <?= ($canDeleteAkses ? '' : 'disabled') ?>>Saldo Pemilik</option>
+                            </select>
+                        </div>
+                        <div class="col-12 transfer-field d-none">
+                            <label class="form-label small fw-semibold">Arah Mutasi Saldo</label>
+                            <select class="form-select form-select-sm" id="arah_saldo" <?= ($canMutateSaldo ? '' : 'disabled') ?>>
+                                <option value="CASH_TOKO_TO_PEMILIK">Tunai Toko ke Tunai Pemilik (Setor)</option>
+                                <option value="CASH_PEMILIK_TO_TOKO">Tunai Pemilik ke Tunai Toko</option>
+                                <option value="CASH_TO_NONCASH">Tunai ke Non Tunai</option>
+                                <option value="NONCASH_TO_CASH">Non Tunai ke Tunai</option>
+                            </select>
+                        </div>
+                        <div class="col-12 transfer-field d-none" id="tujuan-target-wrapper">
+                            <label class="form-label small fw-semibold">Saldo Tunai Tujuan</label>
+                            <select class="form-select form-select-sm" id="tujuan_target">
+                                <option value="TOKO">Saldo Toko</option>
+                                <option value="PEMILIK">Saldo Pemilik</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Nominal</label>
+                            <input type="text" class="form-control form-control-sm money" id="nominal" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Karyawan Penanggung Jawab</label>
+                            <select class="form-select form-select-sm" id="karyawan_id" required>
+                                <option value="">Pilih karyawan</option>
+                                <?php foreach ($karyawanOptions as $row) : ?>
+                                    <option value="<?= esc($row['karyawan_id']) ?>"><?= esc($row['karyawan_id']) ?> - <?= esc($row['fullname']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Keterangan</label>
+                            <input type="text" class="form-control form-control-sm" id="keterangan" maxlength="150">
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btn-save">Simpan</button>
+                <div class="modal-footer bg-light py-2 px-3">
+                    <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-3" id="btn-save">Simpan</button>
                 </div>
             </form>
         </div>
@@ -190,7 +236,7 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
         return new Date(now - tzOffset).toISOString().slice(0, 16);
     }
 
-    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
+    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary btn-sm';
     const table = $('#table-data').DataTable({
         layout: {
             topStart: {
@@ -210,7 +256,7 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             [25, 50, 100, -1],
             ['25 rows', '50 rows', '100 rows', 'Show all']
         ],
-        responsive: true,
+        responsive: false,
         lengthChange: false,
         autoWidth: false,
         processing: true,
@@ -219,6 +265,12 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
         ajax: {
             url: '<?= base_url('/kas/ajax') ?>',
             type: 'post'
+        },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-kas-template',
+            gridClass: 'col-12 col-sm-6 mb-2'
         },
         columns: [{
                 data: 'tanggal',
@@ -293,7 +345,9 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
         $('#saldo_channel').val('CASH');
         $('#arah_saldo').val('CASH_TO_NONCASH');
         $('#btn-save').text(mode === 'create' ? 'Simpan' : 'Update');
-        $('.modal-title').text(mode === 'create' ? 'Tambah Kas Masuk / Keluar' : 'Edit Kas Masuk / Keluar');
+        $('.modal-title').html(mode === 'create'
+            ? '<i class="ti ti-cash me-2 text-success"></i>Tambah Kas Masuk / Keluar'
+            : '<i class="ti ti-pencil me-2 text-warning"></i>Edit Kas Masuk / Keluar');
 
         if (mode === 'edit' && row) {
             $('#kas_id').val(row.kas_id || '');
@@ -382,11 +436,13 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             payload.saldo_asal = '';
             payload.saldo_tujuan = '';
         }
+
+        const btn = $('#btn-save').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...');
         $.ajax({
-                type: modalMode === 'create' ? 'PUT' : 'PATCH',
-                url: '<?= base_url('/kas') ?>',
-                dataType: 'json',
-                data: payload,
+            type: modalMode === 'create' ? 'PUT' : 'PATCH',
+            url: '<?= base_url('/kas') ?>',
+            dataType: 'json',
+            data: payload,
             success: function(res) {
                 if (res.tipe === 'success') {
                     toastr.success(res.data || 'Berhasil');
@@ -398,6 +454,9 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             },
             error: function(xhr) {
                 toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan mutasi kas'));
+            },
+            complete: function() {
+                btn.prop('disabled', false).text(modalMode === 'create' ? 'Simpan' : 'Update');
             }
         });
     });
@@ -407,6 +466,11 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             title: 'Hapus mutasi kas ini?',
             icon: 'warning',
             showCancelButton: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn btn-danger px-3 me-2',
+                cancelButton: 'btn btn-light px-3'
+            },
             confirmButtonText: 'Ya, hapus',
             cancelButtonText: 'Batal'
         }).then((result) => {

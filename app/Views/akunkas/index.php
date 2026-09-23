@@ -11,11 +11,11 @@
         <div class="card bg-success-subtle shadow-none position-relative overflow-hidden mb-4">
             <div class="card-body px-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-9">
+                    <div class="col-12 col-lg-8">
                         <h4 class="fw-semibold mb-2">Akun Kas</h4>
                         <p class="mb-0"><span class="page-pretitle">Total</span> | Master global kategori pemasukan dan pengeluaran kas operasional.</p>
                     </div>
-                    <div class="col-3">
+                    <div class="col-12 col-lg-4 text-start text-lg-end mt-2 mt-lg-0 d-none d-lg-block">
                         <div class="text-center mb-n5">
                             <img src="<?= base_url(); ?>/assets/images/breadcrumb/ChatBc.png" alt="modernize-img" class="img-fluid mb-n4" />
                         </div>
@@ -24,9 +24,9 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle">
+        <div class="card border">
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100 mb-0 table-light thead">
                     <thead></thead>
                     <tbody>
                         <tr>
@@ -34,45 +34,66 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- CardView template for akun kas -->
+                <template id="card-akunkas-template">
+                    <div class="card border mb-2 shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div style="min-width:0; flex:1;">
+                                    <div class="fw-semibold text-truncate" data-dtcv-field="0"></div>
+                                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                                        <!-- jenis akun badge — already rendered by DT render() -->
+                                        <div data-dtcv-field="1"></div>
+                                        <!-- beban usaha badge — already rendered by DT render() -->
+                                        <div data-dtcv-field="2"></div>
+                                    </div>
+                                </div>
+                                <div class="ms-2 flex-shrink-0" data-dtcv-field="3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Akun Kas -->
 <div class="modal fade" id="modal-akun" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Akun Kas</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light py-2 px-3">
+                <h5 class="modal-title fw-semibold"><i class="ti ti-wallet me-2 text-success"></i>Akun Kas</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="form-akun">
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <input type="hidden" id="old_nama_akun">
-                    <div class="mb-2">
-                        <label class="form-label">Nama Akun</label>
-                        <input type="text" class="form-control" id="nama_akun" maxlength="50" required>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Nama Akun</label>
+                        <input type="text" class="form-control form-control-sm" id="nama_akun" maxlength="50" required>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Jenis Akun</label>
-                        <select class="form-select" id="jenis_akun" required>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Jenis Akun</label>
+                        <select class="form-select form-select-sm" id="jenis_akun" required>
                             <option value="MASUK">MASUK</option>
                             <option value="KELUAR">KELUAR</option>
                         </select>
                     </div>
-                    <div class="mb-2" id="flag-beban-wrapper">
+                    <div class="mb-1" id="flag-beban-wrapper">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="flag_beban">
-                            <label class="form-check-label" for="flag_beban">Beban Usaha</label>
+                            <label class="form-check-label small fw-semibold" for="flag_beban">Beban Usaha</label>
                         </div>
-                        <small class="text-muted d-block">
+                        <small class="text-muted d-block mt-1">
                             Akun keluar yang ditandai sebagai beban usaha akan dipakai sebagai komponen BEBAN USAHA untuk perhitungan laba bersih.
                         </small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btn-save">Simpan</button>
+                <div class="modal-footer bg-light py-2 px-3">
+                    <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-3" id="btn-save">Simpan</button>
                 </div>
             </form>
         </div>
@@ -86,7 +107,7 @@
     const akunModal = new bootstrap.Modal(document.getElementById('modal-akun'));
     let modalMode = 'create';
 
-    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
+    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary btn-sm';
     const table = $('#table-data').DataTable({
         layout: {
             topStart: {
@@ -106,7 +127,7 @@
             [25, 50, 100, -1],
             ['25 rows', '50 rows', '100 rows', 'Show all']
         ],
-        responsive: true,
+        responsive: false,
         lengthChange: false,
         autoWidth: false,
         processing: true,
@@ -115,6 +136,12 @@
         ajax: {
             url: '<?= base_url('/akunkas/ajax') ?>',
             type: 'post'
+        },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-akunkas-template',
+            gridClass: 'col-12 col-sm-6 mb-2'
         },
         columns: [{
                 data: 'nama_akun',
@@ -170,10 +197,10 @@
             $('#nama_akun').val(row.nama_akun || '');
             $('#jenis_akun').val(row.jenis_akun || 'KELUAR');
             $('#flag_beban').prop('checked', row.flag_beban === 'Y');
-            $('.modal-title').text('Edit Akun Kas');
+            $('.modal-title').html('<i class="ti ti-pencil me-2 text-warning"></i>Edit Akun Kas');
             $('#btn-save').text('Update');
         } else {
-            $('.modal-title').text('Tambah Akun Kas');
+            $('.modal-title').html('<i class="ti ti-wallet me-2 text-success"></i>Tambah Akun Kas');
             $('#btn-save').text('Simpan');
         }
 
@@ -193,6 +220,7 @@
 
     $('#form-akun').on('submit', function(e) {
         e.preventDefault();
+        const btn = $('#btn-save').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...');
         $.ajax({
             type: modalMode === 'create' ? 'PUT' : 'PATCH',
             url: '<?= base_url('/akunkas') ?>',
@@ -214,15 +242,23 @@
             },
             error: function(xhr) {
                 toastr.error(extractErrorMessage(xhr, 'Gagal menyimpan akun kas'));
+            },
+            complete: function() {
+                btn.prop('disabled', false).text(modalMode === 'create' ? 'Simpan' : 'Update');
             }
         });
     });
 
     function deleteAkun(namaAkun) {
         Swal.fire({
-            title: `Hapus akun kas ${namaAkun} ini?`,
+            title: `Hapus akun kas "${namaAkun}"?`,
             icon: 'warning',
             showCancelButton: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn btn-danger px-3 me-2',
+                cancelButton: 'btn btn-light px-3'
+            },
             confirmButtonText: 'Ya, hapus',
             cancelButtonText: 'Batal'
         }).then((result) => {
