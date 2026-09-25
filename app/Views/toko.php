@@ -3,14 +3,14 @@
 <?= $this->section('content') ?>
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
+        <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 px-md-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-9">
-                        <h4 class="fw-semibold mb-2">Toko</h4>
-                        <p class="mb-0"><span class="page-pretitle">Total</span> | Manajemen Data Toko.</p>
+                    <div class="col-8 col-sm-9">
+                        <h4 class="fw-semibold mb-1 fs-5 fs-md-4 text-truncate">Toko</h4>
+                        <p class="mb-0 text-muted small text-truncate"><span class="page-pretitle badge bg-primary-subtle text-primary fw-medium me-1">Total: 0</span> Manajemen data toko & cabang</p>
                     </div>
-                    <div class="col-3">
+                    <div class="col-4 col-sm-3 d-none d-sm-block">
                         <div class="text-center mb-n5">
                             <img src="<?= base_url(); ?>/assets/images/breadcrumb/ChatBc.png" alt="modernize-img" class="img-fluid mb-n4" />
                         </div>
@@ -20,12 +20,12 @@
         </div>
 
         <div class="page-body">
-            <div class="container-xl">
+            <div class="container-xl p-0 p-md-3">
                 <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body p-2">
-                                <table id="table-data" class="table table-bordered table-hover table-striped table-sm table-head-fixed">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-2 p-md-3">
+                                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100">
                                     <thead></thead>
                                     <tbody>
                                         <tr>
@@ -40,23 +40,52 @@
             </div>
         </div>
     </div>
+
+    <!-- Template CardView Mobile untuk Data Toko -->
+    <template id="card-toko-template">
+        <div class="card shadow-sm border mb-2 h-100 toko-mobile-card">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                    <div>
+                        <span class="badge bg-primary-subtle text-primary font-monospace small px-2 py-1" data-dtcv-field="0"></span>
+                        <h6 class="fw-bold text-dark mb-0 mt-1" data-dtcv-field="1"></h6>
+                    </div>
+                    <div data-dtcv-field="6"></div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted d-block small" style="font-size:0.75rem;">Alamat</span>
+                    <span class="text-dark small text-break" data-dtcv-field="2"></span>
+                </div>
+                <div class="row g-2 pt-2 border-top bg-light-subtle px-2 py-1 rounded small">
+                    <div class="col-6">
+                        <span class="text-muted d-block" style="font-size:0.72rem;">Telepon</span>
+                        <span class="text-muted fw-medium" data-dtcv-field="3"></span>
+                    </div>
+                    <div class="col-6 text-end">
+                        <span class="text-muted d-block" style="font-size:0.72rem;">Gudang</span>
+                        <span data-dtcv-field="5"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 <div class="modal fade" id="modal-web" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div id="loadingOverlay" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); z-index: 1051;">
                 <i class="fas fa-2x fa-sync fa-spin text-primary"></i>
             </div>
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-title">Modal title</h5>
+            <div class="modal-header py-2 px-3">
+                <h5 class="modal-title fs-5" id="modal-title">Modal title</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="modal-form">
-                <div class="modal-body"></div>
-                <div class="modal-footer justify-content-between">
-                    <button type="submit" class="btn btn-primary" id="btn-aksi">Save changes</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-body p-3"></div>
+                <div class="modal-footer p-2 justify-content-between">
+                    <button type="button" class="btn btn-sm btn-secondary" style="min-height:38px; min-width:80px;" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-sm btn-primary" style="min-height:38px; min-width:90px;" id="btn-aksi">Simpan</button>
                 </div>
             </form>
         </div>
@@ -83,6 +112,7 @@
             topStart: {
                 buttons: [{
                     text: '<i class="ti ti-plus"></i> Tambah',
+                    className: 'btn btn-primary btn-touch-target',
                     action: function() {
                         if (akses_menu?.akses_create === "Y") {
                             showModal('tambah');
@@ -93,13 +123,25 @@
                 }, {
                     text: '<i class="ti ti-file-type-xls"></i> Excel',
                     extend: 'excelHtml5',
+                    className: 'btn btn-primary btn-touch-target',
                     title: 'Laporan-Toko',
                     exportOptions: {
                         columns: [0, 1, 2, 3, 4, 5],
                         orthogonal: 'export'
                     },
-                }, "pageLength"]
+                }, 'cardViewToggle', "pageLength"]
             }
+        },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            columns: {
+                xs: 1,
+                sm: 1,
+                md: 2,
+                lg: 3
+            },
+            template: '#card-toko-template'
         },
         lengthMenu: [
             [25, 50, 100, -1],
@@ -128,7 +170,6 @@
                 data: 'toko_alamat',
                 title: 'Alamat',
                 className: "not-mobile",
-
             },
             {
                 data: 'toko_phone',
@@ -139,14 +180,12 @@
                 data: 'toko_theme',
                 title: 'Theme',
                 className: "not-mobile",
-
-
             },
             {
                 data: 'flag_gudang',
                 title: 'Gudang',
                 render: function(data) {
-                    return data === "Y" ? '<i class="ti ti-check text-success fs-5"></i>' : '<i class="ti ti-x text-danger fs-5"></i>';
+                    return data === "Y" ? '<span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i>Ya</span>' : '<span class="badge bg-secondary-subtle text-secondary"><i class="ti ti-minus me-1"></i>Tidak</span>';
                 }
             },
             {
@@ -155,22 +194,23 @@
                 responsivePriority: 1,
                 data: null,
                 render: function(data) {
-                    const editMenu = akses_menu?.akses_update === 'Y' ? `<a class='dropdown-item' onclick='showModal("edit",${JSON.stringify(data)})'><i class='ti ti-pencil text-warning'></i> Edit</a>` : '';
-                    const deleteMenu = akses_menu?.akses_delete === 'Y' ? `<a class='dropdown-item' onclick='showModal("delete",${JSON.stringify(data)})'><i class='ti ti-trash-x text-danger'></i> Hapus</a>` : '';
-                    return `<span class="dropdown">
-                          <button class="btn dropdown-toggle align-text-top btn-sm" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
-                          <div class="dropdown-menu dropdown-menu-end">
+                    const rowJson = JSON.stringify(data).replace(/"/g, '&quot;');
+                    const editMenu = akses_menu?.akses_update === 'Y' ? `<li><a class='dropdown-item py-2' href='javascript:void(0)' onclick='showModal("edit", ${rowJson})'><i class='ti ti-pencil text-warning me-2'></i> Edit</a></li>` : '';
+                    const deleteMenu = akses_menu?.akses_delete === 'Y' ? `<li><a class='dropdown-item py-2 text-danger' href='javascript:void(0)' onclick='showModal("delete", ${rowJson})'><i class='ti ti-trash text-danger me-2'></i> Hapus</a></li>` : '';
+                    return `<div class="dropdown">
+                          <button class="btn btn-sm btn-outline-secondary dropdown-toggle btn-touch-target" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="min-height:36px; padding:4px 10px;">Aksi</button>
+                          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                             ${editMenu}
-                            ${deleteMenu}
-                          </div>
-                        </span>`;
+                            ${deleteMenu ? '<li><hr class="dropdown-divider my-1"></li>' + deleteMenu : ''}
+                          </ul>
+                        </div>`;
                 }
             }
         ]
     });
 
     table.on('xhr.dt', function(e, settings, json) {
-        $(".page-pretitle").text(`Total Data : ` + (json?.recordsTotal || 0));
+        $(".page-pretitle").text(`Total: ` + (json?.recordsTotal || 0));
     });
 
     $('#modal-form').validate({
@@ -208,31 +248,31 @@
 
     function showModal(action, data) {
         $("#modal-form > .modal-body").empty();
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="toko_id" class="form-label">TOKO_ID</label>
-          <input type="text" class="form-control" name="toko_id" id="toko_id" readonly />
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="toko_id" class="form-label small fw-semibold">ID Toko</label>
+          <input type="text" class="form-control form-control-sm" name="toko_id" id="toko_id" readonly />
         </div>`);
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="toko_nama" class="form-label">TOKO_NAMA</label>
-          <input type="text" class="form-control" name="toko_nama" id="toko_nama" />
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="toko_nama" class="form-label small fw-semibold">Nama Toko *</label>
+          <input type="text" class="form-control form-control-sm" name="toko_nama" id="toko_nama" required />
         </div>`);
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="toko_alamat" class="form-label">TOKO_ALAMAT</label>
-          <input type="text" class="form-control" name="toko_alamat" id="toko_alamat" />
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="toko_alamat" class="form-label small fw-semibold">Alamat Toko *</label>
+          <textarea class="form-control form-control-sm" rows="2" name="toko_alamat" id="toko_alamat" required></textarea>
         </div>`);
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="toko_phone" class="form-label">TOKO_PHONE</label>
-          <input type="text" class="form-control" name="toko_phone" id="toko_phone" />
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="toko_phone" class="form-label small fw-semibold">Nomor Telepon *</label>
+          <input type="text" class="form-control form-control-sm" name="toko_phone" id="toko_phone" required />
         </div>`);
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="toko_theme" class="form-label">TOKO_THEME</label>
-          <select class="form-select" name="toko_theme" id="toko_theme">${buildThemeOptions()}</select>
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="toko_theme" class="form-label small fw-semibold">Warna Tema UI *</label>
+          <select class="form-select form-select-sm" name="toko_theme" id="toko_theme" required>${buildThemeOptions()}</select>
         </div>`);
-        $("#modal-form > .modal-body").append(`<div class="form-group mb-1">
-          <label for="flag_gudang" class="form-label">FLAG_GUDANG</label>
-          <select class="form-select" name="flag_gudang" id="flag_gudang">
-            <option value="N">N</option>
-            <option value="Y">Y</option>
+        $("#modal-form > .modal-body").append(`<div class="form-group mb-2">
+          <label for="flag_gudang" class="form-label small fw-semibold">Status Gudang Utama</label>
+          <select class="form-select form-select-sm" name="flag_gudang" id="flag_gudang">
+            <option value="N">Bukan Gudang (Toko Cabang Biasa)</option>
+            <option value="Y">Gudang Utama (Pusat Distribusi)</option>
           </select>
         </div>`);
         $("#modal-form > .modal-body").append(`<input type="hidden" id="_method" name="_method">`);

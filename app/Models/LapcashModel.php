@@ -134,7 +134,7 @@ class LapcashModel extends Model
     {
         [$storeWhere, $binds] = $this->buildStoreWhere('km.toko_id', $storeIds);
         return $this->db->query(
-            "SELECT tanggal, bucket, direction, SUM(total) AS total
+            "SELECT tanggal, bucket AS channel, direction, SUM(total) AS total
              FROM (
                 SELECT DATE(km.tanggal) AS tanggal,
                         CASE
@@ -245,7 +245,9 @@ class LapcashModel extends Model
             }
 
             $movements[$tanggal][$channel][$direction] = ($movements[$tanggal][$channel][$direction] ?? 0) + $total;
-            $movements[$tanggal]['labels'][$label] = ($movements[$tanggal]['labels'][$label] ?? 0) + $total;
+            if ($label !== '') {
+                $movements[$tanggal]['labels'][$label] = ($movements[$tanggal]['labels'][$label] ?? 0) + $total;
+            }
         }
     }
 

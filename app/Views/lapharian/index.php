@@ -9,100 +9,201 @@
 $aksesMenuData = json_decode((string) ($akses_menu ?? '{}'), true) ?: [];
 $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
 ?>
+<style>
+    .lapharian-metric-card {
+        border-radius: 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-touch-target {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+    .metric-action-btn {
+        min-height: 38px;
+        min-width: 38px;
+        padding: 6px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: 8px;
+    }
+    .lapharian-item-card {
+        background: var(--bs-card-bg, #fff);
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .lapharian-item-card:last-child {
+        margin-bottom: 0;
+    }
+    .lapharian-item-card .card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 0.875rem;
+    }
+    .lapharian-item-card .card-row-total {
+        border-top: 1px dashed rgba(0,0,0,0.12);
+        margin-top: 6px;
+        padding-top: 6px;
+        font-weight: 600;
+    }
+    @media (max-width: 767.98px) {
+        .metric-title {
+            font-size: 0.78rem;
+            line-height: 1.2;
+        }
+        .metric-value {
+            font-size: 1.1rem !important;
+            word-break: break-word;
+        }
+        .metric-subtitle {
+            font-size: 0.72rem;
+        }
+        .table-desktop-view {
+            display: none !important;
+        }
+        .cards-mobile-view {
+            display: block !important;
+        }
+    }
+    @media (min-width: 768px) {
+        .table-desktop-view {
+            display: block !important;
+        }
+        .cards-mobile-view {
+            display: none !important;
+        }
+    }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
+        <!-- Page Header -->
+        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 px-md-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Laporan Harian Kasir</h4>
-                        <p class="mb-0"><span id="report-subtitle">Pertanggungjawaban kasir akhir shift / akhir hari</span></p>
+                    <div class="col-12 col-md-7">
+                        <h4 class="fw-semibold mb-1">Laporan Harian Kasir</h4>
+                        <p class="mb-0 text-muted small"><span id="report-subtitle">Pertanggungjawaban kasir akhir shift / akhir hari</span></p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <div id="selected-store-info" class="text-muted small"></div>
+                    <div class="col-12 col-md-5 text-md-end mt-2 mt-md-0">
+                        <div id="selected-store-info" class="badge bg-primary text-wrap text-start text-md-end" style="font-weight: 500;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Filter Card -->
         <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-3">
-                        <label class="form-label">Tanggal Transaksi</label>
+            <div class="card-body p-3 p-md-4">
+                <div class="row g-2 g-md-3 align-items-end">
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label class="form-label small fw-medium mb-1">Tanggal Transaksi</label>
                         <input type="date" class="form-control" id="filter-tanggal" value="<?= date('Y-m-d') ?>">
                     </div>
-                    <div class="col-lg-5" id="filter-toko-wrapper" style="display:none;">
-                        <label class="form-label">Filter Toko</label>
+                    <div class="col-12 col-sm-6 col-lg-5" id="filter-toko-wrapper" style="display:none;">
+                        <label class="form-label small fw-medium mb-1">Filter Toko</label>
                         <select class="form-select select2" id="filter-toko" multiple>
                             <?php foreach ($tokoOptions as $row) : ?>
                                 <option value="<?= esc($row['toko_id']) ?>"><?= esc($row['toko_id']) ?> - <?= esc($row['toko_nama'] ?? $row['toko_id']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-4 d-grid d-lg-flex gap-2">
-                        <button type="button" class="btn btn-primary w-100" id="btn-view"><i class="ti ti-search"></i> View</button>
-                        <button type="button" class="btn btn-success w-100" id="btn-print"><i class="ti ti-printer"></i> Cetak</button>
-                        <button type="button" class="btn btn-info w-100 text-white" id="btn-wa"><i class="ti ti-brand-whatsapp"></i> Share</button>
+                    <div class="col-12 col-lg-4">
+                        <div class="row g-2">
+                            <div class="col-4 col-sm-4">
+                                <button type="button" class="btn btn-primary w-100 btn-touch-target" id="btn-view">
+                                    <i class="ti ti-search me-1"></i> View
+                                </button>
+                            </div>
+                            <div class="col-4 col-sm-4">
+                                <button type="button" class="btn btn-success w-100 btn-touch-target" id="btn-print">
+                                    <i class="ti ti-printer me-1"></i> Cetak
+                                </button>
+                            </div>
+                            <div class="col-4 col-sm-4">
+                                <button type="button" class="btn btn-info w-100 text-white btn-touch-target" id="btn-wa">
+                                    <i class="ti ti-brand-whatsapp me-1"></i> Share
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-primary">
-                    <div class="card-body py-3">
-                        <div class="text-muted small">Uang Harus Disetor</div>
-                        <div class="fs-6 fw-semibold mt-2 text-primary" id="sum-setor">Rp 0</div>
-                        <small class="text-muted">Saldo kas komputer</small>
+        <!-- KPI Grid: 2x2 on Mobile, 4 columns on Desktop -->
+        <div class="row g-2 g-md-3 mb-3">
+            <!-- 1. Uang Harus Disetor -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-primary border-start border-3 lapharian-metric-card">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Uang Harus Disetor</div>
+                        <div class="fs-6 fw-bold mt-1 text-primary metric-value" id="sum-setor">Rp 0</div>
+                        <div class="text-muted metric-subtitle mt-1">Kas komputer</div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-info">
-                    <div class="card-body py-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="text-muted small">Saldo Kas Toko</div>
-                                <div class="fs-6 fw-semibold mt-2 text-info" id="sum-saldo-toko">Rp 0</div>
-                            </div>
-                            <button class="btn btn-sm btn-outline-success" id="btn-deposit" title="Setor tunai toko ke pemilik"><i class="ti ti-arrow-up-circle"></i>Setor tunai toko ke pemilik</button>
+            <!-- 2. Saldo Kas Toko -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-info border-start border-3 lapharian-metric-card">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Kas Toko</div>
+                        <div class="fs-6 fw-bold mt-1 text-info metric-value" id="sum-saldo-toko">Rp 0</div>
+                        <div class="mt-2">
+                            <button class="btn btn-xs btn-outline-success metric-action-btn w-100" id="btn-deposit" title="Setor tunai toko ke pemilik">
+                                <i class="ti ti-arrow-up-circle"></i> <span>Setor Pemilik</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0 border-dark">
-                    <div class="card-body py-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="text-muted small">Saldo Kas Pemilik</div>
-                                <div class="fs-6 fw-semibold mt-2" id="sum-saldo-pemilik">Rp 0</div>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary" id="btn-withdraw-profit" title="Tarik keuntungan pemilik" <?= ($canDeleteAkses ? '' : 'disabled') ?>><i class="ti ti-arrow-down-circle"></i>Tarik keuntungan</button>
+            <!-- 3. Saldo Kas Pemilik -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-dark border-start border-3 lapharian-metric-card">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Pemilik</div>
+                        <div class="fs-6 fw-bold mt-1 text-dark metric-value" id="sum-saldo-pemilik">Rp 0</div>
+                        <div class="mt-2">
+                            <button class="btn btn-xs btn-outline-primary metric-action-btn w-100" id="btn-withdraw-profit" title="Tarik keuntungan pemilik" <?= ($canDeleteAkses ? '' : 'disabled') ?>>
+                                <i class="ti ti-arrow-down-circle"></i> <span>Tarik Untung</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Arus Kas Kecil</div>
-                        <div class="fs-6 fw-semibold mt-2" id="sum-kas">Rp 0</div><small id="sum-kas-detail" class="text-muted"></small>
+            <!-- 4. Arus Kas Kecil -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-warning border-start border-3 lapharian-metric-card">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Arus Kas Kecil</div>
+                        <div class="fs-6 fw-bold mt-1 text-warning metric-value" id="sum-kas">Rp 0</div>
+                        <div class="text-muted metric-subtitle mt-1 text-truncate" id="sum-kas-detail">-</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Riwayat Setoran Toko -> Pemilik (Jika ada) -->
         <div class="row g-3 mb-3" id="deposit-history-section" style="display:none;">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-2">Setoran Hari Ini (Toko → Pemilik)</div>
-                        <div class="table-responsive">
+                <div class="card mb-0">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-2 d-flex align-items-center">
+                            <i class="ti ti-history me-1 text-success"></i> Setoran Hari Ini (Toko &rarr; Pemilik)
+                        </div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Waktu</th>
                                         <th>Toko</th>
@@ -113,19 +214,27 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-deposit-history"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-deposit-history"></div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Detail Laporan Sections -->
         <div class="row g-3">
+            <!-- Summary Per Toko -->
             <div class="col-12">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Summary Per Toko</div>
-                        <div class="table-responsive">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3 d-flex align-items-center justify-content-between">
+                            <span><i class="ti ti-building-store me-1 text-primary"></i> Summary Per Toko</span>
+                            <span class="badge bg-primary-subtle text-primary small d-md-none">Reflow Card</span>
+                        </div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Toko</th>
                                         <th class="text-end">POS Tunai</th>
@@ -139,16 +248,24 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-store-summary"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-store-summary"></div>
                     </div>
                 </div>
             </div>
+
+            <!-- Pertanggungjawaban Per Kasir -->
             <div class="col-12">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Pertanggungjawaban Per Kasir</div>
-                        <div class="table-responsive">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3 d-flex align-items-center justify-content-between">
+                            <span><i class="ti ti-user-check me-1 text-info"></i> Pertanggungjawaban Per Kasir</span>
+                            <span class="badge bg-info-subtle text-info small d-md-none">Reflow Card</span>
+                        </div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Toko</th>
                                         <th>Kasir</th>
@@ -164,13 +281,17 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-cashier-summary"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-cashier-summary"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+
+            <!-- Pendapatan POS per Metode Bayar -->
+            <div class="col-12 col-lg-6">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Pendapatan POS per Metode Bayar</div>
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3"><i class="ti ti-credit-card me-1 text-success"></i> Pendapatan POS per Metode Bayar</div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered align-middle mb-0">
                                 <tbody id="table-pos"></tbody>
@@ -179,13 +300,16 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+
+            <!-- Arus Kas Kecil per Akun -->
+            <div class="col-12 col-lg-6">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Arus Kas Kecil per Akun</div>
-                        <div class="table-responsive">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3"><i class="ti ti-wallet me-1 text-warning"></i> Arus Kas Kecil per Akun</div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Akun</th>
                                         <th>Jenis</th>
@@ -195,16 +319,21 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-kas"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-kas"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+
+            <!-- Rekap Pembayaran Hutang ke Supplier -->
+            <div class="col-12 col-lg-6">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Rekap Pembayaran Hutang ke Supplier</div>
-                        <div class="table-responsive">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3"><i class="ti ti-truck me-1 text-danger"></i> Rekap Bayar Hutang ke Supplier</div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Supplier</th>
                                         <th>Metode</th>
@@ -214,16 +343,21 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-supplier"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-supplier"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+
+            <!-- Rekap Pembayaran Piutang dari Customer -->
+            <div class="col-12 col-lg-6">
                 <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-3">Rekap Pembayaran Piutang dari Customer</div>
-                        <div class="table-responsive">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="fw-semibold mb-3"><i class="ti ti-cash me-1 text-primary"></i> Rekap Terima Piutang Customer</div>
+                        <!-- Desktop Table -->
+                        <div class="table-responsive table-desktop-view">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
                                         <th>Customer</th>
                                         <th>Metode</th>
@@ -233,6 +367,8 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                                 <tbody id="table-customer"></tbody>
                             </table>
                         </div>
+                        <!-- Mobile Cards -->
+                        <div class="cards-mobile-view" id="cards-customer"></div>
                     </div>
                 </div>
             </div>
@@ -388,14 +524,36 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
         const cb = report.cash_balances || {};
         $('#sum-saldo-toko').text(rp(cb.saldo_toko || 0));
         $('#sum-saldo-pemilik').text(rp(cb.saldo_pemilik || 0));
+        
+        // Render Store Summary (Desktop & Mobile)
         $('#table-store-summary').html(summaryRows(report.store_summaries || [], false));
+        $('#cards-store-summary').html(summaryCards(report.store_summaries || [], false));
+
+        // Render Cashier Summary (Desktop & Mobile)
         $('#table-cashier-summary').html(summaryRows(report.cashier_groups || [], true));
+        $('#cards-cashier-summary').html(summaryCards(report.cashier_groups || [], true));
 
         const depRows = report.deposit_history || [];
         if (depRows.length) {
             $('#deposit-history-section').show();
             $('#table-deposit-history').html(depRows.map(row =>
                 `<tr><td>${esc(row.tanggal || '-')}</td><td>${esc(row.toko_nama || row.toko_id)}</td><td class="text-end">${rp(row.nominal || 0)}</td><td>${esc(row.keterangan || '-')}</td></tr>`
+            ).join(''));
+            $('#cards-deposit-history').html(depRows.map(row =>
+                `<div class="lapharian-item-card">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge bg-success-subtle text-success">${esc(row.tanggal || '-')}</span>
+                        <span class="fw-bold text-success">${rp(row.nominal || 0)}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="text-muted">Toko</span>
+                        <span class="fw-medium">${esc(row.toko_nama || row.toko_id)}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="text-muted">Keterangan</span>
+                        <span class="text-end small">${esc(row.keterangan || '-')}</span>
+                    </div>
+                </div>`
             ).join(''));
         } else {
             $('#deposit-history-section').hide();
@@ -407,9 +565,56 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
             rowHtml('QRIS', pos.qris || 0),
             rowHtml('Total POS', pos.total || 0, true)
         ].join(''));
-        $('#table-kas').html(tableRows(kas.rows || [], row => `<tr><td>${esc(row.nama_akun)}</td><td>${esc(row.jenis_akun)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
-        $('#table-supplier').html(tableRows(report.supplier?.rows || [], row => `<tr><td>${esc(row.nama_supplier)}</td><td>${esc(row.cara_bayar)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
-        $('#table-customer').html(tableRows(report.customer?.rows || [], row => `<tr><td>${esc(row.nama_customer)}</td><td>${esc(row.cara_bayar)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
+
+        // Render Kas Kecil
+        const kasRows = kas.rows || [];
+        $('#table-kas').html(tableRows(kasRows, row => `<tr><td>${esc(row.nama_akun)}</td><td>${esc(row.jenis_akun)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
+        $('#cards-kas').html(cardList(kasRows, row => {
+            const isKeluar = String(row.jenis_akun || '').toLowerCase().includes('keluar') || String(row.jenis_akun || '').toLowerCase().includes('beban');
+            const badgeClass = isKeluar ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success';
+            return `<div class="lapharian-item-card">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">${esc(row.nama_akun)}</span>
+                    <span class="badge ${badgeClass}">${esc(row.jenis_akun)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Nominal</span>
+                    <span class="fw-bold text-end">${rp(row.total || 0)}</span>
+                </div>
+            </div>`;
+        }));
+
+        // Render Supplier
+        const supRows = report.supplier?.rows || [];
+        $('#table-supplier').html(tableRows(supRows, row => `<tr><td>${esc(row.nama_supplier)}</td><td>${esc(row.cara_bayar)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
+        $('#cards-supplier').html(cardList(supRows, row =>
+            `<div class="lapharian-item-card">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">${esc(row.nama_supplier)}</span>
+                    <span class="badge bg-secondary-subtle text-secondary">${esc(row.cara_bayar)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Nominal</span>
+                    <span class="fw-bold text-danger text-end">${rp(row.total || 0)}</span>
+                </div>
+            </div>`
+        ));
+
+        // Render Customer
+        const custRows = report.customer?.rows || [];
+        $('#table-customer').html(tableRows(custRows, row => `<tr><td>${esc(row.nama_customer)}</td><td>${esc(row.cara_bayar)}</td><td class="text-end">${rp(row.total || 0)}</td></tr>`));
+        $('#cards-customer').html(cardList(custRows, row =>
+            `<div class="lapharian-item-card">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">${esc(row.nama_customer)}</span>
+                    <span class="badge bg-secondary-subtle text-secondary">${esc(row.cara_bayar)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Nominal</span>
+                    <span class="fw-bold text-primary text-end">${rp(row.total || 0)}</span>
+                </div>
+            </div>`
+        ));
     }
 
     function rowHtml(label, amount, strong = false) {
@@ -421,6 +626,13 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
     function tableRows(rows, renderer) {
         if (!rows.length) {
             return '<tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>';
+        }
+        return rows.map(renderer).join('');
+    }
+
+    function cardList(rows, renderer) {
+        if (!rows.length) {
+            return '<div class="text-center text-muted py-3 small">Tidak ada data</div>';
         }
         return rows.map(renderer).join('');
     }
@@ -441,7 +653,7 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                     <td class="text-end">${rp(row.kas_bersih || 0)}</td>
                     <td class="text-end">${rp(row.supplier_tunai || 0)}</td>
                     <td class="text-end">${rp(row.customer_tunai || 0)}</td>
-                    <td class="text-end fw-semibold">${rp(row.uang_harus_disetor || 0)}</td>
+                    <td class="text-end fw-semibold text-primary">${rp(row.uang_harus_disetor || 0)}</td>
                 </tr>`;
             }
             return `<tr>
@@ -451,8 +663,51 @@ $canDeleteAkses = ($aksesMenuData['akses_delete'] ?? '') === 'Y';
                 <td class="text-end">${rp(row.kas_bersih || 0)}</td>
                 <td class="text-end">${rp(row.supplier_tunai || 0)}</td>
                 <td class="text-end">${rp(row.customer_tunai || 0)}</td>
-                <td class="text-end fw-semibold">${rp(row.uang_harus_disetor || 0)}</td>
+                <td class="text-end fw-semibold text-primary">${rp(row.uang_harus_disetor || 0)}</td>
             </tr>`;
+        }).join('');
+    }
+
+    function summaryCards(rows, withCashier) {
+        if (!rows.length) {
+            return '<div class="text-center text-muted py-3 small">Tidak ada data</div>';
+        }
+        return rows.map(row => {
+            const nonCash = Number(row.pos_transfer || 0) + Number(row.pos_qris || 0);
+            return `
+            <div class="lapharian-item-card border-start border-primary border-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="fw-bold">${esc(row.toko_nama || row.toko_id)}</div>
+                        ${withCashier ? `<div class="small text-muted"><i class="ti ti-user"></i> ${esc(row.nama_kasir || row.kasir)} (${esc(row.kasir || '-')})</div>` : ''}
+                    </div>
+                    ${withCashier ? `<span class="badge bg-light text-dark">${Number(row.total_transaksi || 0).toLocaleString('id-ID')} Trx</span>` : ''}
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">POS Tunai</span>
+                    <span class="fw-medium">${rp(row.pos_tunai || 0)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">POS Non Tunai</span>
+                    <span class="fw-medium">${rp(nonCash)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Kas Kecil Bersih</span>
+                    <span class="fw-medium ${Number(row.kas_bersih || 0) < 0 ? 'text-danger' : ''}">${rp(row.kas_bersih || 0)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Supplier Tunai</span>
+                    <span class="fw-medium text-danger">-${rp(row.supplier_tunai || 0)}</span>
+                </div>
+                <div class="card-row">
+                    <span class="text-muted">Piutang Tunai</span>
+                    <span class="fw-medium text-success">+${rp(row.customer_tunai || 0)}</span>
+                </div>
+                <div class="card-row card-row-total">
+                    <span>Uang Harus Disetor</span>
+                    <span class="text-primary fs-5 fw-bold">${rp(row.uang_harus_disetor || 0)}</span>
+                </div>
+            </div>`;
         }).join('');
     }
 

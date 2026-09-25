@@ -7,79 +7,221 @@
  * @var array $tokoOptions
  */
 ?>
+<style>
+    .metric-card-cash {
+        border-radius: 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-touch-target {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+    @media (max-width: 767.98px) {
+        .metric-title {
+            font-size: 0.78rem;
+            line-height: 1.2;
+        }
+        .metric-value {
+            font-size: 1.15rem !important;
+            word-break: break-word;
+        }
+    }
+    .cashflow-daily-card {
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    .cashflow-daily-card.is-opening {
+        background-color: #f8fafc;
+        border-style: dashed;
+    }
+    .cashflow-daily-card .field-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 0.85rem;
+    }
+    .cashflow-daily-card .field-row-total {
+        border-top: 1px dashed rgba(0,0,0,0.12);
+        margin-top: 6px;
+        padding-top: 6px;
+        font-weight: 600;
+    }
+    .channel-box {
+        background: rgba(0,0,0,0.02);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
+        <!-- Header -->
+        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 px-md-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Laporan Cash Flow Per Bulan</h4>
-                        <p class="mb-0"><span id="period-label">Periode aktif</span> | Monitoring mutasi keuangan tunai dan non tunai.</p>
+                    <div class="col-12 col-md-7">
+                        <h4 class="fw-semibold mb-1">Laporan Cash Flow Bulanan</h4>
+                        <p class="mb-0 text-muted small"><span id="period-label">Periode aktif</span> | Mutasi keuangan tunai & non tunai.</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <div id="selected-store-info" class="text-muted small"></div>
+                    <div class="col-12 col-md-5 text-md-end mt-2 mt-md-0">
+                        <div id="selected-store-info" class="badge bg-primary text-wrap text-start text-md-end" style="font-weight: 500;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Filter Card -->
         <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-3">
-                        <label class="form-label">Periode</label>
+            <div class="card-body p-3 p-md-4">
+                <div class="row g-2 g-md-3 align-items-end">
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label class="form-label small fw-medium mb-1">Periode Bulan</label>
                         <input type="month" class="form-control" id="filter-periode" value="<?= date('Y-m') ?>">
                     </div>
-                    <div class="col-lg-5" id="filter-toko-wrapper" style="display:none;">
-                        <label class="form-label">Filter Toko</label>
+                    <div class="col-12 col-sm-6 col-lg-5" id="filter-toko-wrapper" style="display:none;">
+                        <label class="form-label small fw-medium mb-1">Filter Toko</label>
                         <select class="form-select select2" id="filter-toko" multiple>
                             <?php foreach ($tokoOptions as $row) : ?>
                                 <option value="<?= esc($row['toko_id']) ?>"><?= esc($row['toko_id']) ?> - <?= esc($row['toko_nama'] ?? $row['toko_id']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-4 d-grid d-lg-flex gap-2">
-                        <button type="button" class="btn btn-primary w-100" id="btn-filter"><i class="ti ti-search"></i> Tampilkan</button>
-                        <button type="button" class="btn btn-light w-100" id="btn-reset">Reset</button>
+                    <div class="col-12 col-lg-4">
+                        <div class="row g-2">
+                            <div class="col-6 col-sm-6">
+                                <button type="button" class="btn btn-primary w-100 btn-touch-target" id="btn-filter">
+                                    <i class="ti ti-search me-1"></i> Tampilkan
+                                </button>
+                            </div>
+                            <div class="col-6 col-sm-6">
+                                <button type="button" class="btn btn-light border w-100 btn-touch-target" id="btn-reset">
+                                    <i class="ti ti-rotate me-1"></i> Reset
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Saldo Awal Tunai</div><div class="fs-6 fw-semibold mt-2" id="saldo-awal-cash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Pemasukan Tunai</div><div class="fs-6 fw-semibold mt-2 text-success" id="pemasukan-cash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Pengeluaran Tunai</div><div class="fs-6 fw-semibold mt-2 text-danger" id="pengeluaran-cash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Saldo Akhir Tunai</div><div class="fs-6 fw-semibold mt-2" id="saldo-akhir-cash">Rp 0</div></div></div></div>
+        <!-- KPI 1: Arus Kas Tunai (2x2 di Mobile) -->
+        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+            <span class="small fw-bold text-uppercase text-muted"><i class="ti ti-cash me-1 text-primary"></i> Arus Kas Tunai</span>
+        </div>
+        <div class="row g-2 g-md-3 mb-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-secondary border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Awal Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-dark metric-value" id="saldo-awal-cash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-success border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Masuk Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-success metric-value" id="pemasukan-cash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-danger border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Keluar Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-danger metric-value" id="pengeluaran-cash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-primary border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Akhir Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-primary metric-value" id="saldo-akhir-cash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Saldo Awal Non Tunai</div><div class="fs-6 fw-semibold mt-2" id="saldo-awal-noncash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Pemasukan Non Tunai</div><div class="fs-6 fw-semibold mt-2 text-success" id="pemasukan-noncash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Pengeluaran Non Tunai</div><div class="fs-6 fw-semibold mt-2 text-danger" id="pengeluaran-noncash">Rp 0</div></div></div></div>
-            <div class="col-md-6 col-xl-3"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted small">Saldo Akhir Semua</div><div class="fs-6 fw-semibold mt-2" id="saldo-akhir-all">Rp 0</div></div></div></div>
+        <!-- KPI 2: Arus Kas Non Tunai & Total (2x2 di Mobile) -->
+        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+            <span class="small fw-bold text-uppercase text-muted"><i class="ti ti-credit-card me-1 text-info"></i> Non-Tunai & Akumulasi</span>
+        </div>
+        <div class="row g-2 g-md-3 mb-3">
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-secondary border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Awal Non-Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-dark metric-value" id="saldo-awal-noncash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-success border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Masuk Non-Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-success metric-value" id="pemasukan-noncash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-danger border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Keluar Non-Tunai</div>
+                        <div class="fs-6 fw-bold mt-1 text-danger metric-value" id="pengeluaran-noncash">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-dark border-start border-3 metric-card-cash">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Saldo Akhir Semua</div>
+                        <div class="fs-6 fw-bold mt-1 text-dark metric-value" id="saldo-akhir-all">Rp 0</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Collapsible Summary Card Flow -->
         <div class="card mb-3">
-            <div class="card-body">
-                <div class="fw-semibold mb-3">Summary Cash Flow</div>
-                <div class="row">
-                    <div class="col-lg-6">
-                        <table class="table table-sm table-bordered align-middle mb-0">
-                            <tbody id="summary-body-left"></tbody>
-                        </table>
-                    </div>
-                    <div class="col-lg-6 mt-3 mt-lg-0">
-                        <table class="table table-sm table-bordered align-middle mb-0">
-                            <tbody id="summary-body-right"></tbody>
-                        </table>
+            <div class="card-header bg-transparent p-3 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseSummaryCash" aria-expanded="false" style="cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold"><i class="ti ti-layout-grid me-1 text-primary"></i> Rincian & Akumulasi Arus Kas</span>
+                    <span class="badge bg-primary-subtle text-primary"><i class="ti ti-chevron-down"></i> Buka/Tutup</span>
+                </div>
+            </div>
+            <div class="collapse show" id="collapseSummaryCash">
+                <div class="card-body p-3 p-md-4 pt-0">
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle mb-0">
+                                    <tbody id="summary-body-left"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle mb-0">
+                                    <tbody id="summary-body-right"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
+        <!-- Table / CardView Data Harian -->
+        <div class="card mb-3">
+            <div class="card-body p-2 p-md-3">
                 <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100">
                     <thead>
                         <tr>
@@ -101,6 +243,59 @@
     </div>
 </div>
 
+<!-- Template CardView Mobile untuk Riwayat Kas Harian -->
+<template id="card-cashflow-template">
+    <div class="card cashflow-daily-card shadow-sm mb-2 border-start border-3 border-primary">
+        <div class="card-body p-3">
+            <!-- Header Kartu: Tanggal & Tombol Detail -->
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <div class="fw-bold fs-5 text-dark" data-dtcv-field="0"></div>
+                <div data-dtcv-field="8"></div>
+            </div>
+
+            <!-- Box Tunai -->
+            <div class="channel-box">
+                <div class="small fw-bold text-primary mb-1"><i class="ti ti-cash me-1"></i> Jalur Tunai (Cash)</div>
+                <div class="field-row">
+                    <span class="text-muted">Masuk (In)</span>
+                    <span class="text-success fw-medium">+<span data-dtcv-field="1"></span></span>
+                </div>
+                <div class="field-row">
+                    <span class="text-muted">Keluar (Out)</span>
+                    <span class="text-danger fw-medium">-<span data-dtcv-field="2"></span></span>
+                </div>
+                <div class="field-row">
+                    <span class="text-muted">Saldo Tunai</span>
+                    <span class="fw-bold text-primary" data-dtcv-field="3"></span>
+                </div>
+            </div>
+
+            <!-- Box Non Tunai -->
+            <div class="channel-box">
+                <div class="small fw-bold text-info mb-1"><i class="ti ti-credit-card me-1"></i> Jalur Non Tunai (Bank/QRIS)</div>
+                <div class="field-row">
+                    <span class="text-muted">Masuk (In)</span>
+                    <span class="text-success fw-medium">+<span data-dtcv-field="4"></span></span>
+                </div>
+                <div class="field-row">
+                    <span class="text-muted">Keluar (Out)</span>
+                    <span class="text-danger fw-medium">-<span data-dtcv-field="5"></span></span>
+                </div>
+                <div class="field-row">
+                    <span class="text-muted">Saldo Non Tunai</span>
+                    <span class="fw-bold text-info" data-dtcv-field="6"></span>
+                </div>
+            </div>
+
+            <!-- Total Akumulasi -->
+            <div class="field-row field-row-total">
+                <span class="text-dark">Saldo Akumulasi (All)</span>
+                <span class="fw-bold text-primary fs-5" data-dtcv-field="7"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
 <div class="modal fade" id="modal-detail-cashflow" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md">
         <div class="modal-content">
@@ -108,14 +303,16 @@
                 <h5 class="modal-title">Detail Cash Flow</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <h5 class="fw-semibold mb-3" id="detail-title">Periode -</h5>
-                <table class="table table-sm table-bordered align-middle mb-0">
-                    <tbody id="detail-body"></tbody>
-                </table>
+            <div class="modal-body p-3">
+                <h5 class="fw-semibold mb-3 text-primary" id="detail-title">Periode -</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <tbody id="detail-body"></tbody>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light btn-touch-target" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -188,7 +385,24 @@
                         extend: 'print',
                         text: 'Print',
                         title: 'Laporan Cash Flow'
-                    }, 'pageLength']
+                    }, 'cardViewToggle', 'pageLength']
+                }
+            },
+            cardView: {
+                enable: true,
+                breakpoint: 768,
+                columns: {
+                    xs: 1,
+                    sm: 1,
+                    md: 2,
+                    lg: 3
+                },
+                template: '#card-cashflow-template',
+                onCardRender: function($card, rowData) {
+                    if (rowData.is_opening) {
+                        $card.addClass('is-opening border-secondary border-dashed');
+                        $card.find('.channel-box').addClass('bg-light');
+                    }
                 }
             },
             data: [],
@@ -214,7 +428,7 @@
                         if (row.is_opening) {
                             return '<span class="text-muted">-</span>';
                         }
-                        return `<button type="button" class="btn btn-sm btn-outline-primary" onclick="showDailyDetail('${escapeAttr(row.tanggal || '')}')"><i class="ti ti-list-details"></i></button>`;
+                        return `<button type="button" class="btn btn-sm btn-outline-primary btn-touch-target" style="min-height:36px; padding:4px 10px;" onclick="showDailyDetail('${escapeAttr(row.tanggal || '')}')"><i class="ti ti-list-details me-1"></i> Rincian</button>`;
                     }
                 }
             ],

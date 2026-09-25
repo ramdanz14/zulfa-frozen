@@ -7,102 +7,247 @@
  * @var array $tokoOptions
  */
 ?>
+<style>
+    /* Styling ergonomis untuk Summary Kas & Mobile Layout */
+    .metric-card-summary {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 0.85rem 1rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .metric-card-summary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .metric-card-summary .metric-title {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .metric-card-summary .metric-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    /* CardView styling untuk item Summary Kas di mobile */
+    .kas-summary-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .kas-summary-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+    /* Collapsible Chart Header */
+    .chart-collapse-toggle {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    @media (max-width: 767.98px) {
+        .metric-card-summary {
+            padding: 0.65rem 0.75rem;
+        }
+        .metric-card-summary .metric-value {
+            font-size: 0.98rem;
+        }
+        .metric-card-summary .metric-title {
+            font-size: 0.68rem;
+        }
+        .btn-filter-touch {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+</style>
+
 <div class="body-wrapper">
-    <div class="container-fluid p-0">
-        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Summary Kas</h4>
-                        <p class="mb-0"><span class="page-pretitle">Periode aktif</span> | Rekap mutasi kas masuk dan keluar per akun operasional.</p>
+    <div class="container-fluid p-2 p-md-3">
+        <!-- Header Page -->
+        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 py-3">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">Summary Kas</h4>
+                        <p class="mb-0 small text-muted"><span class="page-pretitle">Periode aktif</span> &bull; Rekap arus kas masuk dan keluar per akun operasional.</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <div id="selected-store-info" class="text-muted small"></div>
+                    <div>
+                        <div id="selected-store-info" class="badge bg-white text-dark border px-2 py-1 small"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-4">
-                        <label class="form-label">Range Tanggal</label>
-                        <input type="text" class="form-control" id="filter-range" readonly>
+        <!-- Filter Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Range Tanggal Transaksi</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="ti ti-calendar text-primary"></i></span>
+                            <input type="text" class="form-control" id="filter-range" readonly>
+                        </div>
                     </div>
-                    <div class="col-lg-5" id="filter-toko-wrapper" style="display:none;">
-                        <label class="form-label">Filter Toko</label>
+                    <div class="col-12 col-md-4" id="filter-toko-wrapper" style="display:none;">
+                        <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Filter Toko</label>
                         <select class="form-select select2" id="filter-toko" multiple>
                             <?php foreach ($tokoOptions as $row) : ?>
                                 <option value="<?= esc($row['toko_id']) ?>"><?= esc($row['toko_id']) ?> - <?= esc($row['toko_nama'] ?? $row['toko_id']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-3 d-grid d-lg-flex gap-2">
-                        <button type="button" class="btn btn-primary w-100" id="btn-filter">Terapkan Filter</button>
-                        <button type="button" class="btn btn-light w-100" id="btn-reset">Reset</button>
+                    <div class="col-12 col-md-<?= !empty($tokoOptions) ? '3' : '7' ?> d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-sm flex-fill btn-filter-touch" id="btn-filter">
+                            <i class="ti ti-search me-1"></i> Terapkan
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm flex-fill btn-filter-touch border" id="btn-reset">
+                            <i class="ti ti-refresh me-1"></i> Reset
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-lg-6">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="text-muted small">Total Tunai</div>
-                            <div class="text-muted small" id="summary-transaksi">0 transaksi</div>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="text-muted small">Pemasukan</div>
-                                <div class="fs-6 fw-semibold mt-2 text-success" id="summary-tunai-masuk">Rp 0</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted small">Pengeluaran</div>
-                                <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-tunai-keluar">Rp 0</div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Metric KPI Cards: 2 Kolom di Mobile, 4 Kolom di Desktop -->
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-cash text-success me-1"></i>Tunai Masuk</div>
+                    <div class="metric-value text-success" id="summary-tunai-masuk">Rp 0</div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small mb-3">Total Non Tunai</div>
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="text-muted small">Pemasukan</div>
-                                <div class="fs-6 fw-semibold mt-2 text-success" id="summary-nontunai-masuk">Rp 0</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted small">Pengeluaran</div>
-                                <div class="fs-6 fw-semibold mt-2 text-danger" id="summary-nontunai-keluar">Rp 0</div>
-                            </div>
-                        </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-cash-off text-danger me-1"></i>Tunai Keluar</div>
+                    <div class="metric-value text-danger" id="summary-tunai-keluar">Rp 0</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-credit-card text-success me-1"></i>Non-Tunai Masuk</div>
+                    <div class="metric-value text-success" id="summary-nontunai-masuk">Rp 0</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card-summary">
+                    <div class="metric-title"><i class="ti ti-credit-card-off text-danger me-1"></i>Non-Tunai Keluar</div>
+                    <div class="metric-value text-danger" id="summary-nontunai-keluar">Rp 0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub Summary: Saldo Bersih & Total Transaksi -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary border px-2 py-1 small">
+                            <i class="ti ti-receipt me-1"></i><span id="summary-transaksi">0 transaksi</span>
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted text-uppercase fw-semibold">Saldo Bersih (Net):</span>
+                        <span class="fw-bold fs-6" id="summary-saldo-bersih">Rp 0</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="fw-semibold mb-3">Perbandingan Kas Per Akun</div>
-                <div id="chart-kas" style="min-height: 360px;"></div>
+        <!-- Collapsible Graphic Section: Default Terbuka di Desktop, Bisa Diciutkan di Mobile -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between chart-collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseAnalyticsCharts">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="ti ti-chart-bar fs-5 text-primary"></i>
+                    <span class="fw-bold text-dark small text-uppercase">Perbandingan Kas Per Akun</span>
+                </div>
+                <div class="small text-muted d-flex align-items-center gap-1">
+                    <span class="d-none d-sm-inline">Tampilkan / Sembunyikan</span>
+                    <i class="ti ti-chevron-down"></i>
+                </div>
+            </div>
+            <div class="collapse show" id="collapseAnalyticsCharts">
+                <div class="card-body p-2 p-md-3">
+                    <div id="chart-kas" style="min-height: 320px;"></div>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
-                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle">
+        <!-- Data Table / Mobile CardView -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-2 px-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="ti ti-list-details fs-5 text-primary"></i>
+                    <h6 class="mb-0 fw-bold">Rincian Mutasi Kas Per Akun</h6>
+                </div>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <table id="table-data" class="table table-bordered table-hover table-striped table-sm align-middle w-100 mb-0">
                     <thead></thead>
                     <tbody>
                         <tr>
-                            <td>No data to show</td>
+                            <td>Memuat data...</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- CardView template untuk layar mobile (< 768px) -->
+                <template id="card-summarykas-template">
+                    <div class="kas-summary-card mb-2">
+                        <!-- Baris 1: Tanggal & Toko -->
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="ti ti-calendar text-primary"></i>
+                                <span class="fw-bold text-dark small" data-dtcv-field="0"></span>
+                            </div>
+                            <span class="badge bg-light text-secondary border small px-2 py-1" data-dtcv-field="1"></span>
+                        </div>
+
+                        <!-- Baris 2: Akun Kas & Jenis (MASUK/KELUAR) -->
+                        <div class="d-flex justify-content-between align-items-start my-2">
+                            <div class="pe-2" style="min-width: 0; flex: 1;">
+                                <div class="fw-bold text-dark text-truncate" data-dtcv-field="3"></div>
+                                <div class="text-muted small">
+                                    <i class="ti ti-receipt me-1"></i><span data-dtcv-field="4"></span> trx
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0" data-dtcv-field="2"></div>
+                        </div>
+
+                        <!-- Baris 3: Breakdown Tunai & Non Tunai -->
+                        <div class="p-2 bg-light-subtle rounded border my-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small" style="font-size: 0.75rem;"><i class="ti ti-cash me-1 text-success"></i>Tunai:</span>
+                                <span class="fw-semibold text-dark small" data-dtcv-field="6"></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small" style="font-size: 0.75rem;"><i class="ti ti-credit-card me-1 text-primary"></i>Non Tunai:</span>
+                                <span class="fw-semibold text-dark small" data-dtcv-field="7"></span>
+                            </div>
+                        </div>
+
+                        <!-- Baris 4: Total Nominal -->
+                        <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                            <span class="text-muted small text-uppercase" style="font-size: 0.72rem; font-weight: 600;">Total Nominal</span>
+                            <span class="fw-bold fs-6" data-dtcv-field="5"></span>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -191,7 +336,7 @@
         chartKas = new ApexCharts(document.querySelector('#chart-kas'), {
             chart: {
                 type: 'bar',
-                height: 360,
+                height: 320,
                 toolbar: {
                     show: false
                 }
@@ -199,7 +344,8 @@
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    columnWidth: '60%'
+                    borderRadius: 4,
+                    columnWidth: '65%'
                 }
             },
             series: [],
@@ -211,8 +357,13 @@
                 }
             },
             yaxis: {
-                categories: []
-
+                categories: [],
+                labels: {
+                    maxWidth: 160,
+                    style: {
+                        fontSize: '11px'
+                    }
+                }
             },
             dataLabels: {
                 enabled: false
@@ -234,7 +385,23 @@
             },
             noData: {
                 text: 'Belum ada data'
-            }
+            },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 280
+                    },
+                    yaxis: {
+                        labels: {
+                            maxWidth: 120,
+                            style: {
+                                fontSize: '10px'
+                            }
+                        }
+                    }
+                }
+            }]
         });
         chartKas.render();
     }
@@ -292,11 +459,18 @@
         chartKas.updateSeries(hasData ? chartData.series : [], true);
     }
 
-    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary';
+    DataTable.Buttons.defaults.dom.button.className = 'btn btn-primary btn-sm';
     const table = $('#table-data').DataTable({
         layout: {
             topStart: {
-                buttons: ['pageLength']
+                buttons: [{
+                    text: '<i class="ti ti-file-type-xls"></i> Excel',
+                    extend: 'excelHtml5',
+                    title: 'Summary-Kas-Operasional',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    }
+                }, 'pageLength']
             }
         },
         lengthMenu: [
@@ -316,6 +490,23 @@
                 d.date_start = filterStart.format('YYYY-MM-DD');
                 d.date_end = filterEnd.format('YYYY-MM-DD');
                 d.toko_ids = getSelectedStoreIds();
+            }
+        },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            template: '#card-summarykas-template',
+            gridClass: 'col-12 col-sm-6 mb-2',
+            onCardRender: function($card, data) {
+                const totalNominal = Number(data.total_nominal || 0);
+                const $totalNominalEl = $card.find('[data-dtcv-field="5"]');
+                if (data.jenis_akun === 'MASUK') {
+                    $totalNominalEl.addClass('text-success');
+                    $card.addClass('border-start border-success border-3');
+                } else {
+                    $totalNominalEl.addClass('text-danger');
+                    $card.addClass('border-start border-danger border-3');
+                }
             }
         },
         columns: [{
@@ -414,6 +605,19 @@
                 $('#summary-nontunai-masuk').text(`Rp ${formatMoneyValue(summary.total_nontunai_masuk || 0)}`);
                 $('#summary-nontunai-keluar').text(`Rp ${formatMoneyValue(summary.total_nontunai_keluar || 0)}`);
                 $('#summary-transaksi').text(`${Number(summary.total_transaksi || 0).toLocaleString('id-ID')} transaksi`);
+
+                const saldoBersih = Number(summary.saldo_bersih || 0);
+                const $saldoBersihEl = $('#summary-saldo-bersih');
+                $saldoBersihEl.text(`Rp ${formatMoneyValue(saldoBersih)}`);
+                $saldoBersihEl.removeClass('text-success text-danger text-dark');
+                if (saldoBersih > 0) {
+                    $saldoBersihEl.addClass('text-success');
+                } else if (saldoBersih < 0) {
+                    $saldoBersihEl.addClass('text-danger');
+                } else {
+                    $saldoBersihEl.addClass('text-dark');
+                }
+
                 refreshChart(data.chart_rows || []);
             },
             error: function(xhr) {

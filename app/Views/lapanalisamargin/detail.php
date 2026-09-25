@@ -7,59 +7,120 @@
  */
 $detailFilter = $detailFilter ?? [];
 ?>
+<style>
+    .metric-card-detail {
+        border-radius: 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-touch-target {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+
+    @media (max-width: 767.98px) {
+        .metric-title {
+            font-size: 0.78rem;
+            line-height: 1.2;
+        }
+
+        .metric-value {
+            font-size: 1.15rem !important;
+            word-break: break-word;
+        }
+    }
+
+    .item-margin-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+    .item-margin-card .field-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 0.85rem;
+    }
+
+    .item-margin-card .field-row-total {
+        border-top: 1px dashed rgba(0, 0, 0, 0.12);
+        margin-top: 6px;
+        padding-top: 6px;
+        font-weight: 600;
+    }
+</style>
+
 <div class="body-wrapper">
     <div class="container-fluid p-0">
-        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-4">
-            <div class="card-body px-4 py-3">
+        <!-- Header -->
+        <div class="card bg-primary-subtle shadow-none position-relative overflow-hidden mb-3">
+            <div class="card-body px-3 px-md-4 py-3">
                 <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <h4 class="fw-semibold mb-2">Detail Analisa Margin</h4>
-                        <p class="mb-0"><span id="detail-period">Periode aktif</span> | Kategori <span id="detail-kat-title">-</span></p>
+                    <div class="col-8 col-md-9">
+                        <h4 class="fw-semibold mb-1">Detail Analisa Margin</h4>
+                        <p class="mb-0 text-muted small"><span id="detail-period">Periode aktif</span> | Kategori <strong id="detail-kat-title" class="text-primary">-</strong></p>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="<?= base_url('/lapanalisamargin') ?>" class="btn btn-light">Kembali</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Sales Qty</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-qty">0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Jml Struk</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-struk">0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Sales Rp</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-sales">Rp 0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <div class="card h-100 mb-0">
-                    <div class="card-body">
-                        <div class="text-muted small">Margin %</div>
-                        <div class="fs-6 fw-semibold mt-2" id="summary-margin-percent">0%</div>
+                    <div class="col-4 col-md-3 text-end">
+                        <a href="<?= base_url('/lapanalisamargin') ?>" class="btn btn-outline-primary btn-touch-target">
+                            <i class="ti ti-arrow-left me-1"></i> Kembali
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-body p-2">
+        <!-- KPI Grid: 2x2 di Mobile, 4 kolom di Desktop -->
+        <div class="row g-2 g-md-3 mb-3">
+            <!-- 1. Sales Qty -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-secondary border-start border-3 metric-card-detail">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Sales Qty</div>
+                        <div class="fs-6 fw-bold mt-1 text-dark metric-value" id="summary-qty">0</div>
+                        <div class="text-muted small mt-1">Total unit terjual</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 2. Jml Struk -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-info border-start border-3 metric-card-detail">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Jml Struk</div>
+                        <div class="fs-6 fw-bold mt-1 text-info metric-value" id="summary-struk">0</div>
+                        <div class="text-muted small mt-1">Frekuensi transaksi</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 3. Sales Rp -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-primary border-start border-3 metric-card-detail">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Sales Rp</div>
+                        <div class="fs-6 fw-bold mt-1 text-primary metric-value" id="summary-sales">Rp 0</div>
+                        <div class="text-muted small mt-1">Total omset kotor</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 4. Margin % -->
+            <div class="col-6 col-md-6 col-xl-3">
+                <div class="card h-100 mb-0 border-success border-start border-3 metric-card-detail">
+                    <div class="card-body p-3">
+                        <div class="text-muted metric-title text-truncate">Gross Margin %</div>
+                        <div class="fs-6 fw-bold mt-1 text-success metric-value" id="summary-margin-percent">0%</div>
+                        <div class="text-muted small mt-1">Rata-rata margin</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table / CardView Data -->
+        <div class="card mb-3">
+            <div class="card-body p-2 p-md-3">
                 <table id="table-detail" class="table table-bordered table-hover table-striped table-sm align-middle w-100">
                     <thead></thead>
                     <tbody>
@@ -72,6 +133,43 @@ $detailFilter = $detailFilter ?? [];
         </div>
     </div>
 </div>
+
+<!-- Template CardView Mobile untuk Item Margin Detail -->
+<template id="card-item-template">
+    <div class="card item-margin-card shadow-sm mb-2 border-start border-3 border-success">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                <div style="flex: 1; min-width: 0;" class="pe-2">
+                    <div class="badge bg-light text-dark font-monospace mb-1" data-dtcv-field="0"></div>
+                    <div class="fw-bold text-dark text-truncate fs-5" data-dtcv-field="1"></div>
+                    <div class="small text-muted" data-dtcv-field="2"></div>
+                </div>
+                <div class="badge bg-success-subtle text-success fs-6 fw-bold shrink-0" data-dtcv-field="8"></div>
+            </div>
+            <div class="field-row">
+                <span class="text-muted">Sales Qty</span>
+                <span class="fw-medium" data-dtcv-field="3"></span>
+            </div>
+            <div class="field-row">
+                <span class="text-muted">Jml Struk</span>
+                <span class="fw-medium" data-dtcv-field="4"></span>
+            </div>
+            <div class="field-row">
+                <span class="text-muted">Sales Rp</span>
+                <span class="fw-bold" data-dtcv-field="5"></span>
+            </div>
+            <div class="field-row">
+                <span class="text-muted">Sales HPP</span>
+                <span class="fw-medium text-danger" data-dtcv-field="6"></span>
+            </div>
+            <div class="field-row field-row-total">
+                <span class="text-dark">Total Margin</span>
+                <span class="fw-bold text-success fs-6" data-dtcv-field="7"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
 <?= $this->endSection('content') ?>
 
 <?= $this->section('javascript') ?>
@@ -96,8 +194,19 @@ $detailFilter = $detailFilter ?? [];
                     exportOptions: {
                         columns: ':visible'
                     }
-                }, 'pageLength']
+                }, 'cardViewToggle', 'pageLength']
             }
+        },
+        cardView: {
+            enable: true,
+            breakpoint: 768,
+            columns: {
+                xs: 1,
+                sm: 1,
+                md: 2,
+                lg: 3
+            },
+            template: '#card-item-template'
         },
         data: [],
         lengthMenu: [
